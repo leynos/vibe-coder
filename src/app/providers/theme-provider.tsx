@@ -29,6 +29,10 @@ function canUseDOM(): boolean {
   return typeof window !== "undefined" && typeof document !== "undefined";
 }
 
+function isSupportedTheme(value: string): value is (typeof AVAILABLE_THEMES)[number] {
+  return (AVAILABLE_THEMES as ReadonlyArray<string>).includes(value);
+}
+
 function applyTheme(theme: ThemeName) {
   if (!canUseDOM()) return;
   const next = theme || DEFAULT_THEME;
@@ -42,14 +46,17 @@ function readStoredTheme(): ThemeName | null {
   if (!canUseDOM()) return null;
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored) return stored;
+    if (stored && isSupportedTheme(stored)) return stored;
     // One-time migration from the legacy "vibecoder.*" key.
     const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
     if (legacy) {
       const migrated = THEME_MIGRATION[legacy] ?? legacy;
-      window.localStorage.setItem(STORAGE_KEY, migrated);
+      if (isSupportedTheme(migrated)) {
+        window.localStorage.setItem(STORAGE_KEY, migrated);
+        window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+        return migrated;
+      }
       window.localStorage.removeItem(LEGACY_STORAGE_KEY);
-      return migrated;
     }
     return null;
   } catch (error) {
