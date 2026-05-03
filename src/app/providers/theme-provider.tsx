@@ -15,7 +15,7 @@ const THEME_MIGRATION: Record<string, string> = {
   "vibecoder-day": "vibe-coder-day",
 };
 
-type ThemeName = string;
+type ThemeName = (typeof AVAILABLE_THEMES)[number];
 
 interface ThemeContextValue {
   theme: ThemeName;
@@ -25,38 +25,106 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
+/**
+ * Returns `true` when executing in a browser context where the DOM is
+ * available.
+ *
+ * @returns `true` if both `window` and `document` are defined.
+ */
 function canUseDOM(): boolean {
   return typeof window !== "undefined" && typeof document !== "undefined";
 }
 
-function isSupportedTheme(value: string): value is (typeof AVAILABLE_THEMES)[number] {
-  return (AVAILABLE_THEMES as ReadonlyArray<string>).includes(value);
+/**
+ * Narrows `value` to {@link ThemeName} by checking membership in
+ * {@link AVAILABLE_THEMES}.
+ *
+ * Accepts `unknown` so it can guard values read from untrusted sources
+ * such as `localStorage`.
+ *
+ * @returns `true` when `value` is a supported theme identifier.
+ */
+function isSupportedTheme(value: unknown): value is ThemeName {
+  return AVAILABLE_THEMES.includes(value as ThemeName);
 }
 
-function applyTheme(theme: ThemeName) {
+/**
+ * Apply a DaisyUI theme name to the `data-theme` attribute on both
+ * `<html>` and `<body>`.
+ *
+ * Side-effect: mutates two DOM attributes. No-ops when called outside a
+ * browser context.
+ */
+function applyTheme(theme: ThemeName): void {
   if (!canUseDOM()) return;
-  const next = theme || DEFAULT_THEME;
-  document.documentElement.setAttribute("data-theme", next);
-  document.body?.setAttribute("data-theme", next);
+  document.documentElement.setAttribute("data-theme", theme);
+  document.body?.setAttribute("data-theme", theme);
 }
 
 // localStorage is accessed synchronously on the single JavaScript thread.
 // No explicit cross-provider locking is required.
+
+/**
+ * Migrate a legacy `vibecoder.theme` entry to `vibe-coder.theme`.
+ *
+ * Reads {@link LEGACY_STORAGE_KEY}, maps the value through
+ * {@link THEME_MIGRATION}, and writes the result to {@link STORAGE_KEY}
+ * when the mapped value passes {@link isSupportedTheme}. Removes the
+ * legacy key unconditionally once migration has been attempted so it is
+ * not processed again.
+ *
+ * This is a command — it performs writes and has no return value.
+ * Call once before {@link readStoredTheme} in the provider initialiser.
+ */
+function migrateThemeStorage(): void {
+  if (!canUseDOM()) return;
+  try {
+    // If the new key already holds a value, no migration is needed.
+    if (window.localStorage.getItem(STORAGE_KEY)) return;
+    const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!legacy) return;
+    const migrated = THEME_MIGRATION[legacy] ?? legacy;
+    if (isSupportedTheme(migrated)) {
+      appLogger.debug("Migrating legacy theme storage key", {
+        legacyKey: LEGACY_STORAGE_KEY,
+        legacyValue: legacy,
+        migratedValue: migrated,
+      });
+      window.localStorage.setItem(STORAGE_KEY, migrated);
+    } else {
+      appLogger.warn("Unsupported theme value discarded; falling back to default", {
+        key: LEGACY_STORAGE_KEY,
+        stored: legacy,
+        fallback: DEFAULT_THEME,
+      });
+    }
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+  } catch (error) {
+    appLogger.warn("Failed to migrate legacy theme storage", { key: LEGACY_STORAGE_KEY, error });
+  }
+}
+
+/**
+ * Read the active theme from {@link STORAGE_KEY}.
+ *
+ * Returns `null` when no theme is stored or when the stored value is not
+ * a member of {@link AVAILABLE_THEMES}. Does not perform any writes —
+ * call {@link migrateThemeStorage} beforehand to ensure any legacy
+ * entries have been promoted.
+ *
+ * @returns The stored {@link ThemeName}, or `null` if none is valid.
+ */
 function readStoredTheme(): ThemeName | null {
   if (!canUseDOM()) return null;
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored && isSupportedTheme(stored)) return stored;
-    // One-time migration from the legacy "vibecoder.*" key.
-    const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
-    if (legacy) {
-      const migrated = THEME_MIGRATION[legacy] ?? legacy;
-      if (isSupportedTheme(migrated)) {
-        window.localStorage.setItem(STORAGE_KEY, migrated);
-        window.localStorage.removeItem(LEGACY_STORAGE_KEY);
-        return migrated;
-      }
-      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    if (stored) {
+      if (isSupportedTheme(stored)) return stored;
+      appLogger.warn("Unsupported theme value discarded; falling back to default", {
+        key: STORAGE_KEY,
+        stored,
+        fallback: DEFAULT_THEME,
+      });
     }
     return null;
   } catch (error) {
@@ -65,8 +133,24 @@ function readStoredTheme(): ThemeName | null {
   }
 }
 
-function persistTheme(theme: ThemeName) {
+/**
+ * Persist the active theme to {@link STORAGE_KEY}.
+ *
+ * Side-effect: writes to `localStorage`. Discards and logs values that
+ * are not members of {@link AVAILABLE_THEMES} as a runtime
+ * defence-in-depth measure, even though the TypeScript type prevents
+ * unsupported values from being passed at compile time.
+ */
+function persistTheme(theme: ThemeName): void {
   if (!canUseDOM()) return;
+  if (!isSupportedTheme(theme)) {
+    appLogger.warn("Unsupported theme value discarded; falling back to default", {
+      key: STORAGE_KEY,
+      stored: theme,
+      fallback: DEFAULT_THEME,
+    });
+    return;
+  }
   try {
     window.localStorage.setItem(STORAGE_KEY, theme);
   } catch (error) {
@@ -76,6 +160,9 @@ function persistTheme(theme: ThemeName) {
 
 /**
  * Provide access to the active DaisyUI theme for the application.
+ *
+ * On mount, migrates any legacy `vibecoder.theme` storage entry before
+ * reading the active theme, so the migration is transparent to consumers.
  *
  * @example
  * ```tsx
@@ -100,7 +187,10 @@ function persistTheme(theme: ThemeName) {
  * ```
  */
 export function ThemeProvider({ children }: { children: ReactNode }): JSX.Element {
-  const [theme, setThemeState] = useState<ThemeName>(() => readStoredTheme() ?? DEFAULT_THEME);
+  const [theme, setThemeState] = useState<ThemeName>(() => {
+    migrateThemeStorage();
+    return readStoredTheme() ?? DEFAULT_THEME;
+  });
 
   useEffect(() => {
     applyTheme(theme);

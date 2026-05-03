@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, renderHook, screen } from "@testing-library/react";
 import type { JSX } from "react";
 import { act } from "react";
 
@@ -87,6 +87,57 @@ describe("ThemeProvider", () => {
 
     expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-day");
     expect(window.localStorage.getItem("vibecoder.theme")).toBeNull();
+  });
+
+  it("falls back to the default theme when the legacy value has no mapping", () => {
+    window.localStorage.setItem("vibecoder.theme", "vibecoder-unknown");
+
+    render(
+      <ThemeProvider>
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    expect(displayed).toBe("vibe-coder-night");
+    expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-night");
+    expect(window.localStorage.getItem("vibecoder.theme")).toBeNull();
+  });
+
+  it("falls back to the default theme when storage holds an unsupported value", () => {
+    window.localStorage.setItem("vibe-coder.theme", "hax");
+
+    render(
+      <ThemeProvider>
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    expect(displayed).toBe("vibe-coder-night");
+  });
+
+  it("sets data-theme to a supported value for every available theme", () => {
+    const availableThemes = ["vibe-coder-night", "vibe-coder-day"] as const;
+
+    for (const themeName of availableThemes) {
+      window.localStorage.setItem("vibe-coder.theme", themeName);
+      const { unmount } = render(
+        <ThemeProvider>
+          <ThemeProbe />
+        </ThemeProvider>,
+      );
+      const attr = document.documentElement.getAttribute("data-theme") ?? "";
+      expect(availableThemes as ReadonlyArray<string>).toContain(attr);
+      unmount();
+      cleanup();
+      window.localStorage.clear();
+      document.documentElement.removeAttribute("data-theme");
+    }
+  });
+
+  it("throws when useTheme is invoked outside ThemeProvider", () => {
+    expect(() => renderHook(() => useTheme())).toThrow();
   });
 
   it("persists and reapplies a new theme", () => {
