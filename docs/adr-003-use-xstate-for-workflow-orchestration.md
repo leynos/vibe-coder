@@ -112,11 +112,12 @@ transitions.
 
 ## Outstanding decisions
 
-- Decide whether machines are colocated with features or stored in
-  `application/machines/`.
-- Define the first model-test harness and graph export workflow.
-- Choose whether autopilot behaviour is one machine or a domain strategy
-  selected by machine state.
+- Machines are centralized under `application/machines/` rather than colocated
+  with individual feature directories.
+- The model-test harness uses `@xstate/test` with Bun; graph export uses the
+  XState developer tools inspector.
+- Autopilot is a parallel state region of `run.machine` rather than a separate
+  top-level machine.
 
 ## Architectural rationale
 

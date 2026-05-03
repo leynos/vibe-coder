@@ -68,7 +68,7 @@ inversion, and make the simulation core independently testable.
 | ------------------ | --------------------------------- | -------------------------------- |
 | Domain testability | Core can run with fake ports      | Often depends on framework setup |
 | Technology change  | Adapters can be replaced          | Changes may cross layers         |
-| Initial complexity | Higher, due explicit ports        | Lower, but easier to entangle    |
+| Initial complexity | Higher, due to explicit ports        | Lower, but easier to entangle    |
 | Simulation tuning  | Self-play can drive the same core | Tooling may need browser wiring  |
 
 _Table 1: Trade-offs for ADR 002._
@@ -134,10 +134,10 @@ type GameApplication = {
 
 ## Outstanding decisions
 
-- Choose whether the first source tree uses `core/` or `domain/` as the package
-  name.
-- Define import-boundary lint rules for TypeScript once the repository scaffold
-  exists.
+- The source tree uses `domain/`, `application/`, and `adapters/` as the chosen
+  package boundaries; the `core/` naming option has been set aside.
+- Import-boundary lint rules will be defined and enforced via Biome or a custom
+  TypeScript rule once the repository scaffold exists.
 - Decide whether optimization tooling lives inside the app package or in a
   sibling package.
 

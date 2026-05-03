@@ -350,7 +350,7 @@ ways that a careful security allocation can reduce — then the player has
 real strategic choices and the simulation is not just a number-increment toy.
 
 This slice proves that throughput can wreck you. It introduces the incident
-system, the debt constellation visualiser, and consequence legibility that
+system, the debt constellation visualizer, and consequence legibility that
 make policy trade-offs meaningful.
 
 ### 3.1. Implement the tech debt tick rules and incident rolling
@@ -412,7 +412,7 @@ See HLD §"Key workflows" (incident response) and
   - Success: integration tests confirm that a CVE cover-up reduces karma and
     increases CVE debt on the next tick; a civic response improves brand.
 
-### 3.3. Deliver the debt constellation visualiser
+### 3.3. Deliver the debt constellation visualizer
 
 This step answers whether the player can diagnose their risk surface through
 a visual view that is readable without relying on generated imagery for
@@ -533,7 +533,7 @@ consequential, not less, as agents arrive — then the intent-steering fantasy
 is real and the idle loop remains interactive through every stage.
 
 This slice delivers the progression tree, the first four stages of
-civilisation, autopilot modes, and the first self-play balancing pass over
+civilization, autopilot modes, and the first self-play balancing pass over
 the game so far.
 
 ### 5.1. Implement the progression system and first four stages
@@ -630,7 +630,7 @@ trivial dominant policy exists. See HLD §"Self-play agents" and
 - [ ] 5.3.3. Run a parameter sweep over three candidate packs, score with the
   fun score, and promote one pack as the new default after human review.
   - Requires 5.3.2.
-  - See HLD §"Optimisation process" and
+  - See HLD §"Optimization process" and
     `adr-006-use-adversarial-self-play-for-parameter-tuning.md`.
   - Success: the promoted pack has no lock-on-victory strategy according to
     the exploit hunter; the balancing report is committed to the repository.
@@ -645,7 +645,7 @@ to "how do I allocate watts?" — then the game has a genuine second act and
 players have a reason to reach it.
 
 This slice delivers the data centre unlock, power generation mix, fossil
-penalty, heat warning, and the power/heat visualiser.
+penalty, heat warning, and the power/heat visualizer.
 
 ### 6.1. Implement power simulation and the energy economy
 
@@ -679,10 +679,10 @@ HLD §"The system heartbeat" (step 2) and HLD §"Path to customer value"
   - Success: the `RiskSurface` machine transitions to `Warning` on the heat
     threshold; the player receives an explanatory incident prompt.
 
-### 6.2. Deliver the power and heat visualiser
+### 6.2. Deliver the power and heat visualizer
 
 This step answers whether the power economy is legible through a Canvas
-visualiser that provides textual summaries for accessibility. See HLD
+visualizer that provides textual summaries for accessibility. See HLD
 §"Core screens" (Power & Heat) and
 `adr-007-keep-runtime-interface-authoritative-and-deterministic.md`.
 
@@ -834,7 +834,7 @@ the core release. They are grouped here to keep the v1 boundary disciplined.
   - Success: each stage is reachable from the stage-4 run in a deterministic
     replay; new risk surfaces appear for each regime.
 
-### 8.2. Full canvas city-aquarium visualiser
+### 8.2. Full canvas city-aquarium visualizer
 
 - [ ] 8.2.1. Implement the animated city-aquarium Canvas world: environment
   layers (bedsit, café, warehouse, robot office, data centre, orbital compute)
@@ -878,7 +878,7 @@ code, or manifests). See `adr-008-use-development-time-image-generation-with-ass
     `approved-runtime` status.
 
 - [ ] 8.3.3. Implement post-processing scripts for chroma-key removal,
-  palette quantisation, sprite slicing, nine-slice extraction, atlas packing,
+  palette quantization, sprite slicing, nine-slice extraction, atlas packing,
   and light-mask generation.
   - See HLD §"Required art pipeline" and
     `adr-008-use-development-time-image-generation-with-asset-promotion.md`

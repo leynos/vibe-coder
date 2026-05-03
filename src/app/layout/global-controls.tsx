@@ -82,7 +82,7 @@ function ThemeToggleButton(): JSX.Element {
   const { t } = useTranslation();
   const nextTheme = themes.find((entry) => entry !== theme) ?? theme;
   const label =
-    nextTheme === "vibecoder-day"
+    nextTheme === "vibe-coder-day"
       ? t("controls-theme-toggle-day-label", { defaultValue: "Switch to Day" })
       : t("controls-theme-toggle-night-label", { defaultValue: "Switch to Night" });
 

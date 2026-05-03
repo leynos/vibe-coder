@@ -3,9 +3,15 @@
 import type { JSX, ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-const STORAGE_KEY = "vibecoder.theme";
-const DEFAULT_THEME = "vibecoder-night";
-const AVAILABLE_THEMES = ["vibecoder-night", "vibecoder-day"] as const;
+const STORAGE_KEY = "vibe-coder.theme";
+const LEGACY_STORAGE_KEY = "vibecoder.theme";
+const DEFAULT_THEME = "vibe-coder-night";
+const AVAILABLE_THEMES = ["vibe-coder-night", "vibe-coder-day"] as const;
+
+const THEME_MIGRATION: Record<string, string> = {
+  "vibecoder-night": "vibe-coder-night",
+  "vibecoder-day": "vibe-coder-day",
+};
 
 type ThemeName = string;
 
@@ -32,7 +38,16 @@ function readStoredTheme(): ThemeName | null {
   if (!canUseDOM()) return null;
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    return stored ?? null;
+    if (stored) return stored;
+    // One-time migration from the legacy "vibecoder.*" key.
+    const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy) {
+      const migrated = THEME_MIGRATION[legacy] ?? legacy;
+      window.localStorage.setItem(STORAGE_KEY, migrated);
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+      return migrated;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -57,7 +72,7 @@ function persistTheme(theme: ThemeName) {
  * function ThemeToggle() {
  *   const { theme, setTheme } = useTheme();
  *   return (
- *     <button onClick={() => setTheme(theme === "vibecoder-night" ? "vibecoder-day" : "vibecoder-night")}>
+ *     <button onClick={() => setTheme(theme === "vibe-coder-night" ? "vibe-coder-day" : "vibe-coder-night")}>
  *       Switch theme
  *     </button>
  *   );

@@ -1,6 +1,6 @@
 {
-  "name": "vibecoder-night",
-  "displayName": "Vibecoder Night",
+  "name": "vibe-coder-night",
+  "displayName": "Vibe Coder Night",
   "default": true,
   "prefersDark": true,
   "colorScheme": "dark",

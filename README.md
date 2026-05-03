@@ -1,6 +1,6 @@
 # 🎮 Vibe Coder
 
-*An offline-first idle strategy game where you manage a software civilisation.*
+*An offline-first idle strategy game where you manage a software civilization.*
 
 You do not grind clicks. You express intent — allocating effort across shipping,
 open source, quality, security, and marketing — then watch a deterministic
@@ -16,11 +16,11 @@ Most idle games reward compulsive clicking. Vibe Coder rewards thinking.
 - **Policy over grind**: express high-level intent (allocations, ethics
   constraints) instead of clicking buttons every second.
 - **Emergent consequences**: deterministic simulation produces technical debt,
-  revenue swings, brand crises, and viral open source moments from your choices.
+  revenue swings, brand crises, and viral open-source moments from your choices.
 - **Ethics as mechanics**: dark patterns, CVE disclosure timelines, fossil fuel
   caps, and labour policy are first-class gameplay levers — not cosmetic flavour.
 - **Multiple endings**: reach a degrowth utopia, UBI paradise, Skynet failure,
-  or waste-heat meltdown depending on how you steer the civilisation.
+  or waste-heat meltdown depending on how you steer the civilization.
 - **Offline-first PWA**: installs to your home screen and plays without a
   network connection.
 
@@ -73,16 +73,16 @@ ______________________________________________________________________
 - **Incident system** — random and deterministic events (security breaches,
   viral moments, regulatory fines) demand decisions with lasting consequences.
 - **Progression unlocks** — grow from a solo developer to orbital compute and
-  Matrioshka dyson swarms across ten-plus civilisation stages.
+  Matrioshka dyson swarms across ten-plus civilization stages.
 - **Reactive audio** — Web Audio engine responds to simulation events with
   layered generative music.
-- **Canvas visualisation** — live city aquarium, debt constellation, and
+- **Canvas visualization** — live city aquarium, debt constellation, and
   power/heat displays.
 - **Self-play balancing** — adversarial agents tune parameters to prevent
   dominant strategies and detect exploits.
 - **Accessible** — WCAG 2AA compliance, full keyboard navigation, reduced
   motion support.
-- **Internationalised** — i18next + Mozilla Fluent; RTL-ready.
+- **Internationalized** — i18next + Mozilla Fluent; RTL-ready.
 
 ______________________________________________________________________
 

@@ -317,7 +317,7 @@ pipeline cannot ignore or launder those findings.
 
 The split also mirrors the Skyjoust validator precedent: formal or model-based
 checking should protect the high-level lifecycle contract rather than duplicate
-fine-grained game simulation. Vibe Coder applies that lesson to optimisation
+fine-grained game simulation. Vibe Coder applies that lesson to optimization
 infrastructure. The TypeScript simulation owns tick-level behaviour. The TLA+
 model owns the promotion safety envelope.
 

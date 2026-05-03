@@ -83,7 +83,7 @@ execution remains a planned migration seam.
 ## Goals and non-goals
 
 - Goals:
-  - Keep simulation authority independent from rendering cadence.
+  - Keep simulation authority independent of rendering cadence.
   - Maintain responsive policy editing and event prompts during active
     simulation.
   - Prepare for late-game worker execution without changing domain rules.
@@ -117,7 +117,7 @@ execution remains a planned migration seam.
 
 ## Architectural rationale
 
-The player watches a civilisation compute itself into glory or catastrophe. That
-computation needs a clock of its own. React can frame the stained glass; it
+The player watches a civilization compute itself into glory or catastrophe. That
+computation needs a clock of its own. React can frame the stained-glass; it
 should not decide when the sun rises.
 

@@ -129,7 +129,7 @@ db.version(1).stores({
 ## Architectural rationale
 
 The hybrid storage model fits an idle simulation: the player needs quick resume,
-while maintainers need enough event history to explain why a civilisation
+while maintainers need enough event history to explain why a civilization
 melted, assimilated everyone, or became a happy open-source desk gremlin on
 universal basic income.
 

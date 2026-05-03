@@ -1,14 +1,14 @@
-## Vibe Coder HLD v0.1
+# Vibe Coder HLD v0.1
 
-**Product thesis:** Vibe Coder is a local-first, policy-driven idle strategy game where the player does not grind clicks. They express intent, watch an increasingly autonomous software civilisation interpret that intent, then intervene when the system’s consequences become interesting, alarming, or weirdly beautiful. The core fantasy is not “number go up”; it is “my policies became a civilisation, and now I must decide whether it deserves more watts.”
+**Product thesis:** Vibe Coder is a local-first, policy-driven idle strategy game where the player does not grind clicks. They express intent, watch an increasingly autonomous software civilization interpret that intent, then intervene when the system's consequences become interesting, alarming, or weirdly beautiful. The core fantasy is not "number go up"; it is "the player's policies became a civilization, and now the question is whether it deserves more watts."
 
-The biggest design warning: “idle” must not mean “low-interactivity”. Crawford’s framing gives us the north star here: interaction is a conversation in which the system must listen to what the player says, think about it meaningfully, and speak back clearly; slow strategy can still be highly interactive when the player has a rich vocabulary of meaningful choices and the game responds with deep consequences.  Crawford also argues that reducing interactivity often makes a game less fun faster than it makes it easier, so Vibe Coder should remove repetitive labour while preserving agency, legibility, and consequence. 
+The biggest design warning: “idle” must not mean “low-interactivity”. Crawford's framing provides the north star here: interaction is a conversation in which the system must listen to what the player says, think about it meaningfully, and speak back clearly; slow strategy can still be highly interactive when the player has a rich vocabulary of meaningful choices and the game responds with deep consequences.  Crawford also argues that reducing interactivity often makes a game less fun faster than it makes it easier, so Vibe Coder should remove repetitive labour while preserving agency, legibility, and consequence. 
 
 ---
 
 # WHY: vision and purpose
 
-## What problem are we solving, and for whom?
+## What problem does Vibe Coder solve, and for whom?
 
 Vibe Coder solves a very specific itch: many idle games offer automation fantasy, but most collapse into either click-farming, spreadsheet worship, or opaque exponential soup. Vibe Coder instead offers a systems-design fantasy for players who enjoy software, organisational dynamics, ethical trade-offs, emergent simulation, and absurd escalation from “one tired goblin at a CRT” to “thermodynamic governance at stellar scale”.
 
@@ -24,7 +24,7 @@ Target players include:
 
 ## What does the application do?
 
-It runs a deterministic-ish, local-first idle simulation in a React PWA. The player starts with a short manual typing ritual, then controls allocation and ethics policies. Every tick, the system updates code generation, tech debt, revenue, open source output, karma, brand, power consumption, PMF, customer income, incidents, progression unlocks, autonomy risk, and eventually civilisation-scale thermodynamic constraints.
+It runs a deterministic-ish, local-first idle simulation in a React PWA. The player starts with a short manual typing ritual, then controls allocation and ethics policies. Every tick, the system updates code generation, tech debt, revenue, open source output, karma, brand, power consumption, PMF, customer income, incidents, progression unlocks, autonomy risk, and eventually civilization-scale thermodynamic constraints.
 
 The game’s “conversation” loop is:
 
@@ -43,7 +43,7 @@ The unique value proposition is a strange little chimera: an idle game with the 
 * **Adversarial tuning:** self-play agents hunt for boring optima, lock-on-victory strategies, and exploit paths.
 * **Local-first trust:** the MVP stores progress locally and works offline.
 
-The attached PWA guidance supports this local-first stance: the Wildside design says the UI should render from local state first, treat the network as optional, and make synchronisation explicit rather than magical.  For Vibe Coder’s MVP, we can go further: no network dependency at all, with future sync treated as a new adapter rather than a foundational assumption.
+The attached PWA guidance supports this local-first stance: the Wildside design says the UI should render from local state first, treat the network as optional, and make synchronisation explicit rather than magical.  For Vibe Coder's MVP, the project can go further: no network dependency at all, with future sync treated as a new adapter rather than a foundational assumption.
 
 ---
 
@@ -146,7 +146,7 @@ flowchart LR
     AudioPort[AudioEventSink]
     AssetPort[AssetCatalogue]
     TelemetryPort[TelemetrySink]
-    OptimPort[OptimisationReporter]
+    OptimPort[OptimizationReporter]
   end
 
   subgraph Adapters[Driven adapters]
@@ -556,7 +556,7 @@ Core screens:
 | Power & Heat         | Late-game economy                   | power draw, generation mix, waste heat budget                               |
 | Progression Tree     | Unlocks and regime shifts           | stage nodes, gates, risk warnings                                           |
 | Incident Prompt      | Meaningful event decisions          | cause, options, consequences, uncertainty                                   |
-| Optimisation Lab     | Dev-only self-play                  | parameter packs, agent results, exploit reports                             |
+| Optimization Lab     | Dev-only self-play                  | parameter packs, agent results, exploit reports                             |
 | Archive / Endings    | Run history                         | ending cards, score, replay summary                                         |
 
 The visual design docs emphasize that generated art can guide focal order and layer grammar, but runtime owns layout, text, panels, charts, status semantics, hit areas, lighting, and animation timing.  That maps cleanly to Vibe Coder: the dashboard can look painterly and lush, but the player must never need to read generated micro-text to understand a CVE incident.
@@ -630,7 +630,7 @@ Parameter packs make self-play, balancing, player-visible difficulty variants, a
 
 ## Design interpretation of Crawford
 
-Crawford gives us three practical constraints.
+Crawford gives three practical constraints.
 
 First, the point is the challenge, not merely achieving the formal goal. A player who finds a loophole can technically win while evading the intended challenge, so the design must eliminate lock-on-victory strategies and loopholes that bypass the real game. 
 
@@ -693,7 +693,7 @@ FunScore =
 
 The exploit hunter matters most. It should try to prove that the challenge can be bypassed: for example, a policy that opens OSS just enough to farm brand while hiding CVEs, or a power build that disables quality checks without visible punishment.
 
-## Optimisation process
+## Optimization process
 
 1. Generate candidate parameter packs.
 2. Run self-play agents over many seeds.
@@ -791,7 +791,7 @@ Use layered generative music rather than long static loops:
 | Power grid       | watts and infrastructure | sub pulses, turbine rhythms, electrical hum              |
 | Cosmic heat      | Dyson/Matrioshka stage   | slow harmonic expansion, radiator noise, stellar shimmer |
 
-Use deterministic seeds for generated motifs per run, so the player’s civilisation gets its own musical identity. The same seed should not produce identical sound every second, but it should produce a stable motif family.
+Use deterministic seeds for generated motifs per run, so the player's civilization gets its own musical identity. The same seed should not produce identical sound every second, but it should produce a stable motif family.
 
 ## SFX design
 
@@ -951,7 +951,7 @@ Includes:
 * brand/PMF/cash impact.
 * debt constellation visual.
 
-Value: proves that throughput can wreck you.
+Value: proves that throughput can wreck the player.
 
 ## Slice 3: “Ethics alters the machine”
 
@@ -1033,6 +1033,6 @@ Value: proves narrative consequence and replayability.
 
 The first genuinely valuable milestone is not “all resources implemented”. It is this:
 
-A player opens the PWA offline, performs the typing ritual, sets a policy, watches LoC turn into debt and value, sees one incident caused by their own choices, changes policy, and hears/Sees the system recover or worsen.
+A player opens the PWA offline, performs the typing ritual, sets a policy, watches LoC turn into debt and value, sees one incident caused by player choices, changes policy, and sees the system recover or worsen.
 
-That proves the game’s heart: **set intent → observe consequence → adjust worldview → watch the little civilisation argue back.**
+That proves the game’s heart: **set intent → observe consequence → adjust worldview → watch the little civilization argue back.**
