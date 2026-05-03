@@ -1,0 +1,47 @@
+{
+  "name": "vibecoder-night",
+  "displayName": "Vibecoder Night",
+  "default": true,
+  "prefersDark": true,
+  "colorScheme": "dark",
+  "semantic": {
+    "bg": {
+      "default": { "value": "{color.neutral.800}" },
+      "subtle": { "value": "{color.neutral.900}" },
+      "muted": { "value": "{color.neutral.700}" },
+      "overlay": { "value": "{color.neutral.600}" }
+    },
+    "fg": {
+      "default": { "value": "{color.neutral.50}" },
+      "muted": { "value": "{color.neutral.400}" }
+    },
+    "brand": {
+      "default": { "value": "{color.primary.500}" },
+      "hover": { "value": "{color.primary.400}" },
+      "contrast": { "value": "{color.neutral.0}" }
+    },
+    "accent": {
+      "default": { "value": "{color.secondary.500}" },
+      "hover": { "value": "{color.secondary.400}" },
+      "contrast": { "value": "{color.neutral.900}" }
+    },
+    "status": {
+      "info": {
+        "default": { "value": "{color.info.500}" },
+        "contrast": { "value": "{color.neutral.0}" }
+      },
+      "success": {
+        "default": { "value": "{color.success.500}" },
+        "contrast": { "value": "{color.neutral.0}" }
+      },
+      "warning": {
+        "default": { "value": "{color.warning.500}" },
+        "contrast": { "value": "{color.neutral.900}" }
+      },
+      "error": {
+        "default": { "value": "{color.error.500}" },
+        "contrast": { "value": "{color.neutral.0}" }
+      }
+    }
+  }
+}

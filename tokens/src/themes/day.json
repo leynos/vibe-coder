@@ -1,0 +1,46 @@
+{
+  "name": "vibecoder-day",
+  "displayName": "Vibecoder Day",
+  "prefersLight": true,
+  "colorScheme": "light",
+  "semantic": {
+    "bg": {
+      "default": { "value": "{color.neutral.0}" },
+      "subtle": { "value": "{color.neutral.50}" },
+      "muted": { "value": "{color.neutral.100}" },
+      "overlay": { "value": "{color.neutral.200}" }
+    },
+    "fg": {
+      "default": { "value": "{color.neutral.900}" },
+      "muted": { "value": "{color.neutral.500}" }
+    },
+    "brand": {
+      "default": { "value": "{color.primary.600}" },
+      "hover": { "value": "{color.primary.700}" },
+      "contrast": { "value": "{color.neutral.0}" }
+    },
+    "accent": {
+      "default": { "value": "{color.secondary.600}" },
+      "hover": { "value": "{color.secondary.700}" },
+      "contrast": { "value": "{color.neutral.0}" }
+    },
+    "status": {
+      "info": {
+        "default": { "value": "{color.info.500}" },
+        "contrast": { "value": "{color.neutral.0}" }
+      },
+      "success": {
+        "default": { "value": "{color.success.500}" },
+        "contrast": { "value": "{color.neutral.0}" }
+      },
+      "warning": {
+        "default": { "value": "{color.warning.500}" },
+        "contrast": { "value": "{color.neutral.900}" }
+      },
+      "error": {
+        "default": { "value": "{color.error.500}" },
+        "contrast": { "value": "{color.neutral.0}" }
+      }
+    }
+  }
+}

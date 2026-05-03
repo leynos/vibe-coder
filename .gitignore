@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.npm-cache/
+.bun/
+.bun-install/
+.bun-cache/
+tmp/
+.tmp/
+
+tokens/node_modules/
+tokens/dist/
+
+playwright-report/
+test-results/

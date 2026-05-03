@@ -1,0 +1,8 @@
+[serve.static]
+plugins = ["bun-plugin-tailwind"]
+
+[build]
+plugins = ["bun-plugin-tailwind"]
+
+[test]
+preload = ["./tests/setup-happy-dom.ts"]

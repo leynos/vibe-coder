@@ -1,0 +1,74 @@
+@import "../tokens/dist/tokens.css";
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    font-family: var(--font-family-sans);
+    min-height: 100%;
+  }
+
+  html,
+  body {
+    min-height: 100%;
+  }
+
+  body {
+    @apply bg-base-200 text-base-content antialiased;
+  }
+
+  #root {
+    min-height: 100%;
+  }
+}
+
+@layer components {
+  /* Floating drawer for global controls (theme + display). */
+  .global-controls__panel {
+    @apply flex w-56 flex-col gap-3 rounded-2xl border border-base-300/50 bg-base-100/95 p-4 text-base-content shadow-2xl shadow-base-300/40 backdrop-blur;
+  }
+
+  .global-controls__trigger {
+    @apply pointer-events-auto border border-base-300/50 bg-base-100/90 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-base-content/70 shadow-xl shadow-base-300/40 backdrop-blur transition hover:text-base-content;
+    border-start-start-radius: 1rem;
+    border-end-start-radius: 1rem;
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+    border-inline-end-width: 0;
+  }
+
+  .global-controls__stack {
+    @apply fixed bottom-6 z-50 flex flex-col gap-3;
+    inset-inline-end: 1.5rem;
+  }
+
+  .global-controls__drawer {
+    @apply fixed inset-y-1/2 z-50 flex -translate-y-1/2 flex-col gap-3;
+    inset-inline-end: 0;
+    padding-inline-end: 0;
+    align-items: flex-end;
+  }
+
+  @media (min-width: 640px) {
+    .global-controls__drawer {
+      padding-inline-end: 0.75rem;
+    }
+  }
+
+  [dir="rtl"] .global-controls__drawer {
+    align-items: flex-start;
+  }
+}
+
+@layer utilities {
+  .text-start {
+    text-align: start;
+  }
+
+  .text-end {
+    text-align: end;
+  }
+
+  .me-2 {
+    margin-inline-end: 0.5rem;
+  }
+}
