@@ -154,8 +154,8 @@ more autonomous mode of operation:
 | Orbital compute   | Thermodynamic constraints enter play.                                |
 | Matrioshka sphere | The late game. Civilization-scale consequences of early ethics choices arrive. |
 
-Stage unlocks require meeting a threshold, then accepting the unlock through
-a review screen. The risks of each stage are shown before accepting. Deferring
+Stage unlocks require meeting a threshold, then accepting the stage unlock
+through a review screen. The risks of each stage are shown before accepting. Deferring
 is always an option.
 
 **Autopilot modes** become available after the edit-bot stage:

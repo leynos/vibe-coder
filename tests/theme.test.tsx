@@ -87,6 +87,8 @@ describe("ThemeProvider", () => {
 
     expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-day");
     expect(window.localStorage.getItem("vibecoder.theme")).toBeNull();
+    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    expect(displayed).toBe("vibe-coder-day");
   });
 
   it("falls back to the default theme when the legacy value has no mapping", () => {

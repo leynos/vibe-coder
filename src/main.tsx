@@ -11,7 +11,7 @@ import "./index.css";
 
 /** Accessible loading indicator displayed while the application bundle hydrates. */
 export function LoadingBackdrop(): JSX.Element {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common", { useSuspense: false });
   const label = t("loading", { defaultValue: "Loading…" });
   return (
     <output

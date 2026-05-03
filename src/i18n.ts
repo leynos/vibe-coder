@@ -118,10 +118,13 @@ const fetchAjax = (
       const message = typedError?.message ?? "Unexpected i18n network failure";
       const name = typedError?.name ?? "Error";
 
-      let status = 500;
       if (name === "AbortError") {
-        status = 408;
-      } else if (typedError instanceof TypeError || /Failed to fetch|NetworkError/u.test(message)) {
+        callback(typedError, { status: 408, statusText: message });
+        return;
+      }
+
+      let status = 500;
+      if (typedError instanceof TypeError || /Failed to fetch|NetworkError/u.test(message)) {
         status = 502;
       }
 
@@ -167,6 +170,7 @@ export const applyDocumentLocale = (language: string | undefined): void => {
   }
 
   if (document.body) {
+    document.body.lang = resolvedLanguage;
     document.body.dir = direction;
     document.body.setAttribute("data-direction", direction);
   }

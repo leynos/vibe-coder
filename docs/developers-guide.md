@@ -111,7 +111,7 @@ public/          # Static assets: locale files, fonts, icons
 The codebase follows hexagonal architecture. Import direction is strictly
 one-way:
 
-```
+```text
 adapters  →  application  →  domain
                            ↑
                      (ports defined here)
@@ -324,7 +324,7 @@ implementation.
 
 The CI workflow runs the same gate sequence as local development:
 
-```
+```text
 check-fmt → lint → typecheck → test → bun semantic
 ```
 
