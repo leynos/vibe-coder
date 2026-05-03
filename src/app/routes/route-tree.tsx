@@ -11,7 +11,7 @@ function HomeScreen(): JSX.Element {
   const { t } = useTranslation();
   return (
     <MobileShell>
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
+      <main className="centred-screen">
         <h1 className="text-2xl font-bold text-base-content">
           {t("home-title", { defaultValue: "Vibecoder" })}
         </h1>
@@ -27,7 +27,7 @@ function AboutScreen(): JSX.Element {
   const { t } = useTranslation();
   return (
     <MobileShell>
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
+      <main className="centred-screen">
         <h1 className="text-2xl font-bold text-base-content">
           {t("about-title", { defaultValue: "About" })}
         </h1>

@@ -22,6 +22,11 @@
 }
 
 @layer components {
+  /* Full-height centred content area used as the body of each screen. */
+  .centred-screen {
+    @apply flex flex-1 flex-col items-center justify-center gap-4 p-6;
+  }
+
   /* Floating drawer for global controls (theme + display). */
   .global-controls__panel {
     @apply flex w-56 flex-col gap-3 rounded-2xl border border-base-300/50 bg-base-100/95 p-4 text-base-content shadow-2xl shadow-base-300/40 backdrop-blur;
