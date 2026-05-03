@@ -309,6 +309,15 @@ bun tokens:build
 This generates CSS custom properties and TypeScript token exports in
 `tokens/dist/`. The output directory is not tracked in git.
 
+### Visual design references
+
+The [in-game design system](in-game-design-system.html) documents the component
+palette, colour grammar, and layer composition that inform interface
+implementation. The [game HUD mockup](vibe-coder-game-hud-mockup.html) is an
+example of the in-game visuals showing the main dashboard layout and player
+controls; treat it as the primary visual reference for run-screen
+implementation.
+
 ---
 
 ## CI pipeline

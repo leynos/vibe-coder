@@ -50,9 +50,15 @@ architecture decision pack.
   layout, hexagonal boundary rules, port and adapter conventions, and CI
   pipeline.
 
+## Design references
+
+- [In-Game Design System](in-game-design-system.html) — component palette,
+  colour grammar, and layer composition for the in-game interface.
+- [Game HUD Mockup](vibe-coder-game-hud-mockup.html) — interactive example of
+  the main dashboard and player controls, illustrating the in-game visual style.
+
 ## Reference notes
 
 This pack assumes a companion high-level design document will explain the
 overall Vibe Coder product architecture. These ADRs intentionally preserve
 specific decisions rather than duplicating the full design narrative.
-

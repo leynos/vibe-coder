@@ -23,6 +23,9 @@ Every playthrough follows the same rhythm:
 There is no repeated clicking after the opening ritual. All forward progress
 comes from policies running over time.
 
+An interactive visual reference for the main dashboard and player controls is
+available in the [game HUD mockup](vibe-coder-game-hud-mockup.html).
+
 ---
 
 ## Starting a run — the typing ritual

@@ -574,7 +574,13 @@ Adapt the Agentland layer grammar to Vibe Coder:
 7. Lighting and audio-reactive flourishes.
 8. Debug overlays: hit boxes, state graph node, tick time, event queue.
 
-The attached art bible says runtime lighting masks should remain deterministic, with generated environment art guiding placement but scripts or code controlling lamp pools, screen glow, vignette, and active pulses. 
+The attached art bible says runtime lighting masks should remain deterministic, with generated environment art guiding placement but scripts or code controlling lamp pools, screen glow, vignette, and active pulses.
+
+The [in-game design system](in-game-design-system.html) documents the component
+palette, colour grammar, and layer composition that give the interface its
+character. The [game HUD mockup](vibe-coder-game-hud-mockup.html) is a worked
+example of the main dashboard and player controls and is the primary visual
+reference for in-game UI implementation.
 
 ---
 
