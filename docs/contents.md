@@ -41,6 +41,15 @@ architecture decision pack.
   formal model boundary for self-play orchestration, trial evidence, and
   default-parameter-pack promotion.
 
+## Guides
+
+- [Player's Guide](users-guide.md) — core gameplay loop, policy mechanics,
+  simulation interpretation, progression, and endings for non-technical
+  players.
+- [Developer's Guide](developers-guide.md) — toolchain setup, directory
+  layout, hexagonal boundary rules, port and adapter conventions, and CI
+  pipeline.
+
 ## Reference notes
 
 This pack assumes a companion high-level design document will explain the

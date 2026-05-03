@@ -219,6 +219,14 @@ function FloatingStack(): JSX.Element {
   );
 }
 
+/**
+ * Renders the theme, display-mode, and language controls appropriate for the
+ * current display context.
+ *
+ * - **Hosted mode**: a vertically stacked set of floating control buttons.
+ * - **Full-browser mode**: a side-anchored slide-out drawer with a labelled
+ *   panel containing all controls.
+ */
 export function GlobalControls(): JSX.Element {
   const { isHosted } = useDisplayMode();
 

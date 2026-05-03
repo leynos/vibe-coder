@@ -16,12 +16,33 @@ import { appLogger, reportError } from "./app/observability/logger";
 
 const supportedLngs = SUPPORTED_LOCALES.map((locale) => locale.code);
 
+/**
+ * Normalise a raw Vite `BASE_URL` value to a consistent
+ * leading-slash, trailing-slash form.
+ *
+ * @param rawBase - The raw base path (e.g. `import.meta.env.BASE_URL`).
+ * @returns A normalised path such as `"/"`, `"/app/"`, or `"/sub-path/"`.
+ *
+ * @example
+ * ```ts
+ * normaliseBasePath(undefined)    // "/"
+ * normaliseBasePath("app")        // "/app/"
+ * normaliseBasePath("/game/")     // "/game/"
+ * ```
+ */
 export const normaliseBasePath = (rawBase: string | undefined): string => {
   const candidate = rawBase && rawBase.length > 0 ? rawBase : "/";
   const withLeading = candidate.startsWith("/") ? candidate : `/${candidate}`;
   return withLeading.endsWith("/") ? withLeading : `${withLeading}/`;
 };
 
+/**
+ * Build the i18next Fluent backend load-path template from the configured
+ * base URL.
+ *
+ * @param rawBase - The raw Vite `BASE_URL` value.
+ * @returns A load-path template such as `"/locales/{{lng}}/{{ns}}.ftl"`.
+ */
 export const buildFluentLoadPath = (rawBase: string | undefined): string => {
   const basePath = normaliseBasePath(rawBase);
   const path = "locales/{{lng}}/{{ns}}.ftl";
@@ -40,6 +61,23 @@ interface AjaxOptions {
   withCredentials?: boolean;
 }
 
+// Tracks all in-flight locale fetch controllers so they can be cancelled on
+// module teardown or test cleanup via abortI18nRequests().
+const activeI18nControllers = new Set<AbortController>();
+
+/**
+ * Cancel all in-flight i18n locale fetch requests.
+ *
+ * Call this on module unload or during test teardown to prevent stale
+ * callbacks from firing after the i18n module is no longer needed.
+ */
+export function abortI18nRequests(): void {
+  for (const controller of activeI18nControllers) {
+    controller.abort();
+  }
+  activeI18nControllers.clear();
+}
+
 const fetchAjax = (
   url: string,
   options: AjaxOptions = {},
@@ -47,9 +85,13 @@ const fetchAjax = (
 ): void => {
   const { body, headers, method, withCredentials } = options;
 
+  const controller = new AbortController();
+  activeI18nControllers.add(controller);
+
   const request: RequestInit = {
     credentials: withCredentials ? "include" : "same-origin",
     method: method ?? "GET",
+    signal: controller.signal,
   };
 
   if (headers) {
@@ -94,9 +136,22 @@ const fetchAjax = (
       reportError(typedError, { ...context, scope: "i18n.fetchAjax" });
 
       callback(typedError, { status, statusText: message });
+    })
+    .finally(() => {
+      activeI18nControllers.delete(controller);
     });
 };
 
+/**
+ * Apply a resolved BCP 47 language tag and its text direction to the HTML
+ * document, setting `lang`, `dir`, and `data-direction` on both `<html>` and
+ * `<body>`.
+ *
+ * Safe to call in non-browser environments — returns immediately when
+ * `document` is undefined.
+ *
+ * @param language - BCP 47 language tag, e.g. `"en-GB"` or `"ar"`.
+ */
 export const applyDocumentLocale = (language: string | undefined): void => {
   if (typeof document === "undefined") return;
 
@@ -117,6 +172,12 @@ export const applyDocumentLocale = (language: string | undefined): void => {
   }
 };
 
+/**
+ * Promise that resolves when i18next has finished initialising and the first
+ * locale bundle is available. React Suspense boundaries await this indirectly
+ * via `useTranslation`; direct consumers can `await i18nReady` before
+ * rendering locale-sensitive logic outside React.
+ */
 // Initialise immediately so that React components can rely on Suspense to wait for .ftl bundles.
 export const i18nReady = i18n
   .use(FluentBackend)

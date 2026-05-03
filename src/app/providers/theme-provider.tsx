@@ -3,6 +3,8 @@
 import type { JSX, ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
+import { appLogger } from "../observability/logger";
+
 const STORAGE_KEY = "vibe-coder.theme";
 const LEGACY_STORAGE_KEY = "vibecoder.theme";
 const DEFAULT_THEME = "vibe-coder-night";
@@ -34,6 +36,8 @@ function applyTheme(theme: ThemeName) {
   document.body?.setAttribute("data-theme", next);
 }
 
+// localStorage is accessed synchronously on the single JavaScript thread.
+// No explicit cross-provider locking is required.
 function readStoredTheme(): ThemeName | null {
   if (!canUseDOM()) return null;
   try {
@@ -48,7 +52,8 @@ function readStoredTheme(): ThemeName | null {
       return migrated;
     }
     return null;
-  } catch {
+  } catch (error) {
+    appLogger.warn("Failed to read stored theme", { key: STORAGE_KEY, error });
     return null;
   }
 }
@@ -57,8 +62,8 @@ function persistTheme(theme: ThemeName) {
   if (!canUseDOM()) return;
   try {
     window.localStorage.setItem(STORAGE_KEY, theme);
-  } catch {
-    // Ignore storage failures (e.g., Safari private mode) while still applying the theme.
+  } catch (error) {
+    appLogger.warn("Failed to persist theme preference", { key: STORAGE_KEY, theme, error });
   }
 }
 

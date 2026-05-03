@@ -9,6 +9,7 @@ import "./i18n";
 import App from "./app/app";
 import "./index.css";
 
+/** Accessible loading indicator displayed while the application bundle hydrates. */
 export function LoadingBackdrop(): JSX.Element {
   const { t } = useTranslation();
   const label = t("loading", { defaultValue: "Loading…" });
@@ -23,11 +24,18 @@ export function LoadingBackdrop(): JSX.Element {
   );
 }
 
+/** Props accepted by the {@link AppRoot} bootstrap wrapper. */
 export interface AppRootProps {
   readonly AppComponent?: ComponentType;
   readonly fallback?: ReactNode;
 }
 
+/**
+ * Root React tree providing StrictMode and Suspense boundaries for the SPA.
+ *
+ * Renders the given `AppComponent` inside `React.StrictMode` with a Suspense
+ * fallback, defaulting to {@link LoadingBackdrop} when none is provided.
+ */
 export function AppRoot({ AppComponent = App, fallback }: AppRootProps = {}): JSX.Element {
   return (
     <React.StrictMode>
@@ -38,6 +46,13 @@ export function AppRoot({ AppComponent = App, fallback }: AppRootProps = {}): JS
   );
 }
 
+/**
+ * Mount the SPA at the given DOM element and return the React root handle.
+ *
+ * @param target - The root `HTMLElement` to mount the application into.
+ * @param props - Optional overrides for `AppComponent` and Suspense fallback.
+ * @returns The React root, which callers may use to unmount or update the tree.
+ */
 export function renderApp(target: HTMLElement, props?: AppRootProps): Root {
   const root = createRoot(target);
   root.render(<AppRoot {...props} />);

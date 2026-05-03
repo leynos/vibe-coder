@@ -7,7 +7,8 @@ import { useTranslation } from "react-i18next";
 import { MobileShell } from "../layout/mobile-shell";
 import { rootRoute } from "./root-route";
 
-function HomeScreen(): JSX.Element {
+/** Home screen: entry point displayed at the root path `/`. */
+export function HomeScreen(): JSX.Element {
   const { t } = useTranslation();
   return (
     <MobileShell>
@@ -23,7 +24,8 @@ function HomeScreen(): JSX.Element {
   );
 }
 
-function AboutScreen(): JSX.Element {
+/** About screen: secondary informational page at `/about`. */
+export function AboutScreen(): JSX.Element {
   const { t } = useTranslation();
   return (
     <MobileShell>
@@ -53,4 +55,5 @@ const aboutRoute = createRoute({
   component: AboutScreen,
 });
 
+/** Assembled TanStack Router route tree, composed from the root and leaf routes. */
 export const routeTree = rootRoute.addChildren([indexRoute, aboutRoute]);

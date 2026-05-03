@@ -53,6 +53,15 @@ function log(level: LogLevel, message: string, context?: Record<string, unknown>
   }
 }
 
+/**
+ * Structured application logger exposing `debug`, `info`, `warn`, and `error`
+ * methods. Each call formats a timestamped log entry and writes it to the
+ * console.
+ *
+ * In production this object should be extended to forward entries to a remote
+ * observability sink (e.g. a Sentry DSN or a telemetry adapter conforming to
+ * the `TelemetrySink` port).
+ */
 export const appLogger = {
   debug: (message: string, context?: Record<string, unknown>) => log("debug", message, context),
   info: (message: string, context?: Record<string, unknown>) => log("info", message, context),

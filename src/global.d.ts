@@ -1,3 +1,14 @@
+/**
+ * @file Global TypeScript ambient declarations.
+ *
+ * Provides type augmentations for:
+ * - jest-axe: accessibility test results and matcher API
+ * - i18next-fluent-backend: Fluent locale backend module
+ * - bun:test / vitest: custom matchers (`toHaveNoViolations`,
+ *   `toBeInTheDocument`) used by the test suite
+ * - Global `IS_REACT_ACT_ENVIRONMENT` flag required by React's test renderer
+ */
+
 declare module "jest-axe" {
   import type { AxeResults, RunOptions } from "axe-core";
 

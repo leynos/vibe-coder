@@ -1,3 +1,16 @@
+/*
+ * Root stylesheet for Vibe Coder.
+ *
+ * Imports compiled design tokens and Tailwind CSS, then defines:
+ * - Base layer: root typography, minimum viewport height, body background
+ * - Components layer: centred-screen layout, global-controls floating panel
+ * - Utilities layer: logical-property helpers for RTL/LTR text alignment
+ *
+ * All theme colours are resolved from CSS custom properties emitted by
+ * tokens/build/style-dictionary.js rather than hard-coded values, so theme
+ * switching requires only a data-theme attribute change on the root element.
+ */
+
 @import "../tokens/dist/tokens.css";
 @import "tailwindcss";
 

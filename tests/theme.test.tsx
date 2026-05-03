@@ -61,6 +61,34 @@ describe("ThemeProvider", () => {
     expect(document.body.getAttribute("data-theme")).toBe(currentTheme);
   });
 
+  it("migrates a legacy vibecoder.theme key to vibe-coder.theme on mount", () => {
+    window.localStorage.setItem("vibecoder.theme", "vibecoder-night");
+
+    render(
+      <ThemeProvider>
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-night");
+    expect(window.localStorage.getItem("vibecoder.theme")).toBeNull();
+    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    expect(displayed).toBe("vibe-coder-night");
+  });
+
+  it("migrates a legacy vibecoder-day theme value on mount", () => {
+    window.localStorage.setItem("vibecoder.theme", "vibecoder-day");
+
+    render(
+      <ThemeProvider>
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-day");
+    expect(window.localStorage.getItem("vibecoder.theme")).toBeNull();
+  });
+
   it("persists and reapplies a new theme", () => {
     render(
       <ThemeProvider>

@@ -1,0 +1,5 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`HomeScreen renders main innerHTML matching snapshot 1`] = `"<h1 class="text-2xl font-bold text-base-content">Vibecoder</h1><p class="text-center text-base-content/70">Welcome to your new mockup application.</p>"`;
+
+exports[`AboutScreen renders main innerHTML matching snapshot 1`] = `"<h1 class="text-2xl font-bold text-base-content">About</h1><p class="text-center text-base-content/70">This is a TypeScript/React mockup with accessibility-first design.</p>"`;
