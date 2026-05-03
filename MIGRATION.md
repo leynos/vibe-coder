@@ -22,5 +22,5 @@ value to its renamed equivalent, writes the result under the new
 `vibe-coder.theme` key, and removes the old key. The selected theme is
 preserved across the rename.
 
-If the legacy key holds an unrecognised value, the key is removed and the
+If the legacy key holds an unrecognized value, the key is removed and the
 application falls back to the default theme (`vibe-coder-night`).

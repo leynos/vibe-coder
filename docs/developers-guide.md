@@ -57,7 +57,7 @@ bun semantic     # Full semantic lint pass
 
 ### What `bun semantic` does
 
-`bun semantic` runs a four-stage semantic lint pipeline:
+`bun semantic` runs a six-stage semantic lint pipeline:
 
 1. **Biome CI** — enforces import ordering, unused-variable rules, and style.
 2. **Class list length check** — rejects Tailwind class stacks that are too

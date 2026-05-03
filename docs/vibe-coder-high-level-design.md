@@ -36,12 +36,12 @@ The game’s “conversation” loop is:
 
 The unique value proposition is a strange little chimera: an idle game with the ethics of a civic sim, the system coupling of an engineering sandbox, and the visual texture of a lost Amiga design bible. Its differentiators:
 
-* **No click farming:** interaction centres on policies and constraints, not repeated low-value actions.
-* **Ethics as mechanics:** karma and alignment affect autonomy risk, brand, OSS contribution, and available strategies.
-* **Tech debt as a vector:** different debt categories create different failure modes, rather than one generic “badness” number.
-* **Power becomes the economy:** the game’s late stage changes regime from money to watts to heat.
-* **Adversarial tuning:** self-play agents hunt for boring optima, lock-on-victory strategies, and exploit paths.
-* **Local-first trust:** the MVP stores progress locally and works offline.
+- **No click farming:** interaction centres on policies and constraints, not repeated low-value actions.
+- **Ethics as mechanics:** karma and alignment affect autonomy risk, brand, OSS contribution, and available strategies.
+- **Tech debt as a vector:** different debt categories create different failure modes, rather than one generic “badness” number.
+- **Power becomes the economy:** the game’s late stage changes regime from money to watts to heat.
+- **Adversarial tuning:** self-play agents hunt for boring optima, lock-on-victory strategies, and exploit paths.
+- **Local-first trust:** the MVP stores progress locally and works offline.
 
 The attached PWA guidance supports this local-first stance: the Wildside design says the UI should render from local state first, treat the network as optional, and make synchronisation explicit rather than magical.  For Vibe Coder's MVP, the project can go further: no network dependency at all, with future sync treated as a new adapter rather than a foundational assumption.
 
@@ -530,10 +530,10 @@ db.version(1).stores({
 
 Use periodic snapshots plus an append-only event log. That gives three useful properties: fast load, reproducible debugging, and a future path to cloud sync.
 
-* Snapshot every N ticks or every M seconds of active simulation.
-* Log policy commits, unlock decisions, event resolutions, random seeds, parameter pack hash, and major domain events.
-* On load, restore latest snapshot and replay subsequent events.
-* On offline return, apply bounded catch-up and summarise skipped time rather than dumping 10,000 tiny incidents into the player’s lap.
+- Snapshot every N ticks or every M seconds of active simulation.
+- Log policy commits, unlock decisions, event resolutions, random seeds, parameter pack hash, and major domain events.
+- On load, restore latest snapshot and replay subsequent events.
+- On offline return, apply bounded catch-up and summarise skipped time rather than dumping 10,000 tiny incidents into the player’s lap.
 
 Skyjoust’s persistence and replay section stores schema version, seed, active modifiers, currencies, unlocks, penalties, configuration hash, asset manifest hash, and per-tick inputs; Vibe Coder should keep the same spirit with run seed, parameter pack hash, asset manifest hash, policy/event log, and replayable state actions. 
 
@@ -801,14 +801,14 @@ Use deterministic seeds for generated motifs per run, so the player's civilizati
 
 ## SFX design
 
-* Code commits: tiny tactile blips, grouped and rate-limited.
-* Debt accumulation: faint knotting/glitch texture.
-* Debt cleanup: softened de-tangle shimmer.
-* CVE incident: sharp alert, but no casino siren nonsense.
-* Policy commit: mechanical switch plus paper stamp.
-* Stage unlock: short motif that reflects the new regime.
-* Catastrophe: audio ducking, distinct sting, then altered ambience.
-* Degrowth utopia / UBI ending: quieter, less dense mix, a sonic exhale.
+- Code commits: tiny tactile blips, grouped and rate-limited.
+- Debt accumulation: faint knotting/glitch texture.
+- Debt cleanup: softened de-tangle shimmer.
+- CVE incident: sharp alert, but no casino siren nonsense.
+- Policy commit: mechanical switch plus paper stamp.
+- Stage unlock: short motif that reflects the new regime.
+- Catastrophe: audio ducking, distinct sting, then altered ambience.
+- Degrowth utopia / UBI ending: quieter, less dense mix, a sonic exhale.
 
 ---
 
@@ -831,12 +831,12 @@ Use deterministic seeds for generated motifs per run, so the player's civilizati
 
 Since MVP storage stays local, the security focus starts with save integrity and browser safety:
 
-* No remote telemetry by default.
-* Import/export saves as JSON with schema validation.
-* Content packs must validate version, IDs, parameter ranges, and asset references.
-* Dexie migrations must preserve or explicitly archive old saves.
-* Future cloud sync must become a new outbound adapter and must not alter domain rules.
-* Any future runtime image or music generation must use a separate explicit API integration, not development-time Codex tooling. Agentland’s docs make this same distinction: built-in image generation belongs to development workflow, not the app runtime. 
+- No remote telemetry by default.
+- Import/export saves as JSON with schema validation.
+- Content packs must validate version, IDs, parameter ranges, and asset references.
+- Dexie migrations must preserve or explicitly archive old saves.
+- Future cloud sync must become a new outbound adapter and must not alter domain rules.
+- Any future runtime image or music generation must use a separate explicit API integration, not development-time Codex tooling. Agentland’s docs make this same distinction: built-in image generation belongs to development workflow, not the app runtime. 
 
 ---
 
@@ -844,27 +844,27 @@ Since MVP storage stays local, the security focus starts with save integrity and
 
 ## Performance
 
-* The main simulation tick should run under 4 ms for ordinary saves on mid-range hardware.
-* The dashboard should remain responsive at 60 FPS for UI interactions.
-* Canvas rendering should degrade gracefully with reduced particle density.
-* Offline catch-up should complete within a few seconds for ordinary absences.
-* Self-play should run in a Web Worker or Node-based dev harness, not on the UI thread.
+- The main simulation tick should run under 4 ms for ordinary saves on mid-range hardware.
+- The dashboard should remain responsive at 60 FPS for UI interactions.
+- Canvas rendering should degrade gracefully with reduced particle density.
+- Offline catch-up should complete within a few seconds for ordinary absences.
+- Self-play should run in a Web Worker or Node-based dev harness, not on the UI thread.
 
 ## Reliability
 
-* Saves must survive reloads, browser restarts, and app updates.
-* Dexie migrations must have tests and rollback/backup behaviour.
-* The game should checkpoint before major schema migrations.
-* The app should show a safe fallback if assets fail to load.
+- Saves must survive reloads, browser restarts, and app updates.
+- Dexie migrations must have tests and rollback/backup behaviour.
+- The game should checkpoint before major schema migrations.
+- The app should show a safe fallback if assets fail to load.
 
 ## Accessibility
 
-* All policy controls must support keyboard input.
-* Sliders need numeric alternatives.
-* Motion intensity and flicker must be adjustable.
-* Audio must have volume controls by bus: music, SFX, UI.
-* Incident prompts must not rely on colour alone.
-* Charts need textual summaries.
+- All policy controls must support keyboard input.
+- Sliders need numeric alternatives.
+- Motion intensity and flicker must be adjustable.
+- Audio must have volume controls by bus: music, SFX, UI.
+- Incident prompts must not rely on colour alone.
+- Charts need textual summaries.
 
 ## Test strategy
 
@@ -886,41 +886,41 @@ Since MVP storage stays local, the security focus starts with save integrity and
 
 ## High priority
 
-* React PWA boot shell.
-* Dexie schema and migrations.
-* Domain core with pure simulation tick.
-* XState app/run/policy/event machines.
-* Main dashboard with resource top bar, policy panel, ethics panel, event timeline.
-* Manual typing ritual.
-* Tech debt vector and first incidents.
-* Stage 1 to 4 progression: manual, autocomplete, edit bot, single agent.
-* Deterministic parameter pack.
-* Save/load and offline catch-up.
-* Basic audio event bus and music layers.
-* First self-play harness with exploit hunter.
+- React PWA boot shell.
+- Dexie schema and migrations.
+- Domain core with pure simulation tick.
+- XState app/run/policy/event machines.
+- Main dashboard with resource top bar, policy panel, ethics panel, event timeline.
+- Manual typing ritual.
+- Tech debt vector and first incidents.
+- Stage 1 to 4 progression: manual, autocomplete, edit bot, single agent.
+- Deterministic parameter pack.
+- Save/load and offline catch-up.
+- Basic audio event bus and music layers.
+- First self-play harness with exploit hunter.
 
 ## Medium priority
 
-* Full debt constellation visualizer.
-* Open source community contribution system.
-* Alignment scare events.
-* Macro income curve and politics pivot.
-* Power generation mix.
-* Stage 5 to 10 progression through agent swarm and data centres.
-* End-state prototypes.
-* Asset manifest pipeline.
-* More elaborate reactive music.
-* Accessibility polish and reduced motion.
+- Full debt constellation visualizer.
+- Open source community contribution system.
+- Alignment scare events.
+- Macro income curve and politics pivot.
+- Power generation mix.
+- Stage 5 to 10 progression through agent swarm and data centres.
+- End-state prototypes.
+- Asset manifest pipeline.
+- More elaborate reactive music.
+- Accessibility polish and reduced motion.
 
 ## Lower priority
 
-* Space compute and Dyson swarm visuals.
-* Matrioshka endgame simulation.
-* Mod/content pack tooling.
-* Cloud sync.
-* Runtime procedural image or music generation.
-* Social sharing.
-* Leaderboards, only if they do not poison the idle vibe.
+- Space compute and Dyson swarm visuals.
+- Matrioshka endgame simulation.
+- Mod/content pack tooling.
+- Cloud sync.
+- Runtime procedural image or music generation.
+- Social sharing.
+- Leaderboards, only if they do not poison the idle vibe.
 
 ---
 
@@ -932,15 +932,15 @@ Goal: a player can start a run, type for 30 seconds, set policies, and watch res
 
 Includes:
 
-* React shell.
-* Dexie save.
-* `RunState`.
-* pure `simulateTick`.
-* resource top bar.
-* policy sliders.
-* basic commit stream.
-* one visual environment: bedsit/café.
-* one music mood.
+- React shell.
+- Dexie save.
+- `RunState`.
+- pure `simulateTick`.
+- resource top bar.
+- policy sliders.
+- basic commit stream.
+- one visual environment: bedsit/café.
+- one music mood.
 
 Value: proves the no-click loop.
 
@@ -950,12 +950,12 @@ Goal: tech debt categories create differentiated consequences.
 
 Includes:
 
-* debt vector.
-* quality/security allocation.
-* simple incidents: XSS, CVE, config drift.
-* incident prompt.
-* brand/PMF/cash impact.
-* debt constellation visual.
+- debt vector.
+- quality/security allocation.
+- simple incidents: XSS, CVE, config drift.
+- incident prompt.
+- brand/PMF/cash impact.
+- debt constellation visual.
 
 Value: proves that throughput can wreck the player.
 
@@ -965,12 +965,12 @@ Goal: karma, brand, and alignment shape automation.
 
 Includes:
 
-* ethics policy.
-* open source allocation.
-* karma and brand dynamics.
-* alignment drift.
-* first misalignment scare.
-* OSS viral moment.
+- ethics policy.
+- open source allocation.
+- karma and brand dynamics.
+- alignment drift.
+- first misalignment scare.
+- OSS viral moment.
 
 Value: proves that ethics is mechanical, not decorative.
 
@@ -980,11 +980,11 @@ Goal: the player unlocks agents and adaptive policies.
 
 Includes:
 
-* edit bot, single agent, memory.
-* autopilot modes: static and adaptive.
-* policy recommendations.
-* agent misinterpretation warnings.
-* self-play balancing pass.
+- edit bot, single agent, memory.
+- autopilot modes: static and adaptive.
+- policy recommendations.
+- agent misinterpretation warnings.
+- self-play balancing pass.
 
 Value: proves the intent-steering fantasy.
 
@@ -994,12 +994,12 @@ Goal: power and heat become the central constraints.
 
 Includes:
 
-* data centre unlock.
-* power generation mix.
-* quality checks throttled under power shortage.
-* fossil penalty.
-* heat warning.
-* power/heat visualizer.
+- data centre unlock.
+- power generation mix.
+- quality checks throttled under power shortage.
+- fossil penalty.
+- heat warning.
+- power/heat visualizer.
 
 Value: proves the mid-to-late game regime shift.
 
@@ -1009,12 +1009,12 @@ Goal: multiple endings trigger from comprehensible state.
 
 Includes:
 
-* Degrowth Utopia.
-* Happy OSS Vibe Coder on UBI.
-* Skynet failure.
-* Waste Heat Meltdown.
-* end-state archive.
-* replay summary.
+- Degrowth Utopia.
+- Happy OSS Vibe Coder on UBI.
+- Skynet failure.
+- Waste Heat Meltdown.
+- end-state archive.
+- replay summary.
 
 Value: proves narrative consequence and replayability.
 

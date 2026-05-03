@@ -485,7 +485,7 @@ The following tooling is available in this environment:
   the `semantic` script to invoke `semgrep` without a persistent virtual
   environment. In CI, installed via `astral-sh/setup-uv@v4`. Locally,
   install with `curl -Ls https://astral.sh/uv/install.sh | sh` or via
-  your system package manager.
+  a system package manager.
 
 ## Key Takeaway
 
