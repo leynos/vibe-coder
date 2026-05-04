@@ -42,6 +42,12 @@ export const normaliseBasePath = (rawBase: string | undefined): string => {
  *
  * @param rawBase - The raw Vite `BASE_URL` value.
  * @returns A load-path template such as `"/locales/{{lng}}/{{ns}}.ftl"`.
+ *
+ * @example
+ * ```ts
+ * buildFluentLoadPath("/"); // "/locales/{{lng}}/{{ns}}.ftl"
+ * buildFluentLoadPath("/app/"); // "/app/locales/{{lng}}/{{ns}}.ftl"
+ * ```
  */
 export const buildFluentLoadPath = (rawBase: string | undefined): string => {
   const basePath = normaliseBasePath(rawBase);
@@ -70,6 +76,12 @@ const activeI18nControllers = new Set<AbortController>();
  *
  * Call this on module unload or during test teardown to prevent stale
  * callbacks from firing after the i18n module is no longer needed.
+ *
+ * @example
+ * ```ts
+ * void fetch("/locales/en-GB/common.ftl"); // starts a tracked request
+ * abortI18nRequests(); // aborts tracked fetches; returns void
+ * ```
  */
 export function abortI18nRequests(): void {
   for (const controller of activeI18nControllers) {
@@ -154,6 +166,16 @@ const fetchAjax = (
  * `document` is undefined.
  *
  * @param language - BCP 47 language tag, e.g. `"en-GB"` or `"ar"`.
+ *
+ * @example
+ * ```ts
+ * applyDocumentLocale("en-GB");
+ * // document.documentElement.lang === "en-GB"
+ * // document.documentElement.dir === "ltr"
+ *
+ * applyDocumentLocale("ar");
+ * // document.documentElement.dir === "rtl"
+ * ```
  */
 export const applyDocumentLocale = (language: string | undefined): void => {
   if (typeof document === "undefined") return;
@@ -181,6 +203,12 @@ export const applyDocumentLocale = (language: string | undefined): void => {
  * locale bundle is available. React Suspense boundaries await this indirectly
  * via `useTranslation`; direct consumers can `await i18nReady` before
  * rendering locale-sensitive logic outside React.
+ *
+ * @example
+ * ```ts
+ * await i18nReady;
+ * // i18n.hasLoadedNamespace("common") === true (given fetch succeeded)
+ * ```
  */
 // Initialise immediately so that React components can rely on Suspense to wait for .ftl bundles.
 export const i18nReady = i18n

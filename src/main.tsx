@@ -9,7 +9,17 @@ import "./i18n";
 import App from "./app/app";
 import "./index.css";
 
-/** Accessible loading indicator displayed while the application bundle hydrates. */
+/**
+ * Accessible loading indicator displayed while the application bundle hydrates.
+ *
+ * @example
+ * ```tsx
+ * <React.Suspense fallback={<LoadingBackdrop />}>
+ *   <App />
+ * </React.Suspense>
+ * // Shows a polite, labelled loading line until children resolve.
+ * ```
+ */
 export function LoadingBackdrop(): JSX.Element {
   const { t } = useTranslation("common", { useSuspense: false });
   const label = t("loading", { defaultValue: "Loading…" });
@@ -35,6 +45,12 @@ export interface AppRootProps {
  *
  * Renders the given `AppComponent` inside `React.StrictMode` with a Suspense
  * fallback, defaulting to {@link LoadingBackdrop} when none is provided.
+ *
+ * @example
+ * ```tsx
+ * createRoot(document.getElementById("root")!).render(<AppRoot />);
+ * // Mounts StrictMode, Suspense with LoadingBackdrop, and the default App.
+ * ```
  */
 export function AppRoot({ AppComponent = App, fallback }: AppRootProps = {}): JSX.Element {
   return (
@@ -52,6 +68,14 @@ export function AppRoot({ AppComponent = App, fallback }: AppRootProps = {}): JS
  * @param target - The root `HTMLElement` to mount the application into.
  * @param props - Optional overrides for `AppComponent` and Suspense fallback.
  * @returns The React root, which callers may use to unmount or update the tree.
+ *
+ * @example
+ * ```tsx
+ * const root = renderApp(document.getElementById("root")!, {
+ *   fallback: <p>Booting…</p>,
+ * });
+ * // SPA is rendered into `target`; call root.unmount() to tear down.
+ * ```
  */
 export function renderApp(target: HTMLElement, props?: AppRootProps): Root {
   const root = createRoot(target);

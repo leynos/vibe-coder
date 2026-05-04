@@ -117,6 +117,7 @@ describe("ThemeProvider", () => {
 
     const displayed = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
     expect(displayed).toBe("vibe-coder-night");
+    expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-night");
   });
 
   it("sets data-theme to a supported value for every available theme", () => {

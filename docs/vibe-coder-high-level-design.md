@@ -556,7 +556,7 @@ Core screens:
 | Power & Heat         | Late-game economy                   | power draw, generation mix, waste heat budget                               |
 | Progression Tree     | Unlocks and regime shifts           | stage nodes, gates, risk warnings                                           |
 | Incident Prompt      | Meaningful event decisions          | cause, options, consequences, uncertainty                                   |
-| Optimization Lab     | Dev-only self-play                  | parameter packs, agent results, exploit reports                             |
+| Optimisation Lab     | Dev-only self-play                  | parameter packs, agent results, exploit reports                             |
 | Archive / Endings    | Run history                         | ending cards, score, replay summary                                         |
 
 The visual design docs emphasize that generated art can guide focal order and layer grammar, but runtime owns layout, text, panels, charts, status semantics, hit areas, lighting, and animation timing.  That maps cleanly to Vibe Coder: the dashboard can look painterly and lush, but the player must never need to read generated micro-text to understand a CVE incident.
@@ -699,7 +699,7 @@ FunScore =
 
 The exploit hunter matters most. It should try to prove that the challenge can be bypassed: for example, a policy that opens OSS just enough to farm brand while hiding CVEs, or a power build that disables quality checks without visible punishment.
 
-## Optimization process
+## Optimisation process
 
 1. Generate candidate parameter packs.
 2. Run self-play agents over many seeds.
