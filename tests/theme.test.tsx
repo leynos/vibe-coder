@@ -1,3 +1,10 @@
+/**
+ * @file Tests theme provider behaviour, storage migration, and hook usage.
+ *
+ * These component tests render the provider around a small probe so theme
+ * state, persistence, and context contracts can be verified through the public
+ * React API.
+ */
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { cleanup, render, renderHook, screen } from "@testing-library/react";
 import type { JSX } from "react";
@@ -140,7 +147,9 @@ describe("ThemeProvider", () => {
   });
 
   it("throws when useTheme is invoked outside ThemeProvider", () => {
-    expect(() => renderHook(() => useTheme())).toThrow();
+    expect(() => renderHook(() => useTheme())).toThrowError(
+      "useTheme must be used within a ThemeProvider",
+    );
   });
 
   it("persists and reapplies a new theme", () => {

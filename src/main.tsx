@@ -53,9 +53,11 @@ export interface AppRootProps {
  * ```
  */
 export function AppRoot({ AppComponent = App, fallback }: AppRootProps = {}): JSX.Element {
+  const suspenseFallback = fallback === undefined ? <LoadingBackdrop /> : fallback;
+
   return (
     <React.StrictMode>
-      <React.Suspense fallback={fallback ?? <LoadingBackdrop />}>
+      <React.Suspense fallback={suspenseFallback}>
         <AppComponent />
       </React.Suspense>
     </React.StrictMode>

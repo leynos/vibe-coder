@@ -1,8 +1,22 @@
 # Vibe Coder HLD v0.1
 
-**Product thesis:** Vibe Coder is a local-first, policy-driven idle strategy game where the player does not grind clicks. They express intent, watch an increasingly autonomous software civilization interpret that intent, then intervene when the system's consequences become interesting, alarming, or weirdly beautiful. The core fantasy is not "number go up"; it is "the player's policies became a civilization, and now the question is whether it deserves more watts."
+**Product thesis:** Vibe Coder is a local-first, policy-driven idle strategy
+game where the player does not grind clicks. They express intent, watch an
+increasingly autonomous software civilization interpret that intent, then
+intervene when the system's consequences become interesting, alarming, or
+weirdly beautiful. The core fantasy is not "number go up"; it is "the player's
+policies became a civilization, and now the question is whether it deserves more
+watts."
 
-The biggest design warning: “idle” must not mean “low-interactivity”. Crawford's framing provides the north star here: interaction is a conversation in which the system must listen to what the player says, think about it meaningfully, and speak back clearly; slow strategy can still be highly interactive when the player has a rich vocabulary of meaningful choices and the game responds with deep consequences.  Crawford also argues that reducing interactivity often makes a game less fun faster than it makes it easier, so Vibe Coder should remove repetitive labour while preserving agency, legibility, and consequence. 
+The biggest design warning: “idle” must not mean “low-interactivity”.
+Crawford's framing provides the north star here: interaction is a conversation
+in which the system must listen to what the player says, think about it
+meaningfully, and speak back clearly; slow strategy can still be highly
+interactive when the player has a rich vocabulary of meaningful choices and the
+game responds with deep consequences.  Crawford also argues that reducing
+interactivity often makes a game less fun faster than it makes it easier, so
+Vibe Coder should remove repetitive labour while preserving agency, legibility,
+and consequence.
 
 ---
 

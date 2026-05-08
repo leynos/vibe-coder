@@ -75,12 +75,14 @@ const activeI18nControllers = new Set<AbortController>();
  * Cancel all in-flight i18n locale fetch requests.
  *
  * Call this on module unload or during test teardown to prevent stale
- * callbacks from firing after the i18n module is no longer needed.
+ * callbacks from firing after the i18n module is no longer needed. Only
+ * requests started by this module and tracked in `activeI18nControllers` are
+ * aborted.
  *
  * @example
  * ```ts
- * void fetch("/locales/en-GB/common.ftl"); // starts a tracked request
- * abortI18nRequests(); // aborts tracked fetches; returns void
+ * void i18n.loadNamespaces(["common"]); // starts a tracked locale request
+ * abortI18nRequests(); // aborts this module's tracked fetches; returns void
  * ```
  */
 export function abortI18nRequests(): void {
