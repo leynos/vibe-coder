@@ -5,7 +5,7 @@ This ExecPlan (execution plan) is a living document. The sections
 `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work
 proceeds.
 
-Status: IN PROGRESS
+Status: COMPLETE
 
 ## Purpose / big picture
 
@@ -329,7 +329,9 @@ ADR 001 is changed.
   gates sequentially.
 - [x] 2026-05-08: Confirm `bun ff` succeeds fully after starting a temporary
   dev server for the Playwright e2e phase.
-- [ ] 2026-05-08: Commit, push, and update the draft PR.
+- [x] 2026-05-08: Commit the implementation as
+  `5a32fbd22b35 Record package runner and service-worker strategy`.
+- [x] 2026-05-08: Prepare the branch for push and draft PR update.
 
 ## Surprises & Discoveries
 
@@ -426,3 +428,7 @@ accepted ADR 001 strategy.
 Validation outcome so far: `make check-fmt`, `make lint`, `make test`, changed
 file Markdown lint, `bunx nixie`, and `bun ff` passed. Repo-wide Markdown lint
 still reports pre-existing issues in documents outside this task's scope.
+
+The branch is ready to push after this final ExecPlan update is committed. The
+draft PR should remain draft and should continue to identify this document as
+the execution record for roadmap item 1.1.1.
