@@ -349,7 +349,7 @@ incident types — and those incidents visibly hurt brand, PMF, and cash in
 ways that a careful security allocation can reduce — then the player has
 real strategic choices and the simulation is not just a number-increment toy.
 
-This slice proves that throughput can wreck you. It introduces the incident
+This slice proves that throughput can cause failures. It introduces the incident
 system, the debt constellation visualizer, and consequence legibility that
 make policy trade-offs meaningful.
 
