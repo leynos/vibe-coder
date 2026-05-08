@@ -234,7 +234,9 @@ For the docs-only implementation, run:
 ```sh
 make check-fmt 2>&1 | tee /tmp/check-fmt-vibe-coder-1-1-1-record-package-runner-and-service-worker-strategy.out
 make lint 2>&1 | tee /tmp/lint-vibe-coder-1-1-1-record-package-runner-and-service-worker-strategy.out
+make typecheck 2>&1 | tee /tmp/typecheck-vibe-coder-1-1-1-record-package-runner-and-service-worker-strategy.out
 make test 2>&1 | tee /tmp/test-vibe-coder-1-1-1-record-package-runner-and-service-worker-strategy.out
+bun semantic 2>&1 | tee /tmp/semantic-vibe-coder-1-1-1-record-package-runner-and-service-worker-strategy.out
 ```
 
 Also run the non-negotiable full frontend gate:
@@ -262,7 +264,9 @@ Expected results:
 ```plaintext
 make check-fmt exits 0.
 make lint exits 0.
+make typecheck exits 0.
 make test exits 0.
+bun semantic exits 0.
 bun ff exits 0.
 Any Markdown or Mermaid checks that are run exit 0.
 ```
@@ -374,7 +378,7 @@ ADR 001 is changed.
   Playwright e2e accessibility test run by `bun ff` passed against the temporary
   dev server.
 - 2026-05-08: Tool discovery exposed Playwright MCP but did not expose a
-  css-view tool. No UI, CSS, semantic-class, or localisation files changed in
+  css-view tool. No UI, CSS, semantic-class, or localization files changed in
   this implementation.
 
 ## Decision Log
