@@ -235,8 +235,8 @@ For the docs-only implementation, run:
 ```sh
 make check-fmt 2>&1 | tee /tmp/check-fmt-vibe-coder-1-1-1-record-package-runner-and-service-worker-strategy.out
 make lint 2>&1 | tee /tmp/lint-vibe-coder-1-1-1-record-package-runner-and-service-worker-strategy.out
-make typecheck 2>&1 | tee /tmp/typecheck-vibe-coder-1-1-1-record-package-runner-and-service-worker-strategy.out
 make test 2>&1 | tee /tmp/test-vibe-coder-1-1-1-record-package-runner-and-service-worker-strategy.out
+make typecheck 2>&1 | tee /tmp/typecheck-vibe-coder-1-1-1-record-package-runner-and-service-worker-strategy.out
 bun semantic 2>&1 | tee /tmp/semantic-vibe-coder-1-1-1-record-package-runner-and-service-worker-strategy.out
 ```
 
