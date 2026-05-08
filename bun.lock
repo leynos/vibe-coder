@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "vibecoder",
+      "name": "vibe-coder",
       "dependencies": {
         "@fluent/bundle": "^0.19.1",
         "@radix-ui/react-accordion": "^1.1.1",

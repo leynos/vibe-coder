@@ -1,5 +1,12 @@
+/**
+ * @file Tests theme provider behaviour, storage migration, and hook usage.
+ *
+ * These component tests render the provider around a small probe so theme
+ * state, persistence, and context contracts can be verified through the public
+ * React API.
+ */
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, renderHook, screen } from "@testing-library/react";
 import type { JSX } from "react";
 import { act } from "react";
 
@@ -59,6 +66,92 @@ describe("ThemeProvider", () => {
     expect(currentTheme.length).toBeGreaterThan(0);
     expect(document.documentElement.getAttribute("data-theme")).toBe(currentTheme);
     expect(document.body.getAttribute("data-theme")).toBe(currentTheme);
+  });
+
+  it("migrates a legacy vibecoder.theme key to vibe-coder.theme on mount", () => {
+    window.localStorage.setItem("vibecoder.theme", "vibecoder-night");
+
+    render(
+      <ThemeProvider>
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-night");
+    expect(window.localStorage.getItem("vibecoder.theme")).toBeNull();
+    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    expect(displayed).toBe("vibe-coder-night");
+  });
+
+  it("migrates a legacy vibecoder-day theme value on mount", () => {
+    window.localStorage.setItem("vibecoder.theme", "vibecoder-day");
+
+    render(
+      <ThemeProvider>
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-day");
+    expect(window.localStorage.getItem("vibecoder.theme")).toBeNull();
+    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    expect(displayed).toBe("vibe-coder-day");
+  });
+
+  it("falls back to the default theme when the legacy value has no mapping", () => {
+    window.localStorage.setItem("vibecoder.theme", "vibecoder-unknown");
+
+    render(
+      <ThemeProvider>
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    expect(displayed).toBe("vibe-coder-night");
+    expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-night");
+    expect(window.localStorage.getItem("vibecoder.theme")).toBeNull();
+  });
+
+  it("falls back to the default theme when storage holds an unsupported value", () => {
+    window.localStorage.setItem("vibe-coder.theme", "hax");
+
+    render(
+      <ThemeProvider>
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    expect(displayed).toBe("vibe-coder-night");
+    expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-night");
+  });
+
+  it("sets data-theme to a supported value for every available theme", () => {
+    const availableThemes = ["vibe-coder-night", "vibe-coder-day"] as const;
+
+    for (const themeName of availableThemes) {
+      window.localStorage.setItem("vibe-coder.theme", themeName);
+      const { unmount } = render(
+        <ThemeProvider>
+          <ThemeProbe />
+        </ThemeProvider>,
+      );
+      const attr = document.documentElement.getAttribute("data-theme") ?? "";
+      expect(attr).toBe(themeName);
+      const bodyAttr = document.body.getAttribute("data-theme") ?? "";
+      expect(bodyAttr).toBe(themeName);
+      unmount();
+      cleanup();
+      window.localStorage.clear();
+      document.documentElement.removeAttribute("data-theme");
+    }
+  });
+
+  it("throws when useTheme is invoked outside ThemeProvider", () => {
+    expect(() => renderHook(() => useTheme())).toThrowError(
+      "useTheme must be used within a ThemeProvider",
+    );
   });
 
   it("persists and reapplies a new theme", () => {

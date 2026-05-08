@@ -10,10 +10,35 @@ interface LogEntry {
   timestamp: string;
 }
 
+/**
+ * Serialise `value` to a JSON string without throwing.
+ *
+ * Handles circular references by replacing them with `"[Circular]"` and
+ * serialises `Error` instances to include `name`, `message`, and `stack` so
+ * diagnostic details are preserved in log output.
+ */
+function safeStringify(value: unknown): string {
+  const seen = new Set<unknown>();
+  try {
+    return JSON.stringify(value, (_key, val: unknown) => {
+      if (val instanceof Error) {
+        return { name: val.name, message: val.message, stack: val.stack };
+      }
+      if (typeof val === "object" && val !== null) {
+        if (seen.has(val)) return "[Circular]";
+        seen.add(val);
+      }
+      return val;
+    });
+  } catch {
+    return "[unserializable]";
+  }
+}
+
 function formatLogEntry(entry: LogEntry): string {
   const parts = [`[${entry.level.toUpperCase()}]`, entry.timestamp, entry.message];
   if (entry.context && Object.keys(entry.context).length > 0) {
-    parts.push(JSON.stringify(entry.context));
+    parts.push(safeStringify(entry.context));
   }
   return parts.join(" ");
 }
@@ -53,6 +78,15 @@ function log(level: LogLevel, message: string, context?: Record<string, unknown>
   }
 }
 
+/**
+ * Structured application logger exposing `debug`, `info`, `warn`, and `error`
+ * methods. Each call formats a timestamped log entry and writes it to the
+ * console.
+ *
+ * In production this object should be extended to forward entries to a remote
+ * observability sink (e.g. a Sentry DSN or a telemetry adapter conforming to
+ * the `TelemetrySink` port).
+ */
 export const appLogger = {
   debug: (message: string, context?: Record<string, unknown>) => log("debug", message, context),
   info: (message: string, context?: Record<string, unknown>) => log("info", message, context),

@@ -1,3 +1,10 @@
+/**
+ * @file Tests the React application entry point and Suspense bootstrap flow.
+ *
+ * These tests render `AppRoot` with controlled components so default and
+ * caller-supplied Suspense fallbacks, loading semantics, and imperative mounting
+ * behaviour remain covered.
+ */
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { cleanup, render, screen } from "@testing-library/react";
 import React, { act } from "react";
@@ -43,6 +50,22 @@ describe("main entry Suspense flow", () => {
     });
 
     expect(screen.getByRole("status", { name: /loading/i })).toBeTruthy();
+
+    await act(async () => {
+      resolve();
+    });
+
+    expect(await screen.findByText("App ready")).toBeTruthy();
+  });
+
+  it("renders no Suspense fallback when callers pass null", async () => {
+    const { Component, resolve } = createDeferredComponent("App ready");
+
+    await act(async () => {
+      render(<AppRoot AppComponent={Component} fallback={null} />);
+    });
+
+    expect(screen.queryByRole("status", { name: /loading/i })).toBeNull();
 
     await act(async () => {
       resolve();

@@ -3,6 +3,8 @@
 import type { JSX, ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
+import { appLogger } from "../observability/logger";
+
 const STORAGE_KEY = "vibecoder.displayMode";
 
 export type DisplayMode = "hosted" | "full-browser";
@@ -27,6 +29,8 @@ function canUseDOM(): boolean {
   return typeof window !== "undefined" && typeof document !== "undefined";
 }
 
+// localStorage is accessed synchronously on the single JavaScript thread.
+// No explicit cross-provider locking is required.
 function readStoredMode(): DisplayMode | null {
   if (!canUseDOM()) return null;
   try {
@@ -35,7 +39,8 @@ function readStoredMode(): DisplayMode | null {
       return stored;
     }
     return null;
-  } catch {
+  } catch (error) {
+    appLogger.warn("Failed to read stored display mode", { key: STORAGE_KEY, error });
     return null;
   }
 }
@@ -44,8 +49,8 @@ function persistMode(mode: DisplayMode) {
   if (!canUseDOM()) return;
   try {
     window.localStorage.setItem(STORAGE_KEY, mode);
-  } catch {
-    // Storage can fail silently (e.g., Safari private mode). Ignore.
+  } catch (error) {
+    appLogger.warn("Failed to persist display mode preference", { key: STORAGE_KEY, mode, error });
   }
 }
 
@@ -53,8 +58,9 @@ function clearPersistedMode() {
   if (!canUseDOM()) return;
   try {
     window.localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // No fallback required when removal fails; the stored preference simply remains.
+  } catch (error) {
+    // Removal failures leave the stored preference in place; log for diagnostics.
+    appLogger.warn("Failed to clear stored display mode", { key: STORAGE_KEY, error });
   }
 }
 

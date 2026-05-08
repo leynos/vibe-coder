@@ -19,6 +19,11 @@ function normalizeBasePath(input: string | undefined): string {
 
 const routerBasePath = normalizeBasePath(import.meta.env.BASE_URL);
 
+/**
+ * Create a new TanStack Router instance configured with the application route
+ * tree and the Vite base path. Tests can call this to obtain an isolated router
+ * instance without affecting the shared singleton.
+ */
 export function createAppRouter() {
   return createRouter({
     routeTree,
@@ -26,6 +31,7 @@ export function createAppRouter() {
   });
 }
 
+/** Shared router singleton used by the production application entry point. */
 export const router = createAppRouter();
 
 declare module "@tanstack/react-router" {
@@ -42,6 +48,11 @@ export interface AppRoutesProps {
   routerInstance?: ReturnType<typeof createAppRouter>;
 }
 
+/**
+ * Renders the TanStack `RouterProvider` with the given router instance.
+ * Accepts an optional `routerInstance` so that tests can inject isolated
+ * routers without mutating the shared singleton.
+ */
 export function AppRoutes({ routerInstance = router }: AppRoutesProps = {}): JSX.Element {
   return <RouterProvider router={routerInstance} />;
 }

@@ -481,6 +481,11 @@ The following tooling is available in this environment:
   automated issues. Review the findings, fix blockers, and rerun the
   scan until it is clean. Pair this with manual keyboard checks before
   shipping.
+- `uv` / `uvx` – Python package installer and runner (Astral). Used by
+  the `semantic` script to invoke `semgrep` without a persistent virtual
+  environment. In CI, installed via `astral-sh/setup-uv@v4`. Locally,
+  install with `curl -Ls https://astral.sh/uv/install.sh | sh` or via
+  a system package manager.
 
 ## Key Takeaway
 
