@@ -311,8 +311,10 @@ ADR 001 is changed.
 - [x] 2026-05-08: Validated the ExecPlan-only change with `make check-fmt`,
   `make lint`, `make test`, `bunx nixie`, isolated ExecPlan Markdown lint, and
   `bun ff`.
-- [ ] Commit the ExecPlan.
-- [ ] Push the branch and open a draft pull request.
+- [x] 2026-05-08: Committed the ExecPlan in commit
+  `2e43951b14dfe6e095839f65df26a414953066ca`.
+- [x] 2026-05-08: Pushed the branch and opened draft PR
+  <https://github.com/leynos/vibe-coder/pull/2>.
 - [ ] Await explicit approval before implementation.
 
 ## Surprises & Discoveries
@@ -363,3 +365,7 @@ ADR 001 is changed.
 ## Outcomes & Retrospective
 
 Pending. This section must be completed after implementation and validation.
+
+Planning outcome: the pre-implementation ExecPlan is drafted, validated,
+committed, pushed, and available for approval in draft PR
+<https://github.com/leynos/vibe-coder/pull/2>. Implementation has not started.
