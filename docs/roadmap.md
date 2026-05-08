@@ -641,8 +641,8 @@ ______________________________________________________________________
 
 Idea: if the mid-to-late game's power and heat constraints create a new
 strategic regime — where the question shifts from "how to grow revenue?" to "how
-do I allocate watts?" — then the game has a genuine second act and players have
-a reason to reach it.
+to allocate watts?" — then the game has a genuine second act and players have a
+reason to reach it.
 
 This slice delivers the data centre unlock, power generation mix, fossil
 penalty, heat warning, and the power/heat visualizer.

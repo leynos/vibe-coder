@@ -139,6 +139,8 @@ describe("ThemeProvider", () => {
       );
       const attr = document.documentElement.getAttribute("data-theme") ?? "";
       expect(attr).toBe(themeName);
+      const bodyAttr = document.body.getAttribute("data-theme") ?? "";
+      expect(bodyAttr).toBe(themeName);
       unmount();
       cleanup();
       window.localStorage.clear();
