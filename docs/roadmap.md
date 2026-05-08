@@ -45,7 +45,7 @@ rules, and adapter shapes. See
 §Outstanding decisions, `adr-005-use-deterministic-simulation-and-parameter-packs.md`
 §Outstanding decisions.
 
-- [ ] 1.1.1. Record the package runner choice (Bun) and confirm the service
+- [x] 1.1.1. Record the package runner choice (Bun) and confirm the service
   worker strategy (Vite PWA plugin or custom worker) as a short ADR amendment
   or decision log entry.
   - See `adr-001-build-an-offline-first-react-pwa.md` §Outstanding decisions.

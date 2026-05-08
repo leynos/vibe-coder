@@ -5,7 +5,7 @@ This ExecPlan (execution plan) is a living document. The sections
 `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work
 proceeds.
 
-Status: DRAFT
+Status: IN PROGRESS
 
 ## Purpose / big picture
 
@@ -315,7 +315,21 @@ ADR 001 is changed.
   `2e43951b14dfe6e095839f65df26a414953066ca`.
 - [x] 2026-05-08: Pushed the branch and opened draft PR
   <https://github.com/leynos/vibe-coder/pull/2>.
-- [ ] Await explicit approval before implementation.
+- [x] 2026-05-08: Received explicit approval to implement this ExecPlan.
+- [x] 2026-05-08: Amend ADR 001 to record Bun as package runner and the Vite
+  PWA plugin as the first service-worker strategy.
+- [x] 2026-05-08: Relocate ADR 001's import/export outstanding decision to
+  ADR 004 by cross-reference without deciding the format.
+- [x] 2026-05-08: Mark roadmap item 1.1.1 done after the ADR change exists.
+- [x] 2026-05-08: Update `docs/developers-guide.md` with a concise pointer to
+  ADR 001's accepted runner and service-worker implementation practice.
+- [x] 2026-05-08: Clean touched-file Markdown lint issues that were already
+  present in ADR 001, ADR 004, and the developer guide.
+- [x] 2026-05-08: Run formatting, linting, testing, and frontend validation
+  gates sequentially.
+- [x] 2026-05-08: Confirm `bun ff` succeeds fully after starting a temporary
+  dev server for the Playwright e2e phase.
+- [ ] 2026-05-08: Commit, push, and update the draft PR.
 
 ## Surprises & Discoveries
 
@@ -342,6 +356,24 @@ ADR 001 is changed.
   accessibility test did run through `bun ff` and passed.
 - 2026-05-08: Repo-wide Markdown lint fails on pre-existing documentation
   issues outside this ExecPlan. Isolated Markdown lint for this ExecPlan passes.
+- 2026-05-08: `git diff` initially failed in the read-only sandbox with
+  `fatal: unable to create temp-file: Read-only file system`; diff inspection
+  requires elevated execution in this environment.
+- 2026-05-08: Isolated Markdown lint on the changed files surfaced pre-existing
+  line-length, table-alignment, and list-spacing issues in ADR 001, ADR 004, and
+  the developer guide. These files were already in scope, so the implementation
+  includes mechanical Markdown hygiene for those touched files only.
+- 2026-05-08: The first implementation `bun ff` run reached the e2e phase and
+  failed because no dev server was reachable at `http://localhost:5173`.
+  A temporary `bun dev` server is required to satisfy the non-negotiable
+  frontend gate in this environment.
+- 2026-05-08: Direct Playwright MCP validation is still unavailable because the
+  MCP browser reports that `chrome-for-testing` is not installed. The
+  Playwright e2e accessibility test run by `bun ff` passed against the temporary
+  dev server.
+- 2026-05-08: Tool discovery exposed Playwright MCP but did not expose a
+  css-view tool. No UI, CSS, semantic-class, or localisation files changed in
+  this implementation.
 
 ## Decision Log
 
@@ -361,11 +393,36 @@ ADR 001 is changed.
   for this plan-only branch because the MCP browser is not installed. Rationale:
   the full `bun ff` gate still ran the Playwright e2e accessibility test against
   a running dev server and passed.
+- 2026-05-08: Proceed with implementation after explicit user approval.
+  Rationale: the approval gate in the `execplans` skill is now satisfied, and
+  the requested implementation stays within the documentation-only scope.
+- 2026-05-08: Update `docs/developers-guide.md` as part of implementation.
+  Rationale: the accepted service-worker strategy creates developer-facing
+  implementation guidance, while `docs/users-guide.md` remains unchanged
+  because no user-visible behaviour changed.
+- 2026-05-08: Shorten ADR 004's H1 and add local markdownlint disables around
+  pre-existing wide tables in touched files. Rationale: this keeps touched-file
+  Markdown lint actionable without rewriting unrelated documentation or broad
+  trade-off tables.
+- 2026-05-08: Keep `docs/users-guide.md` unchanged. Rationale: the
+  implementation records decisions and developer practice only; it does not
+  change player-visible offline, installability, update, import, or export
+  behaviour.
 
 ## Outcomes & Retrospective
 
-Pending. This section must be completed after implementation and validation.
-
 Planning outcome: the pre-implementation ExecPlan is drafted, validated,
 committed, pushed, and available for approval in draft PR
-<https://github.com/leynos/vibe-coder/pull/2>. Implementation has not started.
+<https://github.com/leynos/vibe-coder/pull/2>. The implementation later
+proceeded after explicit approval on 2026-05-08.
+
+Implementation outcome: ADR 001 now records Bun as the accepted package runner
+and the Vite PWA plugin as the initial service-worker strategy. ADR 001 no
+longer carries package-runner or service-worker open questions. The remaining
+import/export save-format decision is tracked in ADR 004, and roadmap item
+1.1.1 is marked done. The developer guide now points implementation work to the
+accepted ADR 001 strategy.
+
+Validation outcome so far: `make check-fmt`, `make lint`, `make test`, changed
+file Markdown lint, `bunx nixie`, and `bun ff` passed. Repo-wide Markdown lint
+still reports pre-existing issues in documents outside this task's scope.
