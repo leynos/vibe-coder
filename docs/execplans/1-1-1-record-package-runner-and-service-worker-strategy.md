@@ -430,9 +430,10 @@ import/export save-format decision is tracked in ADR 004, and roadmap item
 1.1.1 is marked done. The developer guide now points implementation work to the
 accepted ADR 001 strategy.
 
-Validation outcome so far: `make check-fmt`, `make lint`, `make test`, changed
-file Markdown lint, `bunx nixie`, and `bun ff` passed. Repo-wide Markdown lint
-still reports pre-existing issues in documents outside this task's scope.
+Validation outcome so far: `make check-fmt`, `make lint`, `make test`,
+`make typecheck`, `bun semantic`, changed file Markdown lint, `bunx nixie`, and
+`bun ff` passed. Repo-wide Markdown lint still reports pre-existing issues in
+documents outside this task's scope.
 
 The branch is ready to push after this final ExecPlan update is committed. The
 draft PR should remain draft and should continue to identify this document as
