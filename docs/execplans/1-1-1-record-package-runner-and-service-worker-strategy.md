@@ -13,8 +13,8 @@ Roadmap item 1.1.1 closes two early build-spine questions before the domain
 core and adapter skeleton are implemented. After this change, a developer can
 open `docs/adr-001-build-an-offline-first-react-pwa.md` and see that Bun is
 the accepted package runner, and that the first service-worker strategy is
-settled. `docs/roadmap.md` then marks item 1.1.1 as done because ADR 001 no
-longer leaves those choices open.
+settled. `docs/roadmap.md` then marks item 1.1.1 as done because
+Architectural Decision Record (ADR) 001 no longer leaves those choices open.
 
 This is a documentation and decision-record change. It must not implement the
 service worker, add Vite PWA dependencies, alter runtime behaviour, or start
