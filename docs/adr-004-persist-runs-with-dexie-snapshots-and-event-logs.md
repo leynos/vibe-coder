@@ -1,4 +1,4 @@
-# Architectural decision record (ADR) 004: Persist runs with Dexie snapshots and event logs
+# ADR 004: Persist runs with Dexie snapshots and event logs
 
 ## Status
 
@@ -62,12 +62,16 @@ migrate efficiently.
 A hybrid model balances fast loading, replay evidence, and bounded storage, at
 the cost of more persistence logic.
 
+<!-- markdownlint-disable MD013 -->
+
 | Topic               | Chosen direction            | Main alternative                    |
 | ------------------- | --------------------------- | ----------------------------------- |
 | Load speed          | Fast from latest snapshot   | Snapshot-only fast; log-only slower |
 | Debugging           | Recent history is available | Snapshot-only loses cause traces    |
 | Storage growth      | Controllable by compaction  | Log-only grows continuously         |
 | Implementation cost | Moderate                    | Lower for snapshot-only             |
+
+<!-- markdownlint-enable MD013 -->
 
 _Table 1: Trade-offs for ADR 004._
 
@@ -125,6 +129,7 @@ db.version(1).stores({
 - Choose whether self-play reports share the game database or use a
   development-only database.
 - Define whether imported saves can include custom parameter packs.
+- Define the first import/export save format and compatibility policy.
 
 ## Architectural rationale
 
@@ -132,4 +137,3 @@ The hybrid storage model fits an idle simulation: the player needs quick resume,
 while maintainers need enough event history to explain why a civilization
 melted, assimilated everyone, or became a happy open-source desk gremlin on
 universal basic income.
-

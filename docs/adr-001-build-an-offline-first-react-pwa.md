@@ -66,12 +66,16 @@ slice.
 An offline-first PWA maximizes reach, keeps the first release small, and
 preserves future adapter seams for sync, telemetry, and content services.
 
+<!-- markdownlint-disable MD013 -->
+
 | Topic         | Chosen direction                                 | Main alternative                                  |
 | ------------- | ------------------------------------------------ | ------------------------------------------------- |
 | Initial reach | Runs in modern browsers and can install as a PWA | Requires native packaging or backend availability |
 | Offline play  | Primary design constraint                        | Additional feature or unavailable                 |
 | Future sync   | Optional adapter                                 | Often becomes a core dependency                   |
 | Accessibility | Native web semantics are available               | Requires more bespoke implementation              |
+
+<!-- markdownlint-enable MD013 -->
 
 _Table 1: Trade-offs for ADR 001._
 
@@ -81,6 +85,25 @@ The project will build Vibe Coder as an offline-first React PWA. The Minimum
 Viable Product will not require backend services. Local persistence,
 import/export, and service-worker behaviour will provide the initial durability
 and installation story. Networked features remain later adapter work.
+
+## Accepted amendment: build runner and service-worker strategy
+
+The accepted package runner is Bun. Bun remains the repository's command spine
+for dependency installation, script execution, formatting, linting, tests,
+design-token generation, and development-server invocation.
+
+The initial service-worker strategy is the Vite PWA plugin. The first
+implementation should use plugin-managed app-shell precaching, manifest
+integration, installability checks, and standard update handling. Custom
+service-worker code is reserved for later runtime behaviour that cannot be
+represented cleanly through plugin configuration.
+
+This fits the current build spine: the application already uses Vite for the
+browser bundle and Bun for scripts, so PWA hardening can stay close to the
+existing frontend tooling instead of introducing a bespoke worker before the
+offline contract is proven. Domain policy and simulation code remain
+independent of React, Vite, service-worker APIs, Dexie, and browser
+infrastructure.
 
 ## Goals and non-goals
 
@@ -115,10 +138,9 @@ and installation story. Networked features remain later adapter work.
 
 ## Outstanding decisions
 
-- Choose the package runner once the repository baseline is created.
-- Choose whether the first service worker uses Workbox, Vite PWA tooling, or a
-  custom worker.
-- Define the first import/export save format and compatibility policy.
+ADR 001 has no remaining package-runner or service-worker strategy question.
+The first import/export save format and compatibility policy are tracked by
+ADR 004 and the persistence roadmap work, not by this PWA build-spine decision.
 
 ## Architectural rationale
 
@@ -127,4 +149,3 @@ documents: render from local state first, treat the network as optional, and
 make synchronization observable. It also keeps the game close to its own theme:
 a small system that scales through deliberate policies rather than through
 hidden infrastructure.
-

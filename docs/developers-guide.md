@@ -11,12 +11,16 @@ ADRs in `docs/adr-*.md`. For the delivery roadmap, see `docs/roadmap.md`.
 
 ## Toolchain requirements
 
+<!-- markdownlint-disable MD013 MD060 -->
+
 | Tool               | Minimum version | Purpose                                         |
 | ------------------ | --------------- | ----------------------------------------------- |
 | Bun                | 1.3.0           | Package runner, bundler, and test runner.        |
 | Node.js            | 20 LTS          | Required by some build plugins.                 |
 | Python 3 via `uv`  | any             | Runs `semgrep` through `uvx semgrep`.           |
 | `uv`               | 0.4+            | Python package runner; installs `semgrep` on demand. |
+
+<!-- markdownlint-enable MD013 MD060 -->
 
 Install `uv` from <https://docs.astral.sh/uv/>. All other dependencies are
 managed by Bun.
@@ -31,6 +35,13 @@ bun tokens:build
 
 The `tokens/dist/` directory is not tracked in git. Rebuild it whenever
 `tokens/src/themes/*.json` changes.
+
+ADR 001 records Bun as the accepted package runner and the Vite PWA plugin as
+the initial service-worker strategy. Service-worker implementation work should
+start from plugin-managed app-shell precaching, manifest integration,
+installability checks, and standard update handling. Custom worker code is a
+later extension only when required runtime behaviour cannot be expressed
+through plugin configuration.
 
 ---
 
@@ -117,12 +128,16 @@ adapters  →  application  →  domain
                      (ports defined here)
 ```
 
+<!-- markdownlint-disable MD013 MD060 -->
+
 | Layer         | File path         | May import from     | Must not import from      |
 | ------------- | ----------------- | ------------------- | ------------------------- |
 | Domain        | `src/domain/`     | nothing (pure)      | application, adapters, app, React, Dexie, Web Audio |
 | Application   | `src/application/`| domain only         | adapters, app, React DOM, Dexie |
 | Adapters      | `src/adapters/`   | domain, application | React component tree (use ports instead) |
 | App shell     | `src/app/`        | all layers          | must not contain business rules |
+
+<!-- markdownlint-enable MD013 MD060 -->
 
 Violations of these boundaries will be caught by Biome import rules once
 import-boundary lint is configured (roadmap step 1.1.2).
@@ -186,6 +201,7 @@ export interface GameStateRepository {
 ```
 
 A port must:
+
 - Contain only types, interfaces, and type aliases.
 - Not import from `adapters/`, `application/`, or any browser API.
 - Use async return types only when the operation genuinely requires I/O.
@@ -204,6 +220,7 @@ export class DexieGameStateRepository implements GameStateRepository {
 ```
 
 An adapter:
+
 - Must implement one port interface per class.
 - May import from domain and application layers.
 - Must not contain domain rules or business logic.
@@ -228,6 +245,7 @@ Tests live in `tests/`. The file convention is `<subject>.test.tsx` or
 
 All tests use `bun:test`. The test runner preloads `tests/setup-happy-dom.ts`,
 which:
+
 - Sets up a happy-dom window environment.
 - Stubs asset imports (PNG, SVG, etc.) so component tests do not require a
   bundler.
