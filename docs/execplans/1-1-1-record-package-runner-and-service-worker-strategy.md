@@ -102,7 +102,7 @@ feature work before the plan is approved.
   Severity: low.
   Likelihood: high.
   Mitigation: Record the missing references in `Surprises & Discoveries` and
-  rely on the available HLD, ADRs, developer guide, users guide, and in-game
+  rely on the available HLD, ADRs, developer guide, user guide, and in-game
   design-system documents.
 
 - Risk: Running the full `bun ff` gate may expose pre-existing failures
@@ -127,7 +127,7 @@ decided accidentally.
 The high-level design in `docs/vibe-coder-high-level-design.md` names
 React 19, TypeScript, Vite/Bun, and an offline-first PWA build path. The
 developer guide already identifies Bun as package runner, bundler, and test
-runner. The users guide describes offline progress and player-facing behaviour,
+runner. The user guide describes offline progress and player-facing behaviour,
 but this task should not alter that behaviour.
 
 Relevant skills for implementation:
@@ -306,7 +306,7 @@ ADR 001 is changed.
 - [x] 2026-05-08: Confirmed current branch
   `feat/plan-bun-sw-decision` is not `main`.
 - [x] 2026-05-08: Reviewed roadmap item 1.1.1, ADR 001, ADR 002, ADR 003,
-  ADR 005, the HLD, the developer guide, the users guide, and available repo
+  ADR 005, the HLD, the developer guide, the user guide, and available repo
   scripts.
 - [x] 2026-05-08: Used a Wyvern sidecar agent to review the same planning
   scope and surface risks.
