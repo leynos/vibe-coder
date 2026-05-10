@@ -139,8 +139,9 @@ adapters  →  application  →  domain
 
 <!-- markdownlint-enable MD013 MD060 -->
 
-Violations of these boundaries will be caught by Biome import rules once
-import-boundary lint is configured (roadmap step 1.1.2).
+Violations of these boundaries are caught by the custom TypeScript import
+guard. Run `bun run lint:imports` directly while changing layer boundaries;
+`bun semantic` also runs the guard as part of the full semantic lint suite.
 
 ### Domain layer contents
 

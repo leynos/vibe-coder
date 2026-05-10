@@ -5,7 +5,7 @@ This ExecPlan (execution plan) is a living document. The sections
 `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work
 proceeds.
 
-Status: DRAFT
+Status: IN PROGRESS
 
 ## Purpose / big picture
 
@@ -138,7 +138,19 @@ explicitly approved the plan.
   "docs/execplans/1-1-2-record-the-type-script-source-tree-naming.md"`.
 - [x] (2026-05-09T12:55:12Z) Ran plan-creation gates:
   `make check-fmt`, `make lint`, `make typecheck`, and `make test`.
-- [ ] Await explicit user approval before implementation.
+- [x] (2026-05-10T12:21:02Z) Received explicit user approval to implement this
+  ExecPlan.
+- [x] (2026-05-10T12:21:02Z) Re-ran preflight checks: branch is
+  `feat/plan-source-tree-naming`, and the working tree was clean before
+  implementation edits.
+- [x] (2026-05-10T12:21:02Z) Recorded the ADR 002 decision and
+  developer-guide enforcement wording.
+- [x] (2026-05-10T12:21:02Z) Ran focused Markdown lint for ADR 002, the
+  developer guide, and this ExecPlan; touched files passed.
+- [x] (2026-05-10T12:21:02Z) Ran `coderabbit review --agent` for the
+  documentation milestone; the full branch review hit a payload-size limit, and
+  the narrower uncommitted review failed because the account has no usage
+  credits.
 - [ ] Implement the approved decision record, lint guard, tests, and
   documentation updates.
 - [ ] Run required validation gates sequentially.
@@ -189,6 +201,15 @@ explicitly approved the plan.
   Impact: Future test runs in this environment may need the same permission
   path even when source changes are unrelated to snapshots.
 
+- Observation: CodeRabbit is currently unavailable for actionable milestone
+  review in this branch.
+  Evidence: `coderabbit review --agent` failed with `payload_too_large` for
+  the full branch diff. `coderabbit review --agent --type uncommitted` reduced
+  the reviewed diff but failed with an account usage-credit error.
+  Impact: Continue to invoke CodeRabbit after major milestones as requested,
+  but do not block indefinitely on unavailable external review capacity. Record
+  each failed attempt and rely on repository gates plus focused self-review.
+
 ## Decision Log
 
 - Decision: Draft 1.1.2 as a documentation plus executable lint-guard change,
@@ -211,11 +232,25 @@ explicitly approved the plan.
   either Biome or a custom rule.
   Date/Author: 2026-05-09T12:50:51Z / Codex.
 
+- Decision: Move the plan from draft to implementation after explicit user
+  approval.
+  Rationale: The user approved implementation on 2026-05-10 and requested
+  frequent commits plus `coderabbit review --agent` after major milestones.
+  Date/Author: 2026-05-10T12:21:02Z / Codex.
+
+- Decision: Amend ADR 002 directly rather than creating a separate decision-log
+  document.
+  Rationale: The naming and lint-strategy decision belongs with the existing
+  architecture record, avoids a new document category, and matches the plan's
+  preferred path.
+  Date/Author: 2026-05-10T12:21:02Z / Codex.
+
 ## Outcomes & retrospective
 
-No implementation has been performed yet. This draft should be reviewed and
-approved or revised before any code, documentation decision, roadmap, or lint
-configuration changes are made.
+Implementation is in progress. ADR 002 now records the accepted source-tree
+naming and import-boundary strategy, and the developer guide points to the
+planned executable guard. The lint guard, tests, roadmap update, and final
+validation remain outstanding.
 
 ## Context and orientation
 
@@ -575,3 +610,12 @@ Revision note: Added plan-validation evidence after running Markdown lint for
 this file plus `make check-fmt`, `make lint`, `make typecheck`, and
 `make test`. This does not approve implementation; it only records the state of
 the draft plan.
+
+Revision note: Implementation began after explicit approval on 2026-05-10. The
+status changed to `IN PROGRESS`, and preflight progress plus the approval
+decision were recorded before editing implementation files.
+
+Revision note: Stage B and Stage C completed by amending ADR 002 and the
+developer guide. Focused Markdown lint passed for the touched documentation.
+CodeRabbit review attempts were recorded as unavailable due to payload and
+usage-credit errors, so validation continues with local gates.
