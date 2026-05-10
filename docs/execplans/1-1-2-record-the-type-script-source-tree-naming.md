@@ -5,7 +5,7 @@ This ExecPlan (execution plan) is a living document. The sections
 `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work
 proceeds.
 
-Status: IN PROGRESS
+Status: COMPLETE
 
 ## Purpose / big picture
 
@@ -159,8 +159,18 @@ explicitly approved the plan.
 - [x] (2026-05-10T12:21:02Z) Re-ran
   `coderabbit review --agent --type uncommitted`; it still failed because the
   account has no usage credits.
-- [ ] Run required validation gates sequentially.
-- [ ] Commit the completed implementation after gates pass.
+- [x] (2026-05-10T12:21:02Z) Marked roadmap item 1.1.2 as done after the ADR
+  decision, executable guard, package wiring, and focused tests were in place.
+- [x] (2026-05-10T12:33:05Z) Ran final validation gates sequentially:
+  `make check-fmt`, `make lint`, `make typecheck`, `make test`,
+  `bun semantic`, `bun ff`, focused Markdown lint for touched docs, and
+  `bunx nixie`; all passed.
+- [x] (2026-05-10T12:33:05Z) Ran css-view against the local validation server
+  and wrote `/tmp/css-view-vibe-coder-1-1-2.json`.
+- [x] (2026-05-10T12:33:05Z) Stopped the local validation dev server started
+  for `bun ff`.
+- [x] (2026-05-10T12:33:05Z) Prepared the roadmap and final ExecPlan updates
+  for the closing commit after gates passed.
 
 ## Surprises & discoveries
 
@@ -211,10 +221,27 @@ explicitly approved the plan.
   review in this branch.
   Evidence: `coderabbit review --agent` failed with `payload_too_large` for
   the full branch diff. `coderabbit review --agent --type uncommitted` reduced
-  the reviewed diff but failed with an account usage-credit error.
+  the reviewed diff but failed with an account usage-credit error. A final
+  attempt later failed because authentication was no longer available.
   Impact: Continue to invoke CodeRabbit after major milestones as requested,
   but do not block indefinitely on unavailable external review capacity. Record
   each failed attempt and rely on repository gates plus focused self-review.
+
+- Observation: `bun ff` requires generated token CSS and a reachable Vite dev
+  server for its e2e phase.
+  Evidence: The first `bun ff` attempt failed because
+  `tokens/dist/tokens.css` was missing. After `bun tokens:build`, a second
+  attempt reached e2e and failed because `http://localhost:5173` was not
+  reachable. Starting `bun dev` for validation made the final `bun ff` pass.
+  Impact: Future runs in a fresh worktree may need `bun tokens:build` and a
+  validation dev server before `bun ff`.
+
+- Observation: Playwright MCP browser automation was unavailable, but the
+  repository Playwright e2e gate ran successfully.
+  Evidence: The MCP call failed because `chrome-for-testing` is not installed;
+  the `bun ff` e2e phase passed `tests/e2e/a11y.pw.ts` in Chromium.
+  Impact: Browser validation evidence comes from the repository Playwright e2e
+  suite and css-view rather than a Playwright MCP screenshot.
 
 ## Decision Log
 
@@ -260,10 +287,13 @@ explicitly approved the plan.
 
 ## Outcomes & retrospective
 
-Implementation is in progress. ADR 002 now records the accepted source-tree
-naming and import-boundary strategy, and the developer guide points to the
-planned executable guard. The lint guard, tests, roadmap update, and final
-validation remain outstanding.
+Implementation is complete. ADR 002 records the accepted `src/domain/`,
+`src/application/`, and `src/adapters/` source-tree names and rejects
+`src/core/`. The developer guide points contributors to `bun run lint:imports`,
+the custom TypeScript import guard is wired into `bun semantic`, focused tests
+cover allowed and forbidden imports, and roadmap item 1.1.2 is marked done.
+The required validation gates passed after generating ignored token output and
+starting a local dev server for the e2e phase of `bun ff`.
 
 ## Context and orientation
 
@@ -637,3 +667,11 @@ Revision note: Stage D, Stage E, and Stage F completed. The new
 `lint:imports` script passes on the current source tree, focused boundary tests
 pass, and formatting/lint/typecheck gates pass for the implementation
 milestone. CodeRabbit remains unavailable due to account usage credits.
+
+Revision note: Stage G completed by marking only roadmap item 1.1.2 as done.
+Final repository validation is now in progress.
+
+Revision note: Final validation completed and the plan status changed to
+`COMPLETE`. CodeRabbit remained unavailable, Playwright MCP browser automation
+was unavailable, and css-view plus the repository Playwright e2e gate supplied
+browser validation evidence.

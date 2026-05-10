@@ -52,7 +52,7 @@ rules, and adapter shapes. See
   - Success: one accepted document records both choices; no open question
     remains in ADR 001.
 
-- [ ] 1.1.2. Record the TypeScript source-tree naming (`domain/` vs `core/`)
+- [x] 1.1.2. Record the TypeScript source-tree naming (`domain/` vs `core/`)
   and import-boundary lint rule strategy as a decision log entry.
   - See `adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`
     §Outstanding decisions.
