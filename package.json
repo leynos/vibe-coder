@@ -18,11 +18,12 @@
     "test:e2e": "bash scripts/e2e.sh",
     "test:e2e:container": "bash scripts/e2e-container.sh",
     "lint:ftl-vars": "bun run scripts/check-fluent-vars.ts",
-    "semantic:lint": "bunx biome ci src tests tools && bun run lint:classlist && bun run lint:class-duplicates && bun run lint:hardcoded-strings && uvx semgrep --config tools/semgrep-semantic.yml --include src/**/*.tsx --include tests/**/*.tsx && bunx stylelint 'src/**/*.css' --config tools/stylelint.config.cjs",
+    "semantic:lint": "bunx biome ci src tests tools && bun run lint:imports && bun run lint:classlist && bun run lint:class-duplicates && bun run lint:hardcoded-strings && uvx semgrep --config tools/semgrep-semantic.yml --include src/**/*.tsx --include tests/**/*.tsx && bunx stylelint 'src/**/*.css' --config tools/stylelint.config.cjs",
     "semantic": "bun run semantic:lint",
     "lint:classlist": "bun run scripts/check-classlist-length.ts",
     "lint:class-duplicates": "bun run scripts/find-near-duplicate-classes.ts",
     "lint:hardcoded-strings": "bun run scripts/check-hardcoded-strings.ts",
+    "lint:imports": "bun run scripts/lint-import-boundaries.ts",
     "test:all": "bun lint && bun check:types && bun test && bun run test:a11y && bun run lint:ftl-vars && bun run semantic && bun test:e2e",
     "ff": "bunx --bun @tailwindcss/cli --input src/index.css --output tmp/tailwind.css --verbose && rm -f tmp/tailwind.css && bun run test:all"
   },

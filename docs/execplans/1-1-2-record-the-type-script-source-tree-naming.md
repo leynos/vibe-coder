@@ -151,8 +151,14 @@ explicitly approved the plan.
   documentation milestone; the full branch review hit a payload-size limit, and
   the narrower uncommitted review failed because the account has no usage
   credits.
-- [ ] Implement the approved decision record, lint guard, tests, and
-  documentation updates.
+- [x] (2026-05-10T12:21:02Z) Implemented the import-boundary lint guard, wired
+  `lint:imports` into `semantic:lint`, and added focused `bun:test` coverage.
+- [x] (2026-05-10T12:21:02Z) Ran `bun run lint:imports`,
+  `bun test tests/import-boundaries.test.ts`, `make check-fmt`, `make lint`,
+  and `make typecheck` for the import-boundary milestone; all passed.
+- [x] (2026-05-10T12:21:02Z) Re-ran
+  `coderabbit review --agent --type uncommitted`; it still failed because the
+  account has no usage credits.
 - [ ] Run required validation gates sequentially.
 - [ ] Commit the completed implementation after gates pass.
 
@@ -243,6 +249,13 @@ explicitly approved the plan.
   Rationale: The naming and lint-strategy decision belongs with the existing
   architecture record, avoids a new document category, and matches the plan's
   preferred path.
+  Date/Author: 2026-05-10T12:21:02Z / Codex.
+
+- Decision: Split the import-boundary implementation into pure logic and a CLI
+  wrapper.
+  Rationale: `scripts/import-boundaries.ts` can be covered directly by
+  `bun:test`, while `scripts/lint-import-boundaries.ts` remains a small
+  side-effecting wrapper for filesystem scanning and process exit codes.
   Date/Author: 2026-05-10T12:21:02Z / Codex.
 
 ## Outcomes & retrospective
@@ -619,3 +632,8 @@ Revision note: Stage B and Stage C completed by amending ADR 002 and the
 developer guide. Focused Markdown lint passed for the touched documentation.
 CodeRabbit review attempts were recorded as unavailable due to payload and
 usage-credit errors, so validation continues with local gates.
+
+Revision note: Stage D, Stage E, and Stage F completed. The new
+`lint:imports` script passes on the current source tree, focused boundary tests
+pass, and formatting/lint/typecheck gates pass for the implementation
+milestone. CodeRabbit remains unavailable due to account usage credits.
