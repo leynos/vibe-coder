@@ -117,7 +117,7 @@ explicitly approved the plan.
   Likelihood: high.
   Mitigation: Record the missing references and rely on available project
   sources: HLD, ADRs, roadmap, developer guide, user guide, design-system HTML,
-  and existing test/lint scripts. UI-specific localisation and WCAG acceptance
+  and existing test/lint scripts. UI-specific localization and WCAG acceptance
   remain non-applicable unless implementation touches UI.
 
 ## Progress
@@ -128,7 +128,7 @@ explicitly approved the plan.
   `feat/plan-source-tree-naming`, not the main branch.
 - [x] (2026-05-09T12:50:51Z) Used a Wyvern agent team for planning research:
   one agent reviewed roadmap and ADR sources, one reviewed source/config/test
-  shape, and one reviewed frontend/localisation/accessibility constraints.
+  shape, and one reviewed frontend/localization/accessibility constraints.
 - [x] (2026-05-09T12:50:51Z) Reviewed the roadmap, ADR 002, HLD module layout,
   developer guide boundary table, package scripts, Makefile, Biome config, and
   semantic lint tooling.
@@ -175,7 +175,7 @@ explicitly approved the plan.
 ## Surprises & discoveries
 
 - Observation: `docs/v2a-front-end-stack.md` and the requested Tailwind,
-  daisyUI, localisation, and accessibility reference documents are not present
+  daisyUI, localization, and accessibility reference documents are not present
   in this worktree.
   Evidence: Wyvern planning review and the existing 1.1.1 ExecPlan both list
   these documents as absent.
@@ -459,7 +459,7 @@ change does not introduce a business axiom or simulation contract.
 Behavioural Gherkin tests are not required for this item because no
 externally-observable user workflow changes. End-to-end tests are not required
 for the same reason. If the implementation touches UI despite this plan, stop
-and revise the plan to include localisation, accessibility, Playwright, and
+and revise the plan to include localization, accessibility, Playwright, and
 Gherkin coverage before proceeding.
 
 Stage G updates roadmap state. Mark only item 1.1.2 in `docs/roadmap.md` as
@@ -615,7 +615,7 @@ Wyvern planning reports contributed these findings:
 - The current source tree has only shallow boundary barrels for the three
   layers.
 - Existing lint infrastructure favours custom scripts and semantic lint wiring.
-- Missing frontend reference documents make UI-specific localisation and WCAG
+- Missing frontend reference documents make UI-specific localization and WCAG
   implementation constraints non-applicable unless UI is touched.
 
 ## Interfaces and dependencies

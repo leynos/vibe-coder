@@ -1,3 +1,10 @@
+/**
+ * @file Tests for the source import-boundary guard.
+ *
+ * Verifies allowed layer imports and forbidden dependency directions across
+ * static imports, re-exports, and dynamic imports.
+ */
+
 import { describe, expect, it } from "bun:test";
 
 import { classifySourcePath, findBoundaryViolations } from "../scripts/import-boundaries";

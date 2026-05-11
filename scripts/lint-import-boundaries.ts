@@ -7,11 +7,19 @@ import { findBoundaryViolations, type SourceFileInput } from "./import-boundarie
 const PROJECT_ROOT = process.cwd();
 
 function getSourceFiles(): SourceFileInput[] {
-  const glob = new Bun.Glob("src/**/*.{ts,tsx}");
-  return Array.from(glob.scanSync(PROJECT_ROOT)).map((path) => ({
-    path,
-    sourceText: readFileSync(path, "utf8"),
-  }));
+  const glob = new Bun.Glob("src/**/*.{ts,tsx,js,jsx,mts,cts}");
+  return Array.from(glob.scanSync(PROJECT_ROOT)).map((path) => {
+    try {
+      return {
+        path,
+        sourceText: readFileSync(path, "utf8"),
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`getSourceFiles failed to read ${path}: ${message}`);
+      throw error;
+    }
+  });
 }
 
 function main(): void {
