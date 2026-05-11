@@ -210,26 +210,38 @@ function extractImportReferences(file: SourceFileInput): ReadonlyArray<ImportRef
   );
   const references: ImportReference[] = [];
 
-  for (const statement of source.statements) {
-    const importPath = getImportPath(statement);
-    if (!importPath) {
-      continue;
-    }
-
-    const { line, character } = source.getLineAndCharacterOfPosition(statement.getStart(source));
+  const addReference = (node: ts.Node, importPath: string): void => {
+    const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source));
     references.push({
       importPath,
       line: line + 1,
       column: character + 1,
     });
-  }
+  };
+
+  const visit = (node: ts.Node): void => {
+    const importPath = getImportPath(node);
+
+    if (importPath) {
+      addReference(node, importPath);
+    }
+
+    ts.forEachChild(node, visit);
+  };
+
+  visit(source);
 
   return references;
 }
 
-function getImportPath(statement: ts.Statement): string | null {
-  if (ts.isImportDeclaration(statement) || ts.isExportDeclaration(statement)) {
-    const moduleSpecifier = statement.moduleSpecifier;
+function getImportPath(node: ts.Node): string | null {
+  if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
+    const moduleSpecifier = node.moduleSpecifier;
+    return moduleSpecifier && ts.isStringLiteral(moduleSpecifier) ? moduleSpecifier.text : null;
+  }
+
+  if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+    const [moduleSpecifier] = node.arguments;
     return moduleSpecifier && ts.isStringLiteral(moduleSpecifier) ? moduleSpecifier.text : null;
   }
 

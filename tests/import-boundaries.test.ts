@@ -134,6 +134,40 @@ describe("findBoundaryViolations", () => {
     expect(violations[0]?.message).toBe("domain files must not import React DOM");
   });
 
+  it("checks dynamic import expressions as imports", () => {
+    const violations = findBoundaryViolations([
+      ...files,
+      {
+        path: "src/domain/services/lazy-load-save.ts",
+        sourceText: [
+          "export async function loadSaveAdapter() {",
+          '  return await import("../../adapters/persistence/dexie-game-state-repository");',
+          "}",
+        ].join("\n"),
+      },
+    ]);
+
+    expect(violations).toHaveLength(1);
+    expect(violations[0]?.message).toBe("domain files must not import adapter files");
+    expect(violations[0]?.line).toBe(2);
+  });
+
+  it("ignores dynamic imports that do not use literal module specifiers", () => {
+    const violations = findBoundaryViolations([
+      ...files,
+      {
+        path: "src/domain/services/lazy-load-save.ts",
+        sourceText: [
+          "export async function loadSaveAdapter(modulePath: string) {",
+          "  return await import(modulePath);",
+          "}",
+        ].join("\n"),
+      },
+    ]);
+
+    expect(violations).toEqual([]);
+  });
+
   it("checks re-export declarations as imports", () => {
     const violations = findBoundaryViolations([
       ...files,
