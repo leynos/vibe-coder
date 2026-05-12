@@ -159,7 +159,7 @@ describe("findBoundaryViolations", () => {
     expect(violations[0]?.line).toBe(2);
   });
 
-  it("ignores dynamic imports that do not use literal module specifiers", () => {
+  it("rejects domain dynamic imports that do not use literal module specifiers", () => {
     const violations = findBoundaryViolations([
       ...files,
       {
@@ -172,7 +172,29 @@ describe("findBoundaryViolations", () => {
       },
     ]);
 
-    expect(violations).toEqual([]);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]?.importPath).toBe("__NON_LITERAL_DYNAMIC_IMPORT__");
+    expect(violations[0]?.message).toBe("domain files must not use non-literal dynamic imports");
+  });
+
+  it("rejects application dynamic imports that do not use literal module specifiers", () => {
+    const violations = findBoundaryViolations([
+      ...files,
+      {
+        path: "src/application/selectors/lazy-chart.ts",
+        sourceText: [
+          "export async function loadChart(modulePath: string) {",
+          "  return await import(modulePath);",
+          "}",
+        ].join("\n"),
+      },
+    ]);
+
+    expect(violations).toHaveLength(1);
+    expect(violations[0]?.importPath).toBe("__NON_LITERAL_DYNAMIC_IMPORT__");
+    expect(violations[0]?.message).toBe(
+      "application files must not use non-literal dynamic imports",
+    );
   });
 
   it("checks re-export declarations as imports", () => {

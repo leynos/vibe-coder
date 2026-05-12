@@ -38,7 +38,19 @@ const DISALLOWED_APPLICATION_PACKAGES = new Map<string, string>([
   ["dexie", "application files must not import Dexie"],
 ]);
 
-/** Classify a repository path into the architectural layer it belongs to. */
+const NON_LITERAL_DYNAMIC_IMPORT = "__NON_LITERAL_DYNAMIC_IMPORT__";
+
+/**
+ * Classify a repository path into the architectural layer it belongs to.
+ *
+ * @example
+ * ```ts
+ * // example only
+ * classifySourcePath("src/domain/user.ts"); // "domain"
+ * classifySourcePath("src/adapters/http.ts"); // "adapters"
+ * classifySourcePath("scripts/build.ts"); // "other"
+ * ```
+ */
 export function classifySourcePath(path: string): SourceLayer {
   const normalizedPath = normalizeForComparison(path);
 
@@ -58,7 +70,32 @@ export function classifySourcePath(path: string): SourceLayer {
   return "other";
 }
 
-/** Return every import-direction violation found in the supplied source files. */
+/**
+ * Return every import-direction violation found in the supplied source files.
+ *
+ * @example
+ * ```ts
+ * // example only
+ * const files: ReadonlyArray<SourceFileInput> = [
+ *   { path: "src/domain/user.ts", sourceText: "export const user = {};" },
+ *   {
+ *     path: "src/domain/load.ts",
+ *     sourceText: 'import "../adapters/http";',
+ *   },
+ *   { path: "src/adapters/http.ts", sourceText: "export const http = {};" },
+ * ];
+ *
+ * const violations: ReadonlyArray<BoundaryViolation> =
+ *   findBoundaryViolations(files);
+ * // [{
+ * //   sourcePath: "src/domain/load.ts",
+ * //   importPath: "../adapters/http",
+ * //   line: 1,
+ * //   column: 1,
+ * //   message: "domain files must not import adapter files",
+ * // }]
+ * ```
+ */
 export function findBoundaryViolations(
   files: ReadonlyArray<SourceFileInput>,
 ): ReadonlyArray<BoundaryViolation> {
@@ -102,6 +139,13 @@ function describeViolation(
   importPath: string,
   sourcePathSet: ReadonlySet<string>,
 ): string | null {
+  if (
+    importPath === NON_LITERAL_DYNAMIC_IMPORT &&
+    (sourceLayer === "domain" || sourceLayer === "application")
+  ) {
+    return `${sourceLayer} files must not use non-literal dynamic imports`;
+  }
+
   const importedLayer = classifyImportTarget(sourcePath, importPath, sourcePathSet);
 
   if (sourceLayer === "domain") {
@@ -242,7 +286,9 @@ function getImportPath(node: ts.Node): string | null {
 
   if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
     const [moduleSpecifier] = node.arguments;
-    return moduleSpecifier && ts.isStringLiteral(moduleSpecifier) ? moduleSpecifier.text : null;
+    return moduleSpecifier && ts.isStringLiteral(moduleSpecifier)
+      ? moduleSpecifier.text
+      : NON_LITERAL_DYNAMIC_IMPORT;
   }
 
   return null;
