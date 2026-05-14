@@ -4,13 +4,37 @@ import { dirname, isAbsolute, normalize, relative, resolve, sep } from "node:pat
 
 import ts from "typescript";
 
+/**
+ * Architectural layer assigned to a repository source file.
+ *
+ * - `"domain"` - pure business logic under `src/domain/`
+ * - `"application"` - use-case orchestration under `src/application/`
+ * - `"adapters"` - infrastructure adapters under `src/adapters/`
+ * - `"app"` - Next.js / React app shell under `src/app/`
+ * - `"other"` - any path outside the four guarded layers
+ */
 export type SourceLayer = "domain" | "application" | "adapters" | "app" | "other";
 
+/**
+ * A source file supplied to the boundary checker.
+ *
+ * @property path - Repository-relative path to the file (e.g. `"src/domain/model.ts"`).
+ * @property sourceText - UTF-8 source text of the file.
+ */
 export interface SourceFileInput {
   readonly path: string;
   readonly sourceText: string;
 }
 
+/**
+ * A single import-direction violation emitted by `findBoundaryViolations`.
+ *
+ * @property sourcePath - Repository-relative path of the file that contains the violation.
+ * @property importPath - The raw module specifier as written in the source.
+ * @property line - 1-based line number of the offending import statement.
+ * @property column - 1-based column number of the offending import statement.
+ * @property message - Human-readable description of the violated boundary rule.
+ */
 export interface BoundaryViolation {
   readonly sourcePath: string;
   readonly importPath: string;
@@ -19,6 +43,12 @@ export interface BoundaryViolation {
   readonly message: string;
 }
 
+/**
+ * Optional configuration for `classifySourcePath` and `findBoundaryViolations`.
+ *
+ * @property basePath - Absolute path used to normalise relative file paths.
+ *   Defaults to `process.cwd()` when omitted.
+ */
 export interface BoundaryCheckOptions {
   readonly basePath?: string;
 }

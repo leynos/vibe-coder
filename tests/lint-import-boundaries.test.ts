@@ -5,7 +5,7 @@
  * spawning a separate Bun process.
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, spyOn } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -59,6 +59,28 @@ describe("getSourceFiles", () => {
       rmSync(projectRoot, { recursive: true, force: true });
     }
   });
+
+  it("throws and logs when a source file cannot be read", () => {
+    const projectRoot = mkdtempSync(join(tmpdir(), "vibe-coder-imports-err-"));
+    const errorSpy = spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      mkdirSync(join(projectRoot, "src/domain"), { recursive: true });
+      writeFileSync(join(projectRoot, "src/domain/model.ts"), "export const model = {};");
+
+      expect(() =>
+        getSourceFiles(projectRoot, () => {
+          throw new Error("scan failed");
+        }),
+      ).toThrow("scan failed");
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining("getSourceFiles failed to read src/domain/model.ts"),
+      );
+    } finally {
+      errorSpy.mockRestore();
+      rmSync(projectRoot, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("formatViolation", () => {
@@ -108,5 +130,35 @@ describe("main", () => {
 
     expect(exitCode).toBe(0);
     expect(messages).toEqual([]);
+  });
+
+  it("propagates exceptions thrown by findViolations", () => {
+    expect(() =>
+      main({
+        sourceFiles: [buildSourceFile()],
+        findViolations: () => {
+          throw new Error("scan failed");
+        },
+        writeError: () => {},
+      }),
+    ).toThrow("scan failed");
+  });
+
+  it("reports every violation when multiple exist", () => {
+    const messages: string[] = [];
+    const exitCode = main({
+      sourceFiles: [
+        buildSourceFile({
+          path: "src/domain/bad.ts",
+          sourceText: ['import "../adapters/http";', 'import "../adapters/db";'].join("\n"),
+        }),
+        buildSourceFile({ path: "src/adapters/http.ts" }),
+        buildSourceFile({ path: "src/adapters/db.ts" }),
+      ],
+      writeError: (message) => messages.push(message),
+    });
+
+    expect(exitCode).toBe(1);
+    expect(messages).toHaveLength(2);
   });
 });

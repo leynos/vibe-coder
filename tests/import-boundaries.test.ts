@@ -65,6 +65,11 @@ describe("findBoundaryViolations", () => {
       'import "./dexie-game-state-repository";',
     ],
     [
+      "adapters to app shell",
+      "src/adapters/ui/title-adapter.ts",
+      'import "../../app/routes/title";',
+    ],
+    [
       "app shell to every architectural layer",
       "src/app/routes/run.tsx",
       [
@@ -237,6 +242,30 @@ describe("findBoundaryViolations", () => {
   function findViolationsWith(extraFile: SourceFileInput): ReadonlyArray<BoundaryViolation> {
     return findBoundaryViolations([...files, extraFile]);
   }
+});
+
+describe("basePath option", () => {
+  it("classifySourcePath respects an explicit basePath", () => {
+    expect(classifySourcePath("/project/src/domain/model.ts", { basePath: "/project" })).toBe(
+      "domain",
+    );
+    expect(classifySourcePath("/project/src/adapters/http.ts", { basePath: "/project" })).toBe(
+      "adapters",
+    );
+  });
+
+  it("findBoundaryViolations detects violations when basePath is supplied", () => {
+    const violations = findBoundaryViolations(
+      [
+        buildFile("/project/src/domain/bad.ts", 'import "../adapters/http";'),
+        buildFile("/project/src/adapters/http.ts", "export const http = {};"),
+      ],
+      { basePath: "/project" },
+    );
+
+    expect(violations).toHaveLength(1);
+    expect(violations[0]?.message).toBe("domain files must not import adapter files");
+  });
 });
 
 function buildFile(path: string, sourceText: string): SourceFileInput {

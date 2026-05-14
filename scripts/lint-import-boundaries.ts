@@ -13,6 +13,16 @@ import {
 const PROJECT_ROOT = process.cwd();
 const SOURCE_GLOB = "src/**/*.{ts,tsx,js,jsx,mts,cts}";
 
+type ReadSourceFile = (path: string, encoding: "utf8") => string;
+
+/**
+ * Injected dependencies for `main`, used to replace production defaults in tests.
+ *
+ * @property sourceFiles - Pre-loaded source files; skips filesystem scanning when supplied.
+ * @property projectRoot - Absolute path used as the project root; defaults to `process.cwd()`.
+ * @property writeError - Callback receiving each formatted violation string; defaults to `console.error`.
+ * @property findViolations - Boundary-check implementation; defaults to `findBoundaryViolations`.
+ */
 export interface LintImportBoundaryDependencies {
   readonly sourceFiles?: ReadonlyArray<SourceFileInput>;
   readonly projectRoot?: string;
@@ -26,8 +36,8 @@ export interface LintImportBoundaryDependencies {
 /**
  * Return source files scanned from the project root for boundary linting.
  *
- * @param projectRoot - Repository root used for scanning; defaults to
- *   `PROJECT_ROOT`.
+ * @param projectRoot - Repository root used for scanning; defaults to `PROJECT_ROOT`.
+ * @param readSourceFile - UTF-8 file reader; defaults to `readFileSync`.
  * @returns `SourceFileInput` objects containing repository-relative `path`
  *   values and their `sourceText`.
  *
@@ -39,13 +49,16 @@ export interface LintImportBoundaryDependencies {
  * // Uses PROJECT_ROOT by default and throws on read errors.
  * ```
  */
-export function getSourceFiles(projectRoot = PROJECT_ROOT): SourceFileInput[] {
+export function getSourceFiles(
+  projectRoot = PROJECT_ROOT,
+  readSourceFile: ReadSourceFile = readFileSync,
+): SourceFileInput[] {
   const glob = new Bun.Glob(SOURCE_GLOB);
   return Array.from(glob.scanSync({ cwd: projectRoot })).map((path) => {
     try {
       return {
         path,
-        sourceText: readFileSync(resolve(projectRoot, path), "utf8"),
+        sourceText: readSourceFile(resolve(projectRoot, path), "utf8"),
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
