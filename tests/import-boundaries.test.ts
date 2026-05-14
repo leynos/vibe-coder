@@ -58,6 +58,18 @@ describe("findBoundaryViolations", () => {
     expect(violations).toEqual([]);
   });
 
+  it("allows application files to import other application files", () => {
+    const violations = findBoundaryViolations([
+      ...files,
+      {
+        path: "src/application/services/build-dashboard.ts",
+        sourceText: 'import "../selectors/dashboard-selectors";',
+      },
+    ]);
+
+    expect(violations).toEqual([]);
+  });
+
   it("allows adapters to import application and domain files", () => {
     const violations = findBoundaryViolations([
       ...files,
@@ -67,6 +79,18 @@ describe("findBoundaryViolations", () => {
           'import "../../application/selectors/dashboard-selectors";',
           'import "../../domain/model/run-state";',
         ].join("\n"),
+      },
+    ]);
+
+    expect(violations).toEqual([]);
+  });
+
+  it("allows adapters to import other adapter files", () => {
+    const violations = findBoundaryViolations([
+      ...files,
+      {
+        path: "src/adapters/persistence/migrations.ts",
+        sourceText: 'import "./dexie-game-state-repository";',
       },
     ]);
 
@@ -128,6 +152,32 @@ describe("findBoundaryViolations", () => {
     expect(violations[0]?.message).toBe("application files must not import adapter files");
   });
 
+  it("rejects domain files importing app shell files", () => {
+    const violations = findBoundaryViolations([
+      ...files,
+      {
+        path: "src/domain/services/resolve-route.ts",
+        sourceText: 'import "../../app/routes/title";',
+      },
+    ]);
+
+    expect(violations).toHaveLength(1);
+    expect(violations[0]?.message).toBe("domain files must not import app shell files");
+  });
+
+  it("rejects application files importing app shell files", () => {
+    const violations = findBoundaryViolations([
+      ...files,
+      {
+        path: "src/application/selectors/title-selectors.ts",
+        sourceText: 'import "../../app/routes/title";',
+      },
+    ]);
+
+    expect(violations).toHaveLength(1);
+    expect(violations[0]?.message).toBe("application files must not import app shell files");
+  });
+
   it("rejects domain files importing disallowed infrastructure packages", () => {
     const violations = findBoundaryViolations([
       ...files,
@@ -157,6 +207,41 @@ describe("findBoundaryViolations", () => {
     expect(violations).toHaveLength(1);
     expect(violations[0]?.message).toBe("domain files must not import adapter files");
     expect(violations[0]?.line).toBe(2);
+  });
+
+  it("checks no-substitution template dynamic imports as imports", () => {
+    const violations = findBoundaryViolations([
+      ...files,
+      {
+        path: "src/domain/services/lazy-load-save.ts",
+        sourceText: [
+          "export async function loadSaveAdapter() {",
+          "  return await import(`../../adapters/persistence/dexie-game-state-repository`);",
+          "}",
+        ].join("\n"),
+      },
+    ]);
+
+    expect(violations).toHaveLength(1);
+    expect(violations[0]?.message).toBe("domain files must not import adapter files");
+  });
+
+  it("rejects substitution template dynamic imports in guarded layers", () => {
+    const violations = findBoundaryViolations([
+      ...files,
+      {
+        path: "src/domain/services/lazy-load-save.ts",
+        sourceText: [
+          "export async function loadSaveAdapter(name: string) {",
+          "  return await import(`../../adapters/${" + "name}`);",
+          "}",
+        ].join("\n"),
+      },
+    ]);
+
+    expect(violations).toHaveLength(1);
+    expect(violations[0]?.importPath).toBe("__NON_LITERAL_DYNAMIC_IMPORT__");
+    expect(violations[0]?.message).toBe("domain files must not use non-literal dynamic imports");
   });
 
   it("rejects domain dynamic imports that do not use literal module specifiers", () => {
@@ -209,6 +294,20 @@ describe("findBoundaryViolations", () => {
 
     expect(violations).toHaveLength(1);
     expect(violations[0]?.importPath).toBe("../application/selectors/dashboard-selectors");
+  });
+
+  it("checks import type queries as imports", () => {
+    const violations = findBoundaryViolations([
+      ...files,
+      {
+        path: "src/domain/services/adapter-type.ts",
+        sourceText:
+          'type Repository = import("../../adapters/persistence/dexie-game-state-repository").Repository;',
+      },
+    ]);
+
+    expect(violations).toHaveLength(1);
+    expect(violations[0]?.message).toBe("domain files must not import adapter files");
   });
 
   it("resolves relative imports that climb directories", () => {

@@ -19,6 +19,10 @@ export interface BoundaryViolation {
   readonly message: string;
 }
 
+export interface BoundaryCheckOptions {
+  readonly basePath?: string;
+}
+
 interface ImportReference {
   readonly importPath: string;
   readonly line: number;
@@ -51,8 +55,8 @@ const NON_LITERAL_DYNAMIC_IMPORT = "__NON_LITERAL_DYNAMIC_IMPORT__";
  * classifySourcePath("scripts/build.ts"); // "other"
  * ```
  */
-export function classifySourcePath(path: string): SourceLayer {
-  const normalizedPath = normalizeForComparison(path);
+export function classifySourcePath(path: string, options: BoundaryCheckOptions = {}): SourceLayer {
+  const normalizedPath = normalizeForComparison(path, getBasePath(options));
 
   if (normalizedPath.startsWith("src/domain/")) {
     return "domain";
@@ -98,13 +102,15 @@ export function classifySourcePath(path: string): SourceLayer {
  */
 export function findBoundaryViolations(
   files: ReadonlyArray<SourceFileInput>,
+  options: BoundaryCheckOptions = {},
 ): ReadonlyArray<BoundaryViolation> {
-  const sourcePathSet = new Set(files.map((file) => normalizeForComparison(file.path)));
+  const basePath = getBasePath(options);
+  const sourcePathSet = new Set(files.map((file) => normalizeForComparison(file.path, basePath)));
   const violations: BoundaryViolation[] = [];
 
   for (const file of files) {
-    const sourcePath = normalizeForComparison(file.path);
-    const sourceLayer = classifySourcePath(sourcePath);
+    const sourcePath = normalizeForComparison(file.path, basePath);
+    const sourceLayer = classifySourcePath(sourcePath, { basePath });
 
     if (sourceLayer === "other") {
       continue;
@@ -116,6 +122,7 @@ export function findBoundaryViolations(
         sourceLayer,
         reference.importPath,
         sourcePathSet,
+        basePath,
       );
 
       if (message) {
@@ -133,11 +140,13 @@ export function findBoundaryViolations(
   return violations;
 }
 
+/** Describe the first boundary rule violated by one import reference. */
 function describeViolation(
   sourcePath: string,
   sourceLayer: SourceLayer,
   importPath: string,
   sourcePathSet: ReadonlySet<string>,
+  basePath: string,
 ): string | null {
   if (
     importPath === NON_LITERAL_DYNAMIC_IMPORT &&
@@ -146,7 +155,7 @@ function describeViolation(
     return `${sourceLayer} files must not use non-literal dynamic imports`;
   }
 
-  const importedLayer = classifyImportTarget(sourcePath, importPath, sourcePathSet);
+  const importedLayer = classifyImportTarget(sourcePath, importPath, sourcePathSet, basePath);
 
   if (sourceLayer === "domain") {
     return describeDomainViolation(importPath, importedLayer);
@@ -159,6 +168,7 @@ function describeViolation(
   return null;
 }
 
+/** Describe why a domain import crosses a forbidden boundary. */
 function describeDomainViolation(importPath: string, importedLayer: SourceLayer): string | null {
   if (importedLayer === "application") {
     return "domain files must not import application files";
@@ -173,6 +183,7 @@ function describeDomainViolation(importPath: string, importedLayer: SourceLayer)
   return getPackageViolation(importPath, DISALLOWED_DOMAIN_PACKAGES);
 }
 
+/** Describe why an application import crosses a forbidden boundary. */
 function describeApplicationViolation(
   importPath: string,
   importedLayer: SourceLayer,
@@ -187,6 +198,7 @@ function describeApplicationViolation(
   return getPackageViolation(importPath, DISALLOWED_APPLICATION_PACKAGES);
 }
 
+/** Return the package-level violation message for a disallowed dependency. */
 function getPackageViolation(
   importPath: string,
   disallowedPackages: ReadonlyMap<string, string>,
@@ -200,28 +212,40 @@ function getPackageViolation(
   return null;
 }
 
+/** Classify the architectural layer targeted by an import specifier. */
 function classifyImportTarget(
   sourcePath: string,
   importPath: string,
   sourcePathSet: ReadonlySet<string>,
+  basePath: string,
 ): SourceLayer {
   if (importPath.startsWith(".")) {
-    return classifySourcePath(resolveRelativeImport(sourcePath, importPath, sourcePathSet));
+    return classifySourcePath(
+      resolveRelativeImport(sourcePath, importPath, sourcePathSet, basePath),
+      {
+        basePath,
+      },
+    );
   }
 
   if (importPath.startsWith("src/")) {
-    return classifySourcePath(importPath);
+    return classifySourcePath(importPath, { basePath });
   }
 
   return "other";
 }
 
+/** Resolve a relative import to a repository-normalized source path. */
 function resolveRelativeImport(
   sourcePath: string,
   importPath: string,
   sourcePathSet: ReadonlySet<string>,
+  basePath: string,
 ): string {
-  const candidate = normalizeForComparison(resolve(dirname(sourcePath), importPath));
+  const sourceDirectory = isAbsolute(sourcePath)
+    ? dirname(sourcePath)
+    : resolve(basePath, dirname(sourcePath));
+  const candidate = normalizeForComparison(resolve(sourceDirectory, importPath), basePath);
 
   if (sourcePathSet.has(candidate)) {
     return candidate;
@@ -244,6 +268,7 @@ function resolveRelativeImport(
   return candidate;
 }
 
+/** Extract import-like references from a TypeScript or JavaScript source file. */
 function extractImportReferences(file: SourceFileInput): ReadonlyArray<ImportReference> {
   const source = ts.createSourceFile(
     file.path,
@@ -278,27 +303,57 @@ function extractImportReferences(file: SourceFileInput): ReadonlyArray<ImportRef
   return references;
 }
 
+/** Return an import specifier from static, dynamic, export, or import-type nodes. */
 function getImportPath(node: ts.Node): string | null {
   if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
     const moduleSpecifier = node.moduleSpecifier;
-    return moduleSpecifier && ts.isStringLiteral(moduleSpecifier) ? moduleSpecifier.text : null;
+    return moduleSpecifier ? getLiteralModuleSpecifier(moduleSpecifier) : null;
+  }
+
+  if (ts.isImportTypeNode(node)) {
+    return getImportTypePath(node);
   }
 
   if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
     const [moduleSpecifier] = node.arguments;
-    return moduleSpecifier && ts.isStringLiteral(moduleSpecifier)
-      ? moduleSpecifier.text
-      : NON_LITERAL_DYNAMIC_IMPORT;
+    const importPath = moduleSpecifier ? getLiteralModuleSpecifier(moduleSpecifier) : null;
+    return importPath ?? NON_LITERAL_DYNAMIC_IMPORT;
   }
 
   return null;
 }
 
+/** Return the literal module path from an `import("...")` type query. */
+function getImportTypePath(node: ts.ImportTypeNode): string | null {
+  const argument = node.argument;
+  if (!ts.isLiteralTypeNode(argument)) {
+    return null;
+  }
+
+  return getLiteralModuleSpecifier(argument.literal);
+}
+
+/** Return text from string and no-substitution template module specifiers. */
+function getLiteralModuleSpecifier(node: ts.Node): string | null {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+    return node.text;
+  }
+
+  return null;
+}
+
+/** Pick the TypeScript parser mode for a source file path. */
 function getScriptKind(path: string): ts.ScriptKind {
   return path.endsWith(".tsx") || path.endsWith(".jsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
 }
 
-function normalizeForComparison(path: string): string {
-  const repositoryPath = isAbsolute(path) ? relative(process.cwd(), path) : path;
+/** Normalize paths to repository-relative POSIX separators for comparisons. */
+function normalizeForComparison(path: string, basePath: string): string {
+  const repositoryPath = isAbsolute(path) ? relative(basePath, path) : path;
   return normalize(repositoryPath).split(sep).join("/");
+}
+
+/** Resolve the repository base path used for absolute path normalization. */
+function getBasePath(options: BoundaryCheckOptions): string {
+  return options.basePath ?? process.cwd();
 }
