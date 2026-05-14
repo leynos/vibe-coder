@@ -23,7 +23,17 @@ export interface LintImportBoundaryDependencies {
   ) => ReadonlyArray<BoundaryViolation>;
 }
 
-/** Return source files scanned from the project root for boundary linting. */
+/**
+ * Return source files scanned from the project root for boundary linting.
+ *
+ * @example
+ * ```ts
+ * // example only
+ * const files = getSourceFiles();
+ * // files[0] has { path: "src/domain/index.ts", sourceText: "..." }.
+ * // Throws after logging when a matched source file cannot be read.
+ * ```
+ */
 export function getSourceFiles(projectRoot = PROJECT_ROOT): SourceFileInput[] {
   const glob = new Bun.Glob(SOURCE_GLOB);
   return Array.from(glob.scanSync({ cwd: projectRoot })).map((path) => {
@@ -45,7 +55,18 @@ export function formatViolation(violation: BoundaryViolation): string {
   return `${violation.sourcePath}:${violation.line}:${violation.column} ${violation.message}: "${violation.importPath}"`;
 }
 
-/** Run the import-boundary CLI and return the intended process exit code. */
+/**
+ * Run the import-boundary CLI and return the intended process exit code.
+ *
+ * @example
+ * ```ts
+ * // example only
+ * process.exitCode = main();
+ * // Runs findBoundaryViolations(getSourceFiles()), logs violations as:
+ * // src/domain/file.ts:1:1 message: "importPath"
+ * // Returns 1 when violations exist.
+ * ```
+ */
 export function main(dependencies: LintImportBoundaryDependencies = {}): number {
   const projectRoot = dependencies.projectRoot ?? PROJECT_ROOT;
   const sourceFiles = dependencies.sourceFiles ?? getSourceFiles(projectRoot);

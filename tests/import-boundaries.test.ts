@@ -7,7 +7,12 @@
 
 import { describe, expect, it } from "bun:test";
 
-import { classifySourcePath, findBoundaryViolations } from "../scripts/import-boundaries";
+import {
+  type BoundaryViolation,
+  classifySourcePath,
+  findBoundaryViolations,
+  type SourceFileInput,
+} from "../scripts/import-boundaries";
 
 describe("classifySourcePath", () => {
   it("classifies source paths by architectural layer", () => {
@@ -20,306 +25,248 @@ describe("classifySourcePath", () => {
 });
 
 describe("findBoundaryViolations", () => {
-  const files = [
-    { path: "src/domain/model/run-state.ts", sourceText: "export const runState = {};" },
-    { path: "src/domain/services/start-run.ts", sourceText: "export const startRun = () => {};" },
-    {
-      path: "src/application/selectors/dashboard-selectors.ts",
-      sourceText: "export const selectDashboard = () => {};",
-    },
-    {
-      path: "src/adapters/persistence/dexie-game-state-repository.ts",
-      sourceText: "export const repository = {};",
-    },
-    { path: "src/app/routes/title.tsx", sourceText: "export const Title = () => null;" },
+  const baseFiles = [
+    buildFile("src/domain/model/run-state.ts", "export const runState = {};"),
+    buildFile("src/domain/services/start-run.ts", "export const startRun = () => {};"),
+    buildFile(
+      "src/application/selectors/dashboard-selectors.ts",
+      "export const selectDashboard = () => {};",
+    ),
+    buildFile(
+      "src/adapters/persistence/dexie-game-state-repository.ts",
+      "export const repository = {};",
+    ),
+    buildFile("src/app/routes/title.tsx", "export const Title = () => null;"),
   ] as const;
 
-  it("allows domain files to import other domain files", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/domain/services/apply-policy.ts",
-        sourceText: 'import "../model/run-state";',
-      },
-    ]);
-
-    expect(violations).toEqual([]);
-  });
-
-  it("allows application files to import domain files", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/application/selectors/risk-selectors.ts",
-        sourceText: 'import "../../domain/model/run-state";',
-      },
-    ]);
-
-    expect(violations).toEqual([]);
-  });
-
-  it("allows application files to import other application files", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/application/services/build-dashboard.ts",
-        sourceText: 'import "../selectors/dashboard-selectors";',
-      },
-    ]);
-
-    expect(violations).toEqual([]);
-  });
-
-  it("allows adapters to import application and domain files", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/adapters/persistence/migrations.ts",
-        sourceText: [
+  const allowedCases = [
+    {
+      name: "allows domain files to import other domain files",
+      extraFile: buildFile("src/domain/services/apply-policy.ts", 'import "../model/run-state";'),
+    },
+    {
+      name: "allows application files to import domain files",
+      extraFile: buildFile(
+        "src/application/selectors/risk-selectors.ts",
+        'import "../../domain/model/run-state";',
+      ),
+    },
+    {
+      name: "allows application files to import other application files",
+      extraFile: buildFile(
+        "src/application/services/build-dashboard.ts",
+        'import "../selectors/dashboard-selectors";',
+      ),
+    },
+    {
+      name: "allows adapters to import application and domain files",
+      extraFile: buildFile(
+        "src/adapters/persistence/migrations.ts",
+        [
           'import "../../application/selectors/dashboard-selectors";',
           'import "../../domain/model/run-state";',
         ].join("\n"),
-      },
-    ]);
-
-    expect(violations).toEqual([]);
-  });
-
-  it("allows adapters to import other adapter files", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/adapters/persistence/migrations.ts",
-        sourceText: 'import "./dexie-game-state-repository";',
-      },
-    ]);
-
-    expect(violations).toEqual([]);
-  });
-
-  it("allows app shell files to import every architectural layer", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/app/routes/run.tsx",
-        sourceText: [
+      ),
+    },
+    {
+      name: "allows adapters to import other adapter files",
+      extraFile: buildFile(
+        "src/adapters/persistence/migrations.ts",
+        'import "./dexie-game-state-repository";',
+      ),
+    },
+    {
+      name: "allows app shell files to import every architectural layer",
+      extraFile: buildFile(
+        "src/app/routes/run.tsx",
+        [
           'import "../../adapters/persistence/dexie-game-state-repository";',
           'import "../../application/selectors/dashboard-selectors";',
           'import "../../domain/model/run-state";',
         ].join("\n"),
-      },
-    ]);
+      ),
+    },
+  ] as const;
 
-    expect(violations).toEqual([]);
-  });
+  for (const { name, extraFile } of allowedCases) {
+    it(name, () => {
+      expect(findViolationsWith(extraFile)).toEqual([]);
+    });
+  }
 
-  it("rejects domain files importing application files", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/domain/services/simulate-tick.ts",
-        sourceText: 'import "../../application/selectors/dashboard-selectors";',
-      },
-    ]);
-
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.message).toBe("domain files must not import application files");
-  });
-
-  it("rejects domain files importing adapter files", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/domain/services/simulate-tick.ts",
-        sourceText: 'import "../../adapters/persistence/dexie-game-state-repository";',
-      },
-    ]);
-
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.message).toBe("domain files must not import adapter files");
-  });
-
-  it("rejects application files importing adapter files", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/application/selectors/chart-selectors.ts",
-        sourceText: 'import "../../adapters/persistence/dexie-game-state-repository";',
-      },
-    ]);
-
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.message).toBe("application files must not import adapter files");
-  });
-
-  it("rejects domain files importing app shell files", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/domain/services/resolve-route.ts",
-        sourceText: 'import "../../app/routes/title";',
-      },
-    ]);
-
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.message).toBe("domain files must not import app shell files");
-  });
-
-  it("rejects application files importing app shell files", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/application/selectors/title-selectors.ts",
-        sourceText: 'import "../../app/routes/title";',
-      },
-    ]);
-
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.message).toBe("application files must not import app shell files");
-  });
-
-  it("rejects domain files importing disallowed infrastructure packages", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/domain/services/resolve-event.ts",
-        sourceText: 'import { createRoot } from "react-dom/client";',
-      },
-    ]);
-
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.message).toBe("domain files must not import React DOM");
-  });
-
-  it("checks dynamic import expressions as imports", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/domain/services/lazy-load-save.ts",
-        sourceText: [
+  const violationCases = [
+    {
+      name: "rejects domain files importing application files",
+      extraFile: buildFile(
+        "src/domain/services/simulate-tick.ts",
+        'import "../../application/selectors/dashboard-selectors";',
+      ),
+      expected: { message: "domain files must not import application files" },
+    },
+    {
+      name: "rejects domain files importing adapter files",
+      extraFile: buildFile(
+        "src/domain/services/simulate-tick.ts",
+        'import "../../adapters/persistence/dexie-game-state-repository";',
+      ),
+      expected: { message: "domain files must not import adapter files" },
+    },
+    {
+      name: "rejects application files importing adapter files",
+      extraFile: buildFile(
+        "src/application/selectors/chart-selectors.ts",
+        'import "../../adapters/persistence/dexie-game-state-repository";',
+      ),
+      expected: { message: "application files must not import adapter files" },
+    },
+    {
+      name: "rejects domain files importing app shell files",
+      extraFile: buildFile(
+        "src/domain/services/resolve-route.ts",
+        'import "../../app/routes/title";',
+      ),
+      expected: { message: "domain files must not import app shell files" },
+    },
+    {
+      name: "rejects application files importing app shell files",
+      extraFile: buildFile(
+        "src/application/selectors/title-selectors.ts",
+        'import "../../app/routes/title";',
+      ),
+      expected: { message: "application files must not import app shell files" },
+    },
+    {
+      name: "rejects domain files importing disallowed infrastructure packages",
+      extraFile: buildFile(
+        "src/domain/services/resolve-event.ts",
+        'import { createRoot } from "react-dom/client";',
+      ),
+      expected: { message: "domain files must not import React DOM" },
+    },
+    {
+      name: "checks dynamic import expressions as imports",
+      extraFile: buildFile(
+        "src/domain/services/lazy-load-save.ts",
+        [
           "export async function loadSaveAdapter() {",
           '  return await import("../../adapters/persistence/dexie-game-state-repository");',
           "}",
         ].join("\n"),
-      },
-    ]);
-
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.message).toBe("domain files must not import adapter files");
-    expect(violations[0]?.line).toBe(2);
-  });
-
-  it("checks no-substitution template dynamic imports as imports", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/domain/services/lazy-load-save.ts",
-        sourceText: [
+      ),
+      expected: { message: "domain files must not import adapter files", line: 2 },
+    },
+    {
+      name: "checks no-substitution template dynamic imports as imports",
+      extraFile: buildFile(
+        "src/domain/services/lazy-load-save.ts",
+        [
           "export async function loadSaveAdapter() {",
           "  return await import(`../../adapters/persistence/dexie-game-state-repository`);",
           "}",
         ].join("\n"),
-      },
-    ]);
-
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.message).toBe("domain files must not import adapter files");
-  });
-
-  it("rejects substitution template dynamic imports in guarded layers", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/domain/services/lazy-load-save.ts",
-        sourceText: [
+      ),
+      expected: { message: "domain files must not import adapter files" },
+    },
+    {
+      name: "rejects substitution template dynamic imports in guarded layers",
+      extraFile: buildFile(
+        "src/domain/services/lazy-load-save.ts",
+        [
           "export async function loadSaveAdapter(name: string) {",
           "  return await import(`../../adapters/${" + "name}`);",
           "}",
         ].join("\n"),
+      ),
+      expected: {
+        importPath: "__NON_LITERAL_DYNAMIC_IMPORT__",
+        message: "domain files must not use non-literal dynamic imports",
       },
-    ]);
-
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.importPath).toBe("__NON_LITERAL_DYNAMIC_IMPORT__");
-    expect(violations[0]?.message).toBe("domain files must not use non-literal dynamic imports");
-  });
-
-  it("rejects domain dynamic imports that do not use literal module specifiers", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/domain/services/lazy-load-save.ts",
-        sourceText: [
+    },
+    {
+      name: "rejects domain dynamic imports that do not use literal module specifiers",
+      extraFile: buildFile(
+        "src/domain/services/lazy-load-save.ts",
+        [
           "export async function loadSaveAdapter(modulePath: string) {",
           "  return await import(modulePath);",
           "}",
         ].join("\n"),
+      ),
+      expected: {
+        importPath: "__NON_LITERAL_DYNAMIC_IMPORT__",
+        message: "domain files must not use non-literal dynamic imports",
       },
-    ]);
-
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.importPath).toBe("__NON_LITERAL_DYNAMIC_IMPORT__");
-    expect(violations[0]?.message).toBe("domain files must not use non-literal dynamic imports");
-  });
-
-  it("rejects application dynamic imports that do not use literal module specifiers", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/application/selectors/lazy-chart.ts",
-        sourceText: [
+    },
+    {
+      name: "rejects application dynamic imports that do not use literal module specifiers",
+      extraFile: buildFile(
+        "src/application/selectors/lazy-chart.ts",
+        [
           "export async function loadChart(modulePath: string) {",
           "  return await import(modulePath);",
           "}",
         ].join("\n"),
+      ),
+      expected: {
+        importPath: "__NON_LITERAL_DYNAMIC_IMPORT__",
+        message: "application files must not use non-literal dynamic imports",
       },
-    ]);
+    },
+    {
+      name: "checks re-export declarations as imports",
+      extraFile: buildFile(
+        "src/domain/index.ts",
+        'export { selectDashboard } from "../application/selectors/dashboard-selectors";',
+      ),
+      expected: { importPath: "../application/selectors/dashboard-selectors" },
+    },
+    {
+      name: "checks import type queries as imports",
+      extraFile: buildFile(
+        "src/domain/services/adapter-type.ts",
+        'type Repository = import("../../adapters/persistence/dexie-game-state-repository").Repository;',
+      ),
+      expected: { message: "domain files must not import adapter files" },
+    },
+    {
+      name: "resolves relative imports that climb directories",
+      extraFile: buildFile(
+        "src/domain/rules/debt.ts",
+        'import "../../adapters/persistence/migrations";',
+      ),
+      expected: { message: "domain files must not import adapter files" },
+    },
+  ] as const;
 
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.importPath).toBe("__NON_LITERAL_DYNAMIC_IMPORT__");
-    expect(violations[0]?.message).toBe(
-      "application files must not use non-literal dynamic imports",
-    );
-  });
+  for (const { name, extraFile, expected } of violationCases) {
+    it(name, () => {
+      const violations = findViolationsWith(extraFile);
 
-  it("checks re-export declarations as imports", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/domain/index.ts",
-        sourceText:
-          'export { selectDashboard } from "../application/selectors/dashboard-selectors";',
-      },
-    ]);
+      expect(violations).toHaveLength(1);
+      expectViolation(violations[0], expected);
+    });
+  }
 
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.importPath).toBe("../application/selectors/dashboard-selectors");
-  });
-
-  it("checks import type queries as imports", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/domain/services/adapter-type.ts",
-        sourceText:
-          'type Repository = import("../../adapters/persistence/dexie-game-state-repository").Repository;',
-      },
-    ]);
-
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.message).toBe("domain files must not import adapter files");
-  });
-
-  it("resolves relative imports that climb directories", () => {
-    const violations = findBoundaryViolations([
-      ...files,
-      {
-        path: "src/domain/rules/debt.ts",
-        sourceText: 'import "../../adapters/persistence/migrations";',
-      },
-    ]);
-
-    expect(violations).toHaveLength(1);
-    expect(violations[0]?.message).toBe("domain files must not import adapter files");
-  });
+  function findViolationsWith(extraFile: SourceFileInput): ReadonlyArray<BoundaryViolation> {
+    return findBoundaryViolations([...baseFiles, extraFile]);
+  }
 });
+
+function buildFile(path: string, sourceText: string): SourceFileInput {
+  return { path, sourceText };
+}
+
+function expectViolation(
+  violation: BoundaryViolation | undefined,
+  expected: Partial<Pick<BoundaryViolation, "importPath" | "line" | "message">>,
+): void {
+  if (expected.message) {
+    expect(violation?.message).toBe(expected.message);
+  }
+  if (expected.line) {
+    expect(violation?.line).toBe(expected.line);
+  }
+  if (expected.importPath) {
+    expect(violation?.importPath).toBe(expected.importPath);
+  }
+}
