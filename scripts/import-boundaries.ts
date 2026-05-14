@@ -195,6 +195,10 @@ function describeViolation(
     return describeApplicationViolation(importPath, importedLayer);
   }
 
+  if (sourceLayer === "adapters") {
+    return describeAdapterViolation(importedLayer);
+  }
+
   return null;
 }
 
@@ -226,6 +230,15 @@ function describeApplicationViolation(
   }
 
   return getPackageViolation(importPath, DISALLOWED_APPLICATION_PACKAGES);
+}
+
+/** Describe why an adapter import crosses a forbidden boundary. */
+function describeAdapterViolation(importedLayer: SourceLayer): string | null {
+  if (importedLayer === "app") {
+    return "adapter files must not import app shell files";
+  }
+
+  return null;
 }
 
 /** Return the package-level violation message for a disallowed dependency. */

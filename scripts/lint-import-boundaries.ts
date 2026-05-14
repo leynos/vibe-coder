@@ -16,12 +16,25 @@ const SOURCE_GLOB = "src/**/*.{ts,tsx,js,jsx,mts,cts}";
 type ReadSourceFile = (path: string, encoding: "utf8") => string;
 
 /**
- * Injected dependencies for `main`, used to replace production defaults in tests.
+ * `LintImportBoundaryDependencies` is the public seam for `main`, used to
+ * replace production defaults in tests. Its members provide pre-loaded
+ * `sourceFiles`, an optional `projectRoot`, a `writeError` sink, and a
+ * `findViolations` implementation.
  *
  * @property sourceFiles - Pre-loaded source files; skips filesystem scanning when supplied.
  * @property projectRoot - Absolute path used as the project root; defaults to `process.cwd()`.
  * @property writeError - Callback receiving each formatted violation string; defaults to `console.error`.
  * @property findViolations - Boundary-check implementation; defaults to `findBoundaryViolations`.
+ *
+ * @example
+ * ```ts
+ * // example only
+ * const exitCode = main({
+ *   sourceFiles: [{ path: "src/domain/model.ts", sourceText: 'import "../adapters/http";' }],
+ *   writeError: (message) => console.error(message),
+ * });
+ * // Returns 1 when violations are written, otherwise 0.
+ * ```
  */
 export interface LintImportBoundaryDependencies {
   readonly sourceFiles?: ReadonlyArray<SourceFileInput>;

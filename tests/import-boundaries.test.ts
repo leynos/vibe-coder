@@ -21,6 +21,10 @@ describe("classifySourcePath", () => {
     expect(classifySourcePath("src/adapters/index.ts")).toBe("adapters");
     expect(classifySourcePath("src/app/app.tsx")).toBe("app");
     expect(classifySourcePath("src/main.tsx")).toBe("other");
+    expect(classifySourcePath("/repo/src/domain/index.ts", { basePath: "/repo" })).toBe("domain");
+    expect(classifySourcePath("/repo/src/adapters/index.ts", { basePath: "/repo" })).toBe(
+      "adapters",
+    );
   });
 });
 
@@ -63,11 +67,6 @@ describe("findBoundaryViolations", () => {
       "adapter to adapter",
       "src/adapters/persistence/migrations.ts",
       'import "./dexie-game-state-repository";',
-    ],
-    [
-      "adapters to app shell",
-      "src/adapters/ui/title-adapter.ts",
-      'import "../../app/routes/title";',
     ],
     [
       "app shell to every architectural layer",
@@ -126,6 +125,14 @@ describe("findBoundaryViolations", () => {
         'import "../../app/routes/title";',
       ),
       expected: { message: "application files must not import app shell files" },
+    },
+    {
+      name: "rejects adapter files importing app shell files",
+      extraFile: buildFile(
+        "src/adapters/persistence/migrations.ts",
+        'import "../../app/routes/run";',
+      ),
+      expected: { message: "adapter files must not import app shell files" },
     },
     {
       name: "rejects domain files importing disallowed infrastructure packages",
