@@ -26,12 +26,17 @@ export interface LintImportBoundaryDependencies {
 /**
  * Return source files scanned from the project root for boundary linting.
  *
+ * @param projectRoot - Repository root used for scanning; defaults to
+ *   `PROJECT_ROOT`.
+ * @returns `SourceFileInput` objects containing repository-relative `path`
+ *   values and their `sourceText`.
+ *
  * @example
  * ```ts
  * // example only
- * const files = getSourceFiles();
- * // files[0] has { path: "src/domain/index.ts", sourceText: "..." }.
- * // Throws after logging when a matched source file cannot be read.
+ * const files: SourceFileInput[] = getSourceFiles();
+ * // [{ path: "src/domain/model.ts", sourceText: "..." }]
+ * // Uses PROJECT_ROOT by default and throws on read errors.
  * ```
  */
 export function getSourceFiles(projectRoot = PROJECT_ROOT): SourceFileInput[] {
@@ -50,7 +55,26 @@ export function getSourceFiles(projectRoot = PROJECT_ROOT): SourceFileInput[] {
   });
 }
 
-/** Format one import-boundary violation for CLI stderr output. */
+/**
+ * Format one import-boundary violation for CLI stderr output.
+ *
+ * @param violation - Boundary violation to render.
+ * @returns The CLI diagnostic string in
+ *   `${sourcePath}:${line}:${column} ${message}: "${importPath}"` form.
+ *
+ * @example
+ * ```ts
+ * // example only
+ * formatViolation({
+ *   sourcePath: "src/domain/model.ts",
+ *   line: 3,
+ *   column: 5,
+ *   message: "domain files must not import adapter files",
+ *   importPath: "../adapters/http",
+ * });
+ * // 'src/domain/model.ts:3:5 domain files must not import adapter files: "../adapters/http"'
+ * ```
+ */
 export function formatViolation(violation: BoundaryViolation): string {
   return `${violation.sourcePath}:${violation.line}:${violation.column} ${violation.message}: "${violation.importPath}"`;
 }
@@ -58,13 +82,21 @@ export function formatViolation(violation: BoundaryViolation): string {
 /**
  * Run the import-boundary CLI and return the intended process exit code.
  *
+ * @param dependencies - Optional test seams for source files, project root,
+ *   violation detection, and stderr writing.
+ * @returns `1` when violations exist, otherwise `0`.
+ *
  * @example
  * ```ts
  * // example only
- * process.exitCode = main();
- * // Runs findBoundaryViolations(getSourceFiles()), logs violations as:
- * // src/domain/file.ts:1:1 message: "importPath"
- * // Returns 1 when violations exist.
+ * const failingExitCode = main({
+ *   sourceFiles: [{ path: "src/domain/model.ts", sourceText: 'import "../adapters/http";' }],
+ *   writeError: console.error,
+ * });
+ * // Writes formatted violations to stderr and returns 1.
+ *
+ * const passingExitCode = main({ sourceFiles: [] });
+ * // Writes nothing and returns 0.
  * ```
  */
 export function main(dependencies: LintImportBoundaryDependencies = {}): number {

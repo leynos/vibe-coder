@@ -25,7 +25,7 @@ describe("classifySourcePath", () => {
 });
 
 describe("findBoundaryViolations", () => {
-  const baseFiles = [
+  const files = [
     buildFile("src/domain/model/run-state.ts", "export const runState = {};"),
     buildFile("src/domain/services/start-run.ts", "export const startRun = () => {};"),
     buildFile(
@@ -40,59 +40,46 @@ describe("findBoundaryViolations", () => {
   ] as const;
 
   const allowedCases = [
-    {
-      name: "allows domain files to import other domain files",
-      extraFile: buildFile("src/domain/services/apply-policy.ts", 'import "../model/run-state";'),
-    },
-    {
-      name: "allows application files to import domain files",
-      extraFile: buildFile(
-        "src/application/selectors/risk-selectors.ts",
+    ["domain to domain", "src/domain/services/apply-policy.ts", 'import "../model/run-state";'],
+    [
+      "application to domain",
+      "src/application/selectors/risk-selectors.ts",
+      'import "../../domain/model/run-state";',
+    ],
+    [
+      "application to application",
+      "src/application/services/build-dashboard.ts",
+      'import "../selectors/dashboard-selectors";',
+    ],
+    [
+      "adapter to application and domain",
+      "src/adapters/persistence/migrations.ts",
+      [
+        'import "../../application/selectors/dashboard-selectors";',
         'import "../../domain/model/run-state";',
-      ),
-    },
-    {
-      name: "allows application files to import other application files",
-      extraFile: buildFile(
-        "src/application/services/build-dashboard.ts",
-        'import "../selectors/dashboard-selectors";',
-      ),
-    },
-    {
-      name: "allows adapters to import application and domain files",
-      extraFile: buildFile(
-        "src/adapters/persistence/migrations.ts",
-        [
-          'import "../../application/selectors/dashboard-selectors";',
-          'import "../../domain/model/run-state";',
-        ].join("\n"),
-      ),
-    },
-    {
-      name: "allows adapters to import other adapter files",
-      extraFile: buildFile(
-        "src/adapters/persistence/migrations.ts",
-        'import "./dexie-game-state-repository";',
-      ),
-    },
-    {
-      name: "allows app shell files to import every architectural layer",
-      extraFile: buildFile(
-        "src/app/routes/run.tsx",
-        [
-          'import "../../adapters/persistence/dexie-game-state-repository";',
-          'import "../../application/selectors/dashboard-selectors";',
-          'import "../../domain/model/run-state";',
-        ].join("\n"),
-      ),
-    },
+      ].join("\n"),
+    ],
+    [
+      "adapter to adapter",
+      "src/adapters/persistence/migrations.ts",
+      'import "./dexie-game-state-repository";',
+    ],
+    [
+      "app shell to every architectural layer",
+      "src/app/routes/run.tsx",
+      [
+        'import "../../adapters/persistence/dexie-game-state-repository";',
+        'import "../../application/selectors/dashboard-selectors";',
+        'import "../../domain/model/run-state";',
+      ].join("\n"),
+    ],
   ] as const;
 
-  for (const { name, extraFile } of allowedCases) {
-    it(name, () => {
-      expect(findViolationsWith(extraFile)).toEqual([]);
-    });
-  }
+  it.each(allowedCases)("allows %s imports", (_label, path, sourceText) => {
+    const violations = findBoundaryViolations([...files, buildFile(path, sourceText)]);
+
+    expect(violations).toEqual([]);
+  });
 
   const violationCases = [
     {
@@ -248,7 +235,7 @@ describe("findBoundaryViolations", () => {
   }
 
   function findViolationsWith(extraFile: SourceFileInput): ReadonlyArray<BoundaryViolation> {
-    return findBoundaryViolations([...baseFiles, extraFile]);
+    return findBoundaryViolations([...files, extraFile]);
   }
 });
 
