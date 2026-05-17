@@ -14,17 +14,18 @@ import {
   type SourceFileInput,
 } from "../scripts/import-boundaries";
 
+const BASE_PATH = "/project";
+const CHECK_OPTIONS = { basePath: BASE_PATH } as const;
+
 describe("classifySourcePath", () => {
   it("classifies source paths by architectural layer", () => {
-    expect(classifySourcePath("src/domain/index.ts")).toBe("domain");
-    expect(classifySourcePath("src/application/index.ts")).toBe("application");
-    expect(classifySourcePath("src/adapters/index.ts")).toBe("adapters");
-    expect(classifySourcePath("src/app/app.tsx")).toBe("app");
-    expect(classifySourcePath("src/main.tsx")).toBe("other");
-    expect(classifySourcePath("/repo/src/domain/index.ts", { basePath: "/repo" })).toBe("domain");
-    expect(classifySourcePath("/repo/src/adapters/index.ts", { basePath: "/repo" })).toBe(
-      "adapters",
-    );
+    expect(classifySourcePath("src/domain/index.ts", CHECK_OPTIONS)).toBe("domain");
+    expect(classifySourcePath("src/application/index.ts", CHECK_OPTIONS)).toBe("application");
+    expect(classifySourcePath("src/adapters/index.ts", CHECK_OPTIONS)).toBe("adapters");
+    expect(classifySourcePath("src/app/app.tsx", CHECK_OPTIONS)).toBe("app");
+    expect(classifySourcePath("src/main.tsx", CHECK_OPTIONS)).toBe("other");
+    expect(classifySourcePath("/project/src/domain/index.ts", CHECK_OPTIONS)).toBe("domain");
+    expect(classifySourcePath("/project/src/adapters/index.ts", CHECK_OPTIONS)).toBe("adapters");
   });
 });
 
@@ -80,7 +81,10 @@ describe("findBoundaryViolations", () => {
   ] as const;
 
   it.each(allowedCases)("allows %s imports", (_label, path, sourceText) => {
-    const violations = findBoundaryViolations([...files, buildFile(path, sourceText)]);
+    const violations = findBoundaryViolations(
+      [...files, buildFile(path, sourceText)],
+      CHECK_OPTIONS,
+    );
 
     expect(violations).toEqual([]);
   });
@@ -247,18 +251,56 @@ describe("findBoundaryViolations", () => {
   }
 
   function findViolationsWith(extraFile: SourceFileInput): ReadonlyArray<BoundaryViolation> {
-    return findBoundaryViolations([...files, extraFile]);
+    return findBoundaryViolations([...files, extraFile], CHECK_OPTIONS);
   }
+});
+
+describe("layer matrix", () => {
+  const layerFiles = {
+    domain: "src/domain/model/run-state.ts",
+    application: "src/application/selectors/dashboard-selectors.ts",
+    adapters: "src/adapters/persistence/dexie-game-state-repository.ts",
+    app: "src/app/routes/title.tsx",
+    other: "src/main.tsx",
+  } as const;
+  const layerImports = {
+    domain: "src/domain/model/run-state",
+    application: "src/application/selectors/dashboard-selectors",
+    adapters: "src/adapters/persistence/dexie-game-state-repository",
+    app: "src/app/routes/title",
+    other: "src/main",
+  } as const;
+  const layers = Object.keys(layerFiles) as ReadonlyArray<keyof typeof layerFiles>;
+
+  it("exhaustively enforces every source and target layer pair", () => {
+    for (const sourceLayer of layers) {
+      for (const targetLayer of layers) {
+        const violations = findBoundaryViolations(
+          [
+            ...layers.map((layer) => buildFile(layerFiles[layer], "export const marker = {};")),
+            buildFile(layerFiles[sourceLayer], `import "${layerImports[targetLayer]}";`),
+          ],
+          CHECK_OPTIONS,
+        );
+
+        expect({
+          sourceLayer,
+          targetLayer,
+          messages: violations.map((violation) => violation.message),
+        }).toEqual({
+          sourceLayer,
+          targetLayer,
+          messages: expectedLayerMessages(sourceLayer, targetLayer),
+        });
+      }
+    }
+  });
 });
 
 describe("basePath option", () => {
   it("classifySourcePath respects an explicit basePath", () => {
-    expect(classifySourcePath("/project/src/domain/model.ts", { basePath: "/project" })).toBe(
-      "domain",
-    );
-    expect(classifySourcePath("/project/src/adapters/http.ts", { basePath: "/project" })).toBe(
-      "adapters",
-    );
+    expect(classifySourcePath("/project/src/domain/model.ts", CHECK_OPTIONS)).toBe("domain");
+    expect(classifySourcePath("/project/src/adapters/http.ts", CHECK_OPTIONS)).toBe("adapters");
   });
 
   it("findBoundaryViolations detects violations when basePath is supplied", () => {
@@ -267,7 +309,7 @@ describe("basePath option", () => {
         buildFile("/project/src/domain/bad.ts", 'import "../adapters/http";'),
         buildFile("/project/src/adapters/http.ts", "export const http = {};"),
       ],
-      { basePath: "/project" },
+      CHECK_OPTIONS,
     );
 
     expect(violations).toHaveLength(1);
@@ -275,10 +317,36 @@ describe("basePath option", () => {
   });
 });
 
+/**
+ * Build a source-file fixture for import-boundary rule tests.
+ *
+ * @param path - Repository-relative or absolute path used as the source file name.
+ * @param sourceText - TypeScript or JavaScript source text for the fixture.
+ * @returns A complete {@link SourceFileInput} object.
+ *
+ * @example
+ * ```ts
+ * buildFile("src/domain/model.ts", "export const model = {};");
+ * // { path: "src/domain/model.ts", sourceText: "export const model = {};" }
+ * ```
+ */
 function buildFile(path: string, sourceText: string): SourceFileInput {
   return { path, sourceText };
 }
 
+/**
+ * Assert selected fields from a boundary violation.
+ *
+ * @param violation - The violation returned by {@link findBoundaryViolations}.
+ * @param expected - The subset of violation fields relevant to the test case.
+ *
+ * @example
+ * ```ts
+ * expectViolation(violations[0], {
+ *   message: "domain files must not import adapter files",
+ * });
+ * ```
+ */
 function expectViolation(
   violation: BoundaryViolation | undefined,
   expected: Partial<Pick<BoundaryViolation, "importPath" | "line" | "message">>,
@@ -292,4 +360,40 @@ function expectViolation(
   if (expected.importPath) {
     expect(violation?.importPath).toBe(expected.importPath);
   }
+}
+
+/**
+ * Return expected violations for one source and target layer pair.
+ *
+ * @param sourceLayer - Architectural layer containing the import statement.
+ * @param targetLayer - Architectural layer named by the import target.
+ * @returns The expected boundary violation messages for that import direction.
+ *
+ * @example
+ * ```ts
+ * expectedLayerMessages("domain", "adapters");
+ * // ["domain files must not import adapter files"]
+ * ```
+ */
+function expectedLayerMessages(sourceLayer: string, targetLayer: string): string[] {
+  if (sourceLayer === "domain" && targetLayer === "application") {
+    return ["domain files must not import application files"];
+  }
+  if (sourceLayer === "domain" && targetLayer === "adapters") {
+    return ["domain files must not import adapter files"];
+  }
+  if (sourceLayer === "domain" && targetLayer === "app") {
+    return ["domain files must not import app shell files"];
+  }
+  if (sourceLayer === "application" && targetLayer === "adapters") {
+    return ["application files must not import adapter files"];
+  }
+  if (sourceLayer === "application" && targetLayer === "app") {
+    return ["application files must not import app shell files"];
+  }
+  if (sourceLayer === "adapters" && targetLayer === "app") {
+    return ["adapter files must not import app shell files"];
+  }
+
+  return [];
 }

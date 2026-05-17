@@ -53,11 +53,10 @@ export interface BoundaryViolation {
 /**
  * Optional configuration for `classifySourcePath` and `findBoundaryViolations`.
  *
- * @property basePath - Absolute path used to normalise relative file paths.
- *   Required when checking absolute source paths.
+ * @property basePath - Absolute path used to normalise source file paths.
  */
 export interface BoundaryCheckOptions {
-  readonly basePath?: string | undefined;
+  readonly basePath: string;
 }
 
 interface ImportReference {
@@ -85,12 +84,12 @@ const NON_LITERAL_DYNAMIC_IMPORT = "__NON_LITERAL_DYNAMIC_IMPORT__";
  * @example
  * ```ts
  * // example only
- * classifySourcePath("src/domain/user.ts"); // "domain"
- * classifySourcePath("src/adapters/http.ts"); // "adapters"
- * classifySourcePath("scripts/build.ts"); // "other"
+ * classifySourcePath("src/domain/user.ts", { basePath: "/repo" }); // "domain"
+ * classifySourcePath("src/adapters/http.ts", { basePath: "/repo" }); // "adapters"
+ * classifySourcePath("scripts/build.ts", { basePath: "/repo" }); // "other"
  * ```
  */
-export function classifySourcePath(path: string, options: BoundaryCheckOptions = {}): SourceLayer {
+export function classifySourcePath(path: string, options: BoundaryCheckOptions): SourceLayer {
   const normalizedPath = normalizeForComparison(path, getBasePath(options));
 
   if (normalizedPath.startsWith("src/domain/")) {
@@ -125,7 +124,7 @@ export function classifySourcePath(path: string, options: BoundaryCheckOptions =
  * ];
  *
  * const violations: ReadonlyArray<BoundaryViolation> =
- *   findBoundaryViolations(files);
+ *   findBoundaryViolations(files, { basePath: "/repo" });
  * // [{
  * //   sourcePath: "src/domain/load.ts",
  * //   importPath: "../adapters/http",
@@ -137,7 +136,7 @@ export function classifySourcePath(path: string, options: BoundaryCheckOptions =
  */
 export function findBoundaryViolations(
   files: ReadonlyArray<SourceFileInput>,
-  options: BoundaryCheckOptions = {},
+  options: BoundaryCheckOptions,
 ): ReadonlyArray<BoundaryViolation> {
   const basePath = getBasePath(options);
   const sourcePathSet = new Set(files.map((file) => normalizeForComparison(file.path, basePath)));
@@ -181,7 +180,7 @@ function describeViolation(
   sourceLayer: SourceLayer,
   importPath: string,
   sourcePathSet: ReadonlySet<string>,
-  basePath: string | undefined,
+  basePath: string,
 ): string | null {
   if (
     importPath === NON_LITERAL_DYNAMIC_IMPORT &&
@@ -265,7 +264,7 @@ function classifyImportTarget(
   sourcePath: string,
   importPath: string,
   sourcePathSet: ReadonlySet<string>,
-  basePath: string | undefined,
+  basePath: string,
 ): SourceLayer {
   if (importPath.startsWith(".")) {
     return classifySourcePath(
@@ -288,13 +287,11 @@ function resolveRelativeImport(
   sourcePath: string,
   importPath: string,
   sourcePathSet: ReadonlySet<string>,
-  basePath: string | undefined,
+  basePath: string,
 ): string {
   const sourceDirectory = isAbsolute(sourcePath)
     ? dirname(sourcePath)
-    : basePath
-      ? resolve(basePath, dirname(sourcePath))
-      : dirname(sourcePath);
+    : resolve(basePath, dirname(sourcePath));
   const candidate = normalizeForComparison(join(sourceDirectory, importPath), basePath);
 
   if (sourcePathSet.has(candidate)) {

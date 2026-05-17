@@ -42,7 +42,7 @@ export interface LintImportBoundaryDependencies {
   readonly writeError?: (message: string) => void;
   readonly findViolations?: (
     files: ReadonlyArray<SourceFileInput>,
-    options?: BoundaryCheckOptions,
+    options: BoundaryCheckOptions,
   ) => ReadonlyArray<BoundaryViolation>;
 }
 
