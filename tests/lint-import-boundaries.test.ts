@@ -13,6 +13,21 @@ import { join } from "node:path";
 import type { BoundaryViolation, SourceFileInput } from "../scripts/import-boundaries";
 import { formatViolation, getSourceFiles, main } from "../scripts/lint-import-boundaries";
 
+/**
+ * Build a source-file fixture with optional field overrides.
+ *
+ * @example
+ * ```ts
+ * buildSourceFile({
+ *   path: "src/domain/bad.ts",
+ *   sourceText: 'import "../adapters/http";',
+ * });
+ * // {
+ * //   path: "src/domain/bad.ts",
+ * //   sourceText: 'import "../adapters/http";',
+ * // }
+ * ```
+ */
 function buildSourceFile(overrides: Partial<SourceFileInput> = {}): SourceFileInput {
   return {
     path: "src/domain/model.ts",
@@ -21,6 +36,21 @@ function buildSourceFile(overrides: Partial<SourceFileInput> = {}): SourceFileIn
   };
 }
 
+/**
+ * Build a boundary-violation fixture with optional field overrides.
+ *
+ * @example
+ * ```ts
+ * buildViolation({ line: 2, importPath: "../adapters/db" });
+ * // {
+ * //   sourcePath: "src/domain/model.ts",
+ * //   line: 2,
+ * //   column: 1,
+ * //   message: "domain files must not import adapter files",
+ * //   importPath: "../adapters/db",
+ * // }
+ * ```
+ */
 function buildViolation(overrides: Partial<BoundaryViolation> = {}): BoundaryViolation {
   return {
     sourcePath: "src/domain/model.ts",
