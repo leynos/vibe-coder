@@ -159,6 +159,9 @@ describe("main", () => {
     });
 
     expect(exitCode).toBe(1);
-    expect(messages).toHaveLength(2);
+    expect(messages).toEqual([
+      'src/domain/bad.ts:1:1 domain files must not import adapter files: "../adapters/http"',
+      'src/domain/bad.ts:2:1 domain files must not import adapter files: "../adapters/db"',
+    ]);
   });
 });

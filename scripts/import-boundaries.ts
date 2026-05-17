@@ -1,8 +1,15 @@
 /** @file Pure import-boundary checks for Vibe Coder's hexagonal layers. */
 
-import { dirname, isAbsolute, normalize, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 
 import ts from "typescript";
+
+import {
+  getBasePath,
+  getScriptKind,
+  normalizeForComparison,
+  SOURCE_EXTENSIONS,
+} from "./import-boundary-paths";
 
 /**
  * Architectural layer assigned to a repository source file.
@@ -58,8 +65,6 @@ interface ImportReference {
   readonly line: number;
   readonly column: number;
 }
-
-const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx"] as const;
 
 const DISALLOWED_DOMAIN_PACKAGES = new Map<string, string>([
   ["react", "domain files must not import React"],
@@ -383,20 +388,4 @@ function getLiteralModuleSpecifier(node: ts.Node): string | null {
   }
 
   return null;
-}
-
-/** Pick the TypeScript parser mode for a source file path. */
-function getScriptKind(path: string): ts.ScriptKind {
-  return path.endsWith(".tsx") || path.endsWith(".jsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
-}
-
-/** Normalize paths to repository-relative POSIX separators for comparisons. */
-function normalizeForComparison(path: string, basePath: string): string {
-  const repositoryPath = isAbsolute(path) ? relative(basePath, path) : path;
-  return normalize(repositoryPath).split(sep).join("/");
-}
-
-/** Resolve the repository base path used for absolute path normalization. */
-function getBasePath(options: BoundaryCheckOptions): string {
-  return options.basePath ?? process.cwd();
 }
