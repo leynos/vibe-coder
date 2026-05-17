@@ -53,10 +53,11 @@ export interface BoundaryViolation {
 /**
  * Optional configuration for `classifySourcePath` and `findBoundaryViolations`.
  *
- * @property basePath - Absolute path used to normalise source file paths.
+ * @property basePath - Absolute path used to normalise relative file paths.
+ *   Required when checking absolute source paths.
  */
 export interface BoundaryCheckOptions {
-  readonly basePath: string;
+  readonly basePath?: string;
 }
 
 interface ImportReference {
@@ -89,7 +90,7 @@ const NON_LITERAL_DYNAMIC_IMPORT = "__NON_LITERAL_DYNAMIC_IMPORT__";
  * classifySourcePath("scripts/build.ts", { basePath: "/repo" }); // "other"
  * ```
  */
-export function classifySourcePath(path: string, options: BoundaryCheckOptions): SourceLayer {
+export function classifySourcePath(path: string, options: BoundaryCheckOptions = {}): SourceLayer {
   const normalizedPath = normalizeForComparison(path, getBasePath(options));
 
   if (normalizedPath.startsWith("src/domain/")) {
@@ -136,7 +137,7 @@ export function classifySourcePath(path: string, options: BoundaryCheckOptions):
  */
 export function findBoundaryViolations(
   files: ReadonlyArray<SourceFileInput>,
-  options: BoundaryCheckOptions,
+  options: BoundaryCheckOptions = {},
 ): ReadonlyArray<BoundaryViolation> {
   const basePath = getBasePath(options);
   const sourcePathSet = new Set(files.map((file) => normalizeForComparison(file.path, basePath)));
@@ -144,7 +145,7 @@ export function findBoundaryViolations(
 
   for (const file of files) {
     const sourcePath = normalizeForComparison(file.path, basePath);
-    const sourceLayer = classifySourcePath(sourcePath, { basePath });
+    const sourceLayer = classifySourcePath(sourcePath, getOptionsForBasePath(basePath));
 
     if (sourceLayer === "other") {
       continue;
@@ -180,7 +181,7 @@ function describeViolation(
   sourceLayer: SourceLayer,
   importPath: string,
   sourcePathSet: ReadonlySet<string>,
-  basePath: string,
+  basePath: string | undefined,
 ): string | null {
   if (
     importPath === NON_LITERAL_DYNAMIC_IMPORT &&
@@ -264,19 +265,17 @@ function classifyImportTarget(
   sourcePath: string,
   importPath: string,
   sourcePathSet: ReadonlySet<string>,
-  basePath: string,
+  basePath: string | undefined,
 ): SourceLayer {
   if (importPath.startsWith(".")) {
     return classifySourcePath(
       resolveRelativeImport(sourcePath, importPath, sourcePathSet, basePath),
-      {
-        basePath,
-      },
+      getOptionsForBasePath(basePath),
     );
   }
 
   if (importPath.startsWith("src/")) {
-    return classifySourcePath(importPath, { basePath });
+    return classifySourcePath(importPath, getOptionsForBasePath(basePath));
   }
 
   return "other";
@@ -287,11 +286,13 @@ function resolveRelativeImport(
   sourcePath: string,
   importPath: string,
   sourcePathSet: ReadonlySet<string>,
-  basePath: string,
+  basePath: string | undefined,
 ): string {
   const sourceDirectory = isAbsolute(sourcePath)
     ? dirname(sourcePath)
-    : resolve(basePath, dirname(sourcePath));
+    : basePath
+      ? resolve(basePath, dirname(sourcePath))
+      : dirname(sourcePath);
   const candidate = normalizeForComparison(join(sourceDirectory, importPath), basePath);
 
   if (sourcePathSet.has(candidate)) {
@@ -313,6 +314,11 @@ function resolveRelativeImport(
   }
 
   return candidate;
+}
+
+/** Build options without assigning explicit `undefined` to an optional key. */
+function getOptionsForBasePath(basePath: string | undefined): BoundaryCheckOptions {
+  return basePath === undefined ? {} : { basePath };
 }
 
 /** Extract import-like references from a TypeScript or JavaScript source file. */
