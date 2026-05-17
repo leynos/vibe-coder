@@ -12,12 +12,20 @@ export function getScriptKind(path: string): ts.ScriptKind {
 }
 
 /** Normalize paths to repository-relative POSIX separators for comparisons. */
-export function normalizeForComparison(path: string, basePath: string): string {
-  const repositoryPath = isAbsolute(path) ? relative(basePath, path) : path;
-  return normalize(repositoryPath).split(sep).join("/");
+export function normalizeForComparison(path: string, basePath: string | undefined): string {
+  if (isAbsolute(path)) {
+    if (!basePath) {
+      throw new Error(
+        "normalizeForComparison: basePath is required when path is absolute; " +
+          "supply it via BoundaryCheckOptions.basePath",
+      );
+    }
+    return normalize(relative(basePath, path)).split(sep).join("/");
+  }
+  return normalize(path).split(sep).join("/");
 }
 
-/** Resolve the repository base path used for absolute path normalization. */
-export function getBasePath(options: { readonly basePath?: string }): string {
-  return options.basePath ?? process.cwd();
+/** Return the caller-supplied base path, or undefined when none was provided. */
+export function getBasePath(options: { readonly basePath?: string | undefined }): string | undefined {
+  return options.basePath;
 }

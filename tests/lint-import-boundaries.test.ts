@@ -14,18 +14,15 @@ import type { BoundaryViolation, SourceFileInput } from "../scripts/import-bound
 import { formatViolation, getSourceFiles, main } from "../scripts/lint-import-boundaries";
 
 /**
- * Build a source-file fixture with optional field overrides.
+ * Build a minimal {@link SourceFileInput} fixture for use in tests.
+ *
+ * @param overrides - Optional properties merged over the default fixture.
+ * @returns A complete {@link SourceFileInput} object.
  *
  * @example
  * ```ts
- * buildSourceFile({
- *   path: "src/domain/bad.ts",
- *   sourceText: 'import "../adapters/http";',
- * });
- * // {
- * //   path: "src/domain/bad.ts",
- * //   sourceText: 'import "../adapters/http";',
- * // }
+ * buildSourceFile({ path: "src/adapters/http.ts" });
+ * // { path: "src/adapters/http.ts", sourceText: "export const model = {};" }
  * ```
  */
 function buildSourceFile(overrides: Partial<SourceFileInput> = {}): SourceFileInput {
@@ -37,17 +34,20 @@ function buildSourceFile(overrides: Partial<SourceFileInput> = {}): SourceFileIn
 }
 
 /**
- * Build a boundary-violation fixture with optional field overrides.
+ * Build a minimal {@link BoundaryViolation} fixture for use in tests.
+ *
+ * @param overrides - Optional properties merged over the default fixture.
+ * @returns A complete {@link BoundaryViolation} object.
  *
  * @example
  * ```ts
- * buildViolation({ line: 2, importPath: "../adapters/db" });
+ * buildViolation({ line: 3, column: 5 });
  * // {
  * //   sourcePath: "src/domain/model.ts",
- * //   line: 2,
- * //   column: 1,
+ * //   line: 3,
+ * //   column: 5,
  * //   message: "domain files must not import adapter files",
- * //   importPath: "../adapters/db",
+ * //   importPath: "../adapters/http",
  * // }
  * ```
  */

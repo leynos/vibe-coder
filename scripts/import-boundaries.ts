@@ -1,6 +1,6 @@
 /** @file Pure import-boundary checks for Vibe Coder's hexagonal layers. */
 
-import { dirname, isAbsolute, resolve } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 
 import ts from "typescript";
 
@@ -54,10 +54,10 @@ export interface BoundaryViolation {
  * Optional configuration for `classifySourcePath` and `findBoundaryViolations`.
  *
  * @property basePath - Absolute path used to normalise relative file paths.
- *   Defaults to `process.cwd()` when omitted.
+ *   Required when checking absolute source paths.
  */
 export interface BoundaryCheckOptions {
-  readonly basePath?: string;
+  readonly basePath?: string | undefined;
 }
 
 interface ImportReference {
@@ -181,7 +181,7 @@ function describeViolation(
   sourceLayer: SourceLayer,
   importPath: string,
   sourcePathSet: ReadonlySet<string>,
-  basePath: string,
+  basePath: string | undefined,
 ): string | null {
   if (
     importPath === NON_LITERAL_DYNAMIC_IMPORT &&
@@ -265,7 +265,7 @@ function classifyImportTarget(
   sourcePath: string,
   importPath: string,
   sourcePathSet: ReadonlySet<string>,
-  basePath: string,
+  basePath: string | undefined,
 ): SourceLayer {
   if (importPath.startsWith(".")) {
     return classifySourcePath(
@@ -288,12 +288,14 @@ function resolveRelativeImport(
   sourcePath: string,
   importPath: string,
   sourcePathSet: ReadonlySet<string>,
-  basePath: string,
+  basePath: string | undefined,
 ): string {
   const sourceDirectory = isAbsolute(sourcePath)
     ? dirname(sourcePath)
-    : resolve(basePath, dirname(sourcePath));
-  const candidate = normalizeForComparison(resolve(sourceDirectory, importPath), basePath);
+    : basePath
+      ? resolve(basePath, dirname(sourcePath))
+      : dirname(sourcePath);
+  const candidate = normalizeForComparison(join(sourceDirectory, importPath), basePath);
 
   if (sourcePathSet.has(candidate)) {
     return candidate;
