@@ -14,16 +14,18 @@ const PROJECT_ROOT = process.cwd();
 const SOURCE_GLOB = "src/**/*.{ts,tsx,js,jsx,mts,cts}";
 
 type ReadSourceFile = (path: string, encoding: "utf8") => string;
+type WriteLog = (message: string) => void;
 
 /**
  * `LintImportBoundaryDependencies` is the public seam for `main`, used to
  * replace production defaults in tests. Its members provide pre-loaded
- * `sourceFiles`, an optional `projectRoot`, a `writeError` sink, and a
- * `findViolations` implementation.
+ * `sourceFiles`, an optional `projectRoot`, log sinks, and a `findViolations`
+ * implementation.
  *
  * @property sourceFiles - Pre-loaded source files; skips filesystem scanning when supplied.
  * @property projectRoot - Absolute path used as the project root; defaults to `process.cwd()`.
  * @property writeError - Callback receiving each formatted violation string; defaults to `console.error`.
+ * @property writeInfo - Callback receiving operation progress messages; defaults to `console.info`.
  * @property findViolations - Boundary-check implementation; defaults to `findBoundaryViolations`.
  *
  * @example
@@ -39,7 +41,8 @@ type ReadSourceFile = (path: string, encoding: "utf8") => string;
 export interface LintImportBoundaryDependencies {
   readonly sourceFiles?: ReadonlyArray<SourceFileInput>;
   readonly projectRoot?: string;
-  readonly writeError?: (message: string) => void;
+  readonly writeError?: WriteLog;
+  readonly writeInfo?: WriteLog;
   readonly findViolations?: (
     files: ReadonlyArray<SourceFileInput>,
     options: BoundaryCheckOptions,
@@ -127,20 +130,65 @@ export function formatViolation(violation: BoundaryViolation): string {
  */
 export function main(dependencies: LintImportBoundaryDependencies = {}): number {
   const projectRoot = dependencies.projectRoot ?? PROJECT_ROOT;
-  const sourceFiles = dependencies.sourceFiles ?? getSourceFiles(projectRoot);
   const findViolations = dependencies.findViolations ?? findBoundaryViolations;
   const writeError = dependencies.writeError ?? console.error;
-  const violations = findViolations(sourceFiles, { basePath: projectRoot });
+  const writeInfo = dependencies.writeInfo ?? console.info;
+
+  writeInfo(`lint-import-boundaries start: projectRoot="${projectRoot}"`);
+
+  const sourceFiles = dependencies.sourceFiles ?? getSourceFiles(projectRoot);
+  writeInfo(`lint-import-boundaries scanned: files=${sourceFiles.length}`);
+
+  let violations: ReadonlyArray<BoundaryViolation>;
+  try {
+    violations = findViolations(sourceFiles, { basePath: projectRoot });
+  } catch (error) {
+    writeError(
+      `lint-import-boundaries failed: category="${getErrorCategory(error)}" message="${getErrorMessage(error)}"`,
+    );
+    throw error;
+  }
 
   for (const violation of violations) {
     writeError(formatViolation(violation));
   }
+
+  const exitCode = violations.length > 0 ? 1 : 0;
+  writeInfo(
+    `lint-import-boundaries completed: files=${sourceFiles.length} violations=${violations.length} exitCode=${exitCode}`,
+  );
 
   if (violations.length > 0) {
     return 1;
   }
 
   return 0;
+}
+
+/**
+ * Return a stable category for an unknown failure value.
+ *
+ * @example
+ * ```ts
+ * getErrorCategory(new TypeError("bad input")); // "TypeError"
+ * getErrorCategory("bad input"); // "string"
+ * ```
+ */
+function getErrorCategory(error: unknown): string {
+  return error instanceof Error ? error.name : typeof error;
+}
+
+/**
+ * Return a printable message for an unknown failure value.
+ *
+ * @example
+ * ```ts
+ * getErrorMessage(new Error("scan failed")); // "scan failed"
+ * getErrorMessage("scan failed"); // "scan failed"
+ * ```
+ */
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 if (import.meta.main) {

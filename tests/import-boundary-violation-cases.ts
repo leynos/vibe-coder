@@ -4,6 +4,25 @@
 
 import type { BoundaryViolation, SourceFileInput } from "../scripts/import-boundaries";
 
+/**
+ * Describes one single-violation fixture consumed by import-boundary tests.
+ *
+ * @property name - Human-readable test name passed to `it`.
+ * @property extraFile - Source file added to the shared fixture set.
+ * @property expected - Violation fields asserted for the extra source file.
+ *
+ * @example
+ * ```ts
+ * const testCase: ImportBoundaryViolationCase = {
+ *   name: "rejects domain files importing adapter files",
+ *   extraFile: {
+ *     path: "src/domain/service.ts",
+ *     sourceText: 'import "../adapters/http";',
+ *   },
+ *   expected: { message: "domain files must not import adapter files" },
+ * };
+ * ```
+ */
 export interface ImportBoundaryViolationCase {
   readonly name: string;
   readonly extraFile: SourceFileInput;

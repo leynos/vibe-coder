@@ -141,6 +141,7 @@ describe("main", () => {
         }),
       ],
       writeError: (message) => messages.push(message),
+      writeInfo: () => {},
     });
 
     expect(exitCode).toBe(1);
@@ -156,6 +157,7 @@ describe("main", () => {
     const exitCode = main({
       sourceFiles: [buildSourceFile()],
       writeError: (message) => messages.push(message),
+      writeInfo: () => {},
     });
 
     expect(exitCode).toBe(0);
@@ -170,8 +172,45 @@ describe("main", () => {
           throw new Error("scan failed");
         },
         writeError: () => {},
+        writeInfo: () => {},
       }),
     ).toThrow("scan failed");
+  });
+
+  it("logs scan start, file count, and completion summary", () => {
+    const messages: string[] = [];
+    const exitCode = main({
+      sourceFiles: [buildSourceFile()],
+      projectRoot: "/project",
+      writeError: () => {},
+      writeInfo: (message) => messages.push(message),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(messages).toEqual([
+      'lint-import-boundaries start: projectRoot="/project"',
+      "lint-import-boundaries scanned: files=1",
+      "lint-import-boundaries completed: files=1 violations=0 exitCode=0",
+    ]);
+  });
+
+  it("logs failure category and message when violation detection throws", () => {
+    const messages: string[] = [];
+
+    expect(() =>
+      main({
+        sourceFiles: [buildSourceFile()],
+        findViolations: () => {
+          throw new TypeError("scan failed");
+        },
+        projectRoot: "/project",
+        writeError: (message) => messages.push(message),
+        writeInfo: () => {},
+      }),
+    ).toThrow("scan failed");
+    expect(messages).toEqual([
+      'lint-import-boundaries failed: category="TypeError" message="scan failed"',
+    ]);
   });
 
   it("reports every violation when multiple exist", () => {
@@ -186,6 +225,7 @@ describe("main", () => {
         buildSourceFile({ path: "src/adapters/db.ts" }),
       ],
       writeError: (message) => messages.push(message),
+      writeInfo: () => {},
     });
 
     expect(exitCode).toBe(1);
