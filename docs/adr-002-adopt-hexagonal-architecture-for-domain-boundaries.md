@@ -1,4 +1,4 @@
-# Architectural decision record (ADR) 002: Adopt hexagonal architecture for domain boundaries
+# ADR 002: Adopt hexagonal architecture for domain boundaries
 
 ## Status
 
@@ -64,12 +64,16 @@ domain logic to drift into adapters when dependency direction is not enforced.
 Ports and adapters make domain boundaries explicit, preserve dependency
 inversion, and make the simulation core independently testable.
 
-| Topic              | Chosen direction                  | Main alternative                 |
-| ------------------ | --------------------------------- | -------------------------------- |
-| Domain testability | Core can run with fake ports      | Often depends on framework setup |
-| Technology change  | Adapters can be replaced          | Changes may cross layers         |
-| Initial complexity | Higher, due to explicit ports        | Lower, but easier to entangle    |
-| Simulation tuning  | Self-play can drive the same core | Tooling may need browser wiring  |
+<!-- markdownlint-disable MD013 -->
+
+| Topic              | Chosen direction                  | Main alternative                |
+| ------------------ | --------------------------------- | ------------------------------- |
+| Domain testability | Core can run with fake ports      | Often depends on framework      |
+| Technology change  | Adapters can be replaced          | Changes may cross layers        |
+| Initial complexity | Higher, due to explicit ports     | Lower, but easier to entangle   |
+| Simulation tuning  | Self-play can drive the same core | Tooling may need browser wiring |
+
+<!-- markdownlint-enable MD013 -->
 
 _Table 1: Trade-offs for ADR 002._
 
@@ -79,6 +83,13 @@ The project will adopt hexagonal architecture. Application services and domain
 rules form the core. React, Dexie, Web Audio, Canvas, workers, asset tooling,
 and optimization runners interact with the core through inbound and outbound
 ports.
+
+The TypeScript source tree uses `src/domain/`, `src/application/`, and
+`src/adapters/` as the package boundaries for that core and its outer ring.
+The alternative `src/core/` name is rejected because it blurs the distinction
+between pure domain policy and application orchestration. Import-boundary
+enforcement uses the repository's custom TypeScript lint guard, exposed as
+`bun run lint:imports` and wired into `bun semantic`.
 
 The following sketch illustrates the intended direction of dependencies.
 
@@ -134,10 +145,6 @@ type GameApplication = {
 
 ## Outstanding decisions
 
-- The source tree uses `domain/`, `application/`, and `adapters/` as the chosen
-  package boundaries; the `core/` naming option has been set aside.
-- Import-boundary lint rules will be defined and enforced via Biome or a custom
-  TypeScript rule once the repository scaffold exists.
 - Decide whether optimization tooling lives inside the app package or in a
   sibling package.
 
@@ -148,4 +155,3 @@ presentation stack. Hexagonal boundaries keep the simulation as the source of
 truth while letting the outer ring change. The approach also matches the
 attached architecture material, which treats adapters as translation layers that
 must not invent domain state.
-
