@@ -92,7 +92,7 @@ describe("findBoundaryViolations", () => {
 
   for (const { name, extraFile, expected } of violationCases) {
     it(name, () => {
-      const violations = findViolationsWith(buildFile(extraFile.path, extraFile.sourceText));
+      const violations = findViolationsWith(extraFile);
 
       expect(violations).toHaveLength(1);
       expectViolation(violations[0], expected);
@@ -110,16 +110,15 @@ describe("findBoundaryViolations", () => {
       ),
     );
 
-    expect(violations.map(({ importPath, message }) => ({ importPath, message }))).toEqual([
-      {
-        importPath: "../../application/selectors/dashboard-selectors",
-        message: "domain files must not import application files",
-      },
-      {
-        importPath: "../../adapters/persistence/dexie-game-state-repository",
-        message: "domain files must not import adapter files",
-      },
-    ]);
+    expect(violations).toHaveLength(2);
+    expectViolation(violations[0], {
+      importPath: "../../application/selectors/dashboard-selectors",
+      message: "domain files must not import application files",
+    });
+    expectViolation(violations[1], {
+      importPath: "../../adapters/persistence/dexie-game-state-repository",
+      message: "domain files must not import adapter files",
+    });
   });
 
   function findViolationsWith(extraFile: SourceFileInput): ReadonlyArray<BoundaryViolation> {

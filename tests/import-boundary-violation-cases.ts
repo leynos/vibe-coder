@@ -2,14 +2,11 @@
  * @file Shared import-boundary violation fixtures for behavioural tests.
  */
 
-import type { BoundaryViolation } from "../scripts/import-boundaries";
+import type { BoundaryViolation, SourceFileInput } from "../scripts/import-boundaries";
 
 export interface ImportBoundaryViolationCase {
   readonly name: string;
-  readonly extraFile: {
-    readonly path: string;
-    readonly sourceText: string;
-  };
+  readonly extraFile: SourceFileInput;
   readonly expected: Partial<Pick<BoundaryViolation, "importPath" | "line" | "message">>;
 }
 
