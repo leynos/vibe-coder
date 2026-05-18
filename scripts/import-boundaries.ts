@@ -25,7 +25,9 @@ export type SourceLayer = "domain" | "application" | "adapters" | "app" | "other
 /**
  * A source file supplied to the boundary checker.
  *
- * @property path - Repository-relative path to the file (e.g. `"src/domain/model.ts"`).
+ * @property path - Repository-relative path to the file (e.g. `"src/domain/model.ts"`),
+ *   or an absolute path when {@link BoundaryCheckOptions.basePath} is supplied
+ *   so the checker can normalize it to a repository-relative path.
  * @property sourceText - UTF-8 source text of the file.
  */
 export interface SourceFileInput {
@@ -53,8 +55,10 @@ export interface BoundaryViolation {
 /**
  * Optional configuration for `classifySourcePath` and `findBoundaryViolations`.
  *
- * @property basePath - Absolute path used to normalise relative file paths.
- *   Required when checking absolute source paths.
+ * @property basePath - Absolute repository path used to normalize absolute
+ *   {@link SourceFileInput.path} values into repository-relative paths. Callers
+ *   must supply {@link BoundaryCheckOptions.basePath} when passing absolute
+ *   source paths.
  */
 export interface BoundaryCheckOptions {
   readonly basePath?: string;
@@ -73,6 +77,7 @@ const DISALLOWED_DOMAIN_PACKAGES = new Map<string, string>([
 ]);
 
 const DISALLOWED_APPLICATION_PACKAGES = new Map<string, string>([
+  ["react", "application files must not import React"],
   ["react-dom", "application files must not import React DOM"],
   ["dexie", "application files must not import Dexie"],
 ]);

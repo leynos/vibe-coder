@@ -147,6 +147,14 @@ describe("findBoundaryViolations", () => {
       expected: { message: "domain files must not import React DOM" },
     },
     {
+      name: "rejects application files importing React",
+      extraFile: buildFile(
+        "src/application/selectors/render-selector.ts",
+        'import { useMemo } from "react";',
+      ),
+      expected: { message: "application files must not import React" },
+    },
+    {
       name: "checks dynamic import expressions as imports",
       extraFile: buildFile(
         "src/domain/services/lazy-load-save.ts",
@@ -376,24 +384,14 @@ function expectViolation(
  * ```
  */
 function expectedLayerMessages(sourceLayer: string, targetLayer: string): string[] {
-  if (sourceLayer === "domain" && targetLayer === "application") {
-    return ["domain files must not import application files"];
-  }
-  if (sourceLayer === "domain" && targetLayer === "adapters") {
-    return ["domain files must not import adapter files"];
-  }
-  if (sourceLayer === "domain" && targetLayer === "app") {
-    return ["domain files must not import app shell files"];
-  }
-  if (sourceLayer === "application" && targetLayer === "adapters") {
-    return ["application files must not import adapter files"];
-  }
-  if (sourceLayer === "application" && targetLayer === "app") {
-    return ["application files must not import app shell files"];
-  }
-  if (sourceLayer === "adapters" && targetLayer === "app") {
-    return ["adapter files must not import app shell files"];
-  }
+  const messagesByLayerPair: Record<string, string[]> = {
+    "domain->application": ["domain files must not import application files"],
+    "domain->adapters": ["domain files must not import adapter files"],
+    "domain->app": ["domain files must not import app shell files"],
+    "application->adapters": ["application files must not import adapter files"],
+    "application->app": ["application files must not import app shell files"],
+    "adapters->app": ["adapter files must not import app shell files"],
+  };
 
-  return [];
+  return messagesByLayerPair[`${sourceLayer}->${targetLayer}`] ?? [];
 }

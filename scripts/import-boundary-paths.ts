@@ -6,12 +6,31 @@ import ts from "typescript";
 
 export const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx"] as const;
 
-/** Pick the TypeScript parser mode for a source file path. */
+/**
+ * Pick the TypeScript parser mode for a source file path.
+ *
+ * @example
+ * ```ts
+ * getScriptKind("file.tsx"); // ts.ScriptKind.TSX
+ * getScriptKind("file.ts"); // ts.ScriptKind.TS
+ * ```
+ */
 export function getScriptKind(path: string): ts.ScriptKind {
   return path.endsWith(".tsx") || path.endsWith(".jsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
 }
 
-/** Normalize paths to repository-relative POSIX separators for comparisons. */
+/**
+ * Normalize paths to repository-relative POSIX separators for comparisons.
+ *
+ * @example
+ * ```ts
+ * normalizeForComparison("/repo/src/domain/model.ts", "/repo");
+ * // "src/domain/model.ts"
+ *
+ * normalizeForComparison("src\\domain\\model.ts", undefined);
+ * // "src/domain/model.ts"
+ * ```
+ */
 export function normalizeForComparison(path: string, basePath: string | undefined): string {
   if (isAbsolute(path)) {
     if (!basePath) {
@@ -25,7 +44,15 @@ export function normalizeForComparison(path: string, basePath: string | undefine
   return normalize(path).split(sep).join("/");
 }
 
-/** Return the caller-supplied base path, or undefined when none was provided. */
+/**
+ * Return the caller-supplied base path, or undefined when none was provided.
+ *
+ * @example
+ * ```ts
+ * getBasePath({ basePath: "/repo" }); // "/repo"
+ * getBasePath({}); // undefined
+ * ```
+ */
 export function getBasePath(options: { readonly basePath?: string }): string | undefined {
   return options.basePath;
 }
