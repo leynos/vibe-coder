@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Accepted.
 
 ## Date
 
@@ -65,6 +65,8 @@ and dev-tool visibility are weaker than a formal machine model.
 XState provides explicit state nodes, guards, actions, model testing, and visual
 inspection while leaving numerical simulation outside the graph.
 
+<!-- markdownlint-disable MD013 MD060 -->
+
 | Topic                | Chosen direction                   | Main alternative          |
 | -------------------- | ---------------------------------- | ------------------------- |
 | Invalid states       | Guarded transitions                | Often implicit            |
@@ -74,12 +76,33 @@ inspection while leaving numerical simulation outside the graph.
 
 _Table 1: Trade-offs for ADR 003._
 
+<!-- markdownlint-enable MD013 MD060 -->
+
 ## Decision outcome / proposed direction
 
 The project will use XState for application and interaction workflows. Machines
 will coordinate lifecycle, editing, prompt, unlock, autopilot, and audio mood
 states. Domain services will continue to own resource calculation and simulation
 transitions.
+
+Machines are centralized under `src/application/machines/`. This is an
+application-layer choice, not a generic pattern transplant: the first planned
+machines coordinate workflows that cross multiple future features, including
+boot, run lifecycle, policy editing, event prompts, progression, and audio
+mood. Keeping those workflow contracts in the application layer gives inbound
+adapters and React views one stable orchestration surface while leaving feature
+UI free to colocate its own presentation code.
+
+The first model-test harness uses XState v5 graph utilities imported from
+`xstate/graph` and executed by Bun tests. The earlier `@xstate/test` candidate
+is not adopted because current XState v5 documentation places the maintained
+model-based testing utilities in the graph export included with `xstate`.
+Machine tests should use graph-generated paths to prove reachable states and
+transition coverage before UI flows depend on those machines.
+
+Autopilot remains modelled as a future parallel state region of `run.machine`.
+That modelling choice is accepted here, but this ADR does not implement
+`run.machine` or any autopilot behaviour.
 
 ## Goals and non-goals
 
@@ -112,12 +135,10 @@ transitions.
 
 ## Outstanding decisions
 
-- Machines are centralized under `application/machines/` rather than colocated
-  with individual feature directories.
-- The model-test harness uses `@xstate/test` with Bun; graph export uses the
-  XState developer tools inspector.
-- Autopilot is a parallel state region of `run.machine` rather than a separate
-  top-level machine.
+- None for roadmap item 1.1.3. Machine placement, the first model-test harness,
+  and autopilot's future modelling shape are accepted above.
+- Later roadmap items still need to define the concrete events, guards, and
+  application-service calls for each production machine.
 
 ## Architectural rationale
 
@@ -126,4 +147,3 @@ response form a clear conversation. Explicit state machines help the application
 listen to player commands, think through guarded workflow transitions, and speak
 through legible user interface states without smearing those responsibilities
 across React components.
-

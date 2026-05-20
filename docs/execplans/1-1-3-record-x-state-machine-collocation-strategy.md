@@ -5,7 +5,7 @@ This ExecPlan (execution plan) is a living document. The sections
 `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work
 proceeds.
 
-Status: DRAFT
+Status: COMPLETE
 
 ## Purpose / big picture
 
@@ -22,7 +22,8 @@ this plan until the user has explicitly approved it.
 
 ## Constraints
 
-- Do not begin implementation until this ExecPlan is explicitly approved.
+- This ExecPlan was explicitly approved for implementation on 2026-05-20 by
+  the user request to proceed with the planned functionality.
 - Keep the implementation scoped to roadmap item 1.1.3.
 - Use the `hexagonal-architecture` skill to protect boundaries. Dependencies
   point inward, domain policy remains free of framework imports, and XState
@@ -406,9 +407,75 @@ The implementation is accepted when all of the following are true:
 - [x] (2026-05-18T22:30:56Z) Started a temporary validation dev server for e2e
   and css-view because the Rocky/Fedora e2e wrapper requires a reachable server
   at `http://localhost:5173`; stopped that server after validation.
-- [ ] Commit this ExecPlan.
-- [ ] Push the branch and open a draft pull request for plan review.
-- [ ] Await explicit user approval before implementation.
+- [x] (2026-05-18T22:30:56Z) Committed this ExecPlan for plan review.
+- [x] (2026-05-18T22:30:56Z) Pushed the branch and opened draft pull request
+  #7 for plan review.
+- [x] (2026-05-20T00:00:00+02:00) Received explicit user approval to proceed
+  with implementation of this ExecPlan.
+- [ ] Update ADR 003 with the accepted machine placement and model-test harness
+  decisions.
+- [x] (2026-05-20T00:00:00+02:00) Verified package metadata:
+  `xstate` is available at version `5.31.1`, while `@xstate/test` remains at
+  version `0.5.1`.
+- [x] (2026-05-20T00:00:00+02:00) Updated ADR 003 to accepted status, recorded
+  centralized `src/application/machines/` placement, selected XState v5
+  `xstate/graph` for the first model-test harness, and closed the 1.1.3
+  outstanding decisions.
+- [ ] Add the first application-layer XState machine and model-test harness
+  coverage.
+- [x] (2026-05-20T00:00:00+02:00) Added `xstate@5.31.1` as the only new
+  direct dependency for the first machine and graph harness.
+- [x] (2026-05-20T00:00:00+02:00) Added `src/application/machines/app.machine.ts`
+  with the minimal boot workflow states `booting`, `title`, and `failed`.
+- [x] (2026-05-20T00:00:00+02:00) Added `tests/app-machine.test.ts`, using
+  `createTestModel` from `xstate/graph` to prove graph-generated reachability
+  for the first machine.
+- [x] (2026-05-20T00:00:00+02:00) Ran focused typecheck and machine tests. The
+  final focused run passed with `3 pass`, `0 fail` for
+  `tests/app-machine.test.ts`.
+- [ ] Update developer documentation and mark roadmap item 1.1.3 done after the
+  success criteria are met.
+- [x] (2026-05-20T00:00:00+02:00) Updated `docs/developers-guide.md` with the
+  accepted machine placement and `xstate/graph` model-test harness practice.
+- [x] (2026-05-20T00:00:00+02:00) Left `docs/users-guide.md` unchanged because
+  the implemented change is developer-facing and introduces no player-visible
+  behaviour.
+- [x] (2026-05-20T00:00:00+02:00) Marked only roadmap item 1.1.3 as done after
+  the accepted ADR, first machine source, focused machine test, and developer
+  guide update were in place.
+- [ ] Run required validation, including `coderabbit review --agent` after each
+  major milestone.
+- [x] (2026-05-20T00:00:00+02:00) Ran `coderabbit review --agent` after the
+  ADR/developer-documentation milestone; it completed with `findings: 0`.
+- [x] (2026-05-20T00:00:00+02:00) Ran `coderabbit review --agent` after the
+  machine/test milestone; it completed with `findings: 0`.
+- [x] (2026-05-20T00:00:00+02:00) Ran a final `coderabbit review --agent`;
+  it reported one valid JSDoc concern and one graph-path efficiency concern.
+  Both were cleared by adding an `appMachine` actor-lifecycle example and by
+  changing the reachability test to target each expected state with
+  `getShortestPaths({ toState })`.
+- [x] (2026-05-20T00:00:00+02:00) Reran `coderabbit review --agent` after the
+  documentation fixes and reachability assertion cleanup; the final review
+  completed with `findings: 0`.
+- [x] (2026-05-20T00:00:00+02:00) Addressed CodeRabbit's last valid
+  reachability assertion concern by asserting that targeted graph path
+  generation returns at least one path for each expected state, then reran
+  CodeRabbit successfully with `findings: 0`.
+- [x] (2026-05-20T00:00:00+02:00) Ran focused Markdown lint for the touched
+  documents; the final run passed with no output.
+- [x] (2026-05-20T00:00:00+02:00) Ran `make check-fmt`; the first run applied
+  Biome formatting to one file, and the second run reported no fixes needed.
+- [x] (2026-05-20T00:00:00+02:00) Ran `make lint`, `make typecheck`, and
+  `make test`; all passed after correcting Biome export ordering in the new
+  barrels. These gates were rerun after the final CodeRabbit cleanups and
+  passed again.
+- [x] (2026-05-20T00:00:00+02:00) Ran `bun ff`; the first run reached e2e and
+  failed because no dev server was reachable at `http://localhost:5173`, then
+  later runs passed fully after starting a temporary branch validation server,
+  including the final rerun after clearing all CodeRabbit findings.
+- [x] (2026-05-20T00:00:00+02:00) Ran css-view against
+  `http://127.0.0.1:5173/`; it completed successfully and wrote
+  `/tmp/css-view-vibe-coder-1-1-3-record-x-state-machine-collocation-strategy.json`.
 
 ## Surprises & discoveries
 
@@ -461,6 +528,37 @@ The implementation is accepted when all of the following are true:
   css-view validation ran separately and wrote
   `/tmp/css-view-vibe-coder-1-1-3-record-x-state-machine-collocation-strategy.json`.
 
+- Observation: XState v5's default graph path generation did not cover both
+  sibling boot outcomes in one unconstrained shortest-path call.
+  Evidence: the first focused `bun test tests/app-machine.test.ts` run reached
+  `booting` and `title`, but not `failed`.
+  Impact: The first harness now declares the three accepted events explicitly
+  and asks `getShortestPaths` for each expected target state so reachability is
+  proven without relying on duplicate path output.
+
+- Observation: CodeRabbit's final review caught a valid documentation gap in
+  the first machine module.
+  Evidence: `coderabbit review --agent` asked for a JSDoc example showing the
+  actor lifecycle.
+  Impact: `src/application/machines/app.machine.ts` now includes a file-level
+  `@example` that imports `createActor`, starts `appMachine`, sends
+  `BOOT_READY`, and observes the `title` state.
+
+- Observation: The final `bun ff` gate required a reachable dev server for
+  `scripts/e2e.sh`.
+  Evidence: the first `bun ff` run printed
+  `ERROR: Dev server not reachable at http://localhost:5173`.
+  Impact: A temporary `bun dev -- --host 127.0.0.1 --port 5173` server was
+  started only for validation and stopped after `bun ff` and css-view
+  completed.
+
+- Observation: The Playwright MCP browser still cannot launch in this
+  environment.
+  Evidence: `mcp__playwright__.browser_navigate` reported that
+  `chrome-for-testing` is not installed.
+  Impact: Playwright evidence for this implementation comes from the repository
+  e2e stage inside `bun ff`, which passed `tests/e2e/a11y.pw.ts`.
+
 ## Decision Log
 
 - Decision: Draft this plan as implementation-gated rather than making ADR,
@@ -485,6 +583,33 @@ The implementation is accepted when all of the following are true:
   Rationale: Recording machine placement and adding a minimal test does not
   change player-visible behaviour.
 
+- Decision: Adopt `xstate` version `5.31.1` and do not add `@xstate/test`.
+  Rationale: Package metadata and current official documentation support the
+  maintained XState v5 graph utility path through `xstate/graph`; adding the
+  older test package would preserve stale ADR wording rather than ratify the
+  current harness.
+
 ## Outcomes & Retrospective
 
-This section is intentionally empty until the plan is approved and implemented.
+Roadmap item 1.1.3 is implemented. ADR 003 is accepted for this item and now
+records centralized `src/application/machines/` placement, XState v5
+`xstate/graph` as the first model-test harness, and autopilot as a future
+parallel region of `run.machine`.
+
+The first machine lives at `src/application/machines/app.machine.ts`, is
+exported through the application layer, and intentionally models only boot
+workflow reachability. The first machine test lives at
+`tests/app-machine.test.ts` and uses `createTestModel` from `xstate/graph` to
+check reachability for `booting`, `title`, and `failed` without adding
+simulation state or UI behaviour.
+
+`docs/developers-guide.md` now records the accepted machine placement and graph
+harness practice, `docs/roadmap.md` marks only item 1.1.3 as done, and
+`docs/users-guide.md` remains unchanged because no player-visible behaviour was
+introduced.
+
+All required gates passed after the final CodeRabbit cleanup: `make check-fmt`,
+`make lint`, `make typecheck`, `make test`, and `bun ff`. Playwright MCP remains
+unavailable because `chrome-for-testing` is not installed, but the repository
+Playwright e2e accessibility test passed inside `bun ff`, and css-view
+completed successfully against the served app.
