@@ -265,7 +265,7 @@ Autopilot modelling: retain ADR 003's current direction that autopilot is a
 parallel state region of `run.machine`, but do not implement it in 1.1.3.
 ```
 
-The ADR text must explain why centralising machines in the application layer is
+The ADR text must explain why centralizing machines in the application layer is
 not a generic pattern transplant. In this repository, machines coordinate
 application workflows that cross features, while feature UI remains in the app
 shell or future inbound adapters. This keeps domain rules pure and avoids
