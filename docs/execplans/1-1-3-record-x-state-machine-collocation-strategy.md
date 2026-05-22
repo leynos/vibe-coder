@@ -195,7 +195,7 @@ Official XState source checks made during planning:
 - The graph docs state that graph utilities are included in the main `xstate`
   package and imported from `xstate/graph`.
 - The graph docs present path generation as useful for model-based testing,
-  validation, visualisation, and documentation, and show `createTestModel` from
+  validation, visualization, and documentation, and show `createTestModel` from
   `xstate/graph`.
 - The legacy `@xstate/test` page says the latest model-based testing utilities
   previously in `@xstate/test` are now part of graph utilities.
@@ -258,7 +258,7 @@ Third, update ADR 003. Add an accepted decision section near the decision
 outcome that records:
 
 ```plaintext
-Machine placement: centralised under `src/application/machines/`.
+Machine placement: centralized under `src/application/machines/`.
 First model-test harness: XState v5 graph/model-test utilities through
 `xstate/graph`, exercised by Bun tests.
 Autopilot modelling: retain ADR 003's current direction that autopilot is a
@@ -362,7 +362,7 @@ title includes `(1.1.3)`.
 The implementation is accepted when all of the following are true:
 
 - `docs/adr-003-use-xstate-for-workflow-orchestration.md` contains an accepted
-  decision for centralised `src/application/machines/` placement or another
+  decision for centralized `src/application/machines/` placement or another
   explicitly approved placement.
 - ADR 003 records the first model-test harness choice and no longer leaves that
   choice open.
@@ -392,7 +392,7 @@ The implementation is accepted when all of the following are true:
 - [x] (2026-05-18T22:25:29Z) Used a Wyvern agent team for planning research:
   one agent reviewed roadmap and ADR scope, one reviewed source, test, i18n, and
   script patterns, and one reviewed frontend, accessibility, Playwright,
-  css-view, and localisation constraints.
+  css-view, and localization constraints.
 - [x] (2026-05-18T22:25:29Z) Reviewed the roadmap, ADR 001, ADR 002, ADR 003,
   ADR 005, existing source layout, existing test harnesses, package scripts,
   Makefile, developer guide, and prior ExecPlan structure.
@@ -569,7 +569,7 @@ The implementation is accepted when all of the following are true:
   Rationale: The success criterion includes a first machine test that compiles
   and passes.
 
-- Decision: Prefer centralised machine placement under
+- Decision: Prefer centralized machine placement under
   `src/application/machines/` unless implementation uncovers a blocker.
   Rationale: ADR 003, the HLD direction cited by the roadmap, and the developer
   guide already align on application-layer machine ownership.
