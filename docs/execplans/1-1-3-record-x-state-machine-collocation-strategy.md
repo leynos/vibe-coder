@@ -476,6 +476,25 @@ The implementation is accepted when all of the following are true:
 - [x] (2026-05-20T00:00:00+02:00) Ran css-view against
   `http://127.0.0.1:5173/`; it completed successfully and wrote
   `/tmp/css-view-vibe-coder-1-1-3-record-x-state-machine-collocation-strategy.json`.
+- [x] (2026-05-22T00:00:00+02:00) Used a Wyvern agent team to verify the
+  latest review warnings against the current code. The compile-time machine
+  contract warning was still valid, while the observability warning was only
+  valid for exposing boundary-safe hooks.
+- [x] (2026-05-22T00:00:00+02:00) Added TypeScript compile-time assertions for
+  the public app machine event, state, and action contracts.
+- [x] (2026-05-22T00:00:00+02:00) Added named XState action IDs for boot
+  success, boot failure, and retry events so the app shell can provide logging
+  and metrics without importing adapters into `src/application/machines/`.
+- [x] (2026-05-22T00:00:00+02:00) Used a scribe agent to update
+  `docs/developers-guide.md` with the observability boundary guidance.
+- [x] (2026-05-22T00:00:00+02:00) Ran `coderabbit review --agent` for the
+  review-fix milestone, fixed each still-valid type-test concern it reported,
+  and reran local gates after each change.
+- [x] (2026-05-22T00:00:00+02:00) Attempted a final CodeRabbit confirmation
+  run after the last fix. CodeRabbit repeatedly returned recoverable
+  rate-limit errors, first with a 3 minute 46 second wait and then with a
+  5 minute 36 second wait, so final confirmation could not complete in this
+  pass.
 
 ## Surprises & discoveries
 
@@ -559,6 +578,39 @@ The implementation is accepted when all of the following are true:
   Impact: Playwright evidence for this implementation comes from the repository
   e2e stage inside `bun ff`, which passed `tests/e2e/a11y.pw.ts`.
 
+- Observation: Review feedback correctly identified that runtime machine tests
+  did not prove compile-time contracts for the public machine event and state
+  types.
+  Evidence: `tests/app-machine.test.ts` exercised runtime behaviour, but had no
+  `@ts-expect-error` assertions or equivalent type-level fixtures.
+  Impact: `tests/app-machine.types.test.ts` now makes `bun check:types` fail if
+  undeclared events, states, or action IDs become accepted accidentally.
+
+- Observation: The observability warning was partly valid, but the requested
+  direct logging implementation would violate the hexagonal boundary.
+  Evidence: `appLogger` lives under `src/app/observability/logger.ts`, while
+  `src/application/machines/app.machine.ts` belongs to the application layer.
+  Impact: The machine now exposes typed action IDs for boot observability. The
+  app shell or adapter composition boundary must provide concrete logging or
+  metrics implementations.
+
+- Observation: CodeRabbit's follow-up findings against
+  `tests/app-machine.types.test.ts` were valid and helped keep the file as a
+  compile-time contract test instead of a mixed runtime/type test.
+  Evidence: The review asked to remove runtime invalid sends, remove redundant
+  runtime fixture assertions, derive actor send types through XState's
+  `ActorRefFrom`, add exact union exhaustiveness checks, and move negative
+  `@ts-expect-error` assertions into the suite.
+  Impact: The type test now uses `expectTypeOf`, exact union checks, and scoped
+  negative assertions without sending invalid events at runtime.
+
+- Observation: Final CodeRabbit confirmation is currently blocked by service
+  rate limiting.
+  Evidence: Two final `coderabbit review --agent` attempts returned recoverable
+  rate-limit errors after the requested wait period.
+  Impact: Local validation is clean, but the final CodeRabbit clean-result
+  confirmation remains unavailable until the external quota recovers.
+
 ## Decision Log
 
 - Decision: Draft this plan as implementation-gated rather than making ADR,
@@ -588,6 +640,23 @@ The implementation is accepted when all of the following are true:
   maintained XState v5 graph utility path through `xstate/graph`; adding the
   older test package would preserve stale ADR wording rather than ratify the
   current harness.
+
+- Decision: Add compile-time machine contract tests with TypeScript
+  `@ts-expect-error` assertions instead of adding `tsd`.
+  Rationale: `tsconfig.json` already includes `tests/`, so `make typecheck`
+  enforces these assertions without introducing another dependency or command.
+
+- Decision: Satisfy the observability concern by exporting typed named action
+  IDs, not by importing `appLogger` into the machine.
+  Rationale: Application machines define orchestration contracts. Concrete
+  logging and metrics are adapter concerns and must be provided at the app shell
+  or composition boundary.
+
+- Decision: Keep the compile-time machine contract tests in the Bun test tree
+  rather than adding a separate type-test runner.
+  Rationale: `bun check:types` already enforces `@ts-expect-error` and
+  `expectTypeOf` assertions under `tests/`, and avoiding `tsd` keeps the change
+  smaller.
 
 ## Outcomes & Retrospective
 

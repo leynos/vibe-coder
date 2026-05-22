@@ -10,5 +10,5 @@
  * and `docs/adr-003-use-xstate-for-workflow-orchestration.md` for rationale.
  */
 
-export type { AppMachineEvent } from "./machines";
+export type { AppMachineAction, AppMachineEvent, AppMachineStateValue } from "./machines";
 export { appMachine } from "./machines";

@@ -168,7 +168,10 @@ The domain layer contains:
 - **Machine model tests**: the first machine harness uses XState v5 graph
   utilities from `xstate/graph` under Bun tests. Prefer graph-generated path
   coverage for reachability and impossible-state checks before wiring machines
-  into React views.
+  into React views. App machines may expose named XState action IDs for
+  observability, but logging and metrics implementations must be provided at
+  the app shell or adapter composition boundary, not imported into
+  `src/application/machines/`.
 - **Application services**: `startRun`, `applyPolicy`, `resolveEvent`, and
   similar use-case entry points. These orchestrate ports and machines but do
   not contain domain equations.

@@ -6,5 +6,5 @@
  * internals before their roadmap slices exist.
  */
 
-export type { AppMachineEvent } from "./app.machine";
+export type { AppMachineAction, AppMachineEvent, AppMachineStateValue } from "./app.machine";
 export { appMachine } from "./app.machine";

@@ -25,23 +25,40 @@ export type AppMachineEvent =
   | { readonly type: "BOOT_FAILED" }
   | { readonly type: "RETRY_BOOT" };
 
+export type AppMachineStateValue = "booting" | "failed" | "title";
+
+export type AppMachineAction =
+  | { readonly type: "recordBootFailed" }
+  | { readonly type: "recordBootRetryRequested" }
+  | { readonly type: "recordBootSucceeded" };
+
 export const appMachine = createMachine({
   id: "app",
   types: {} as {
+    actions: AppMachineAction;
     events: AppMachineEvent;
   },
   initial: "booting",
   states: {
     booting: {
       on: {
-        BOOT_FAILED: { target: "failed" },
-        BOOT_READY: { target: "title" },
+        BOOT_FAILED: {
+          actions: { type: "recordBootFailed" },
+          target: "failed",
+        },
+        BOOT_READY: {
+          actions: { type: "recordBootSucceeded" },
+          target: "title",
+        },
       },
     },
     title: {},
     failed: {
       on: {
-        RETRY_BOOT: { target: "booting" },
+        RETRY_BOOT: {
+          actions: { type: "recordBootRetryRequested" },
+          target: "booting",
+        },
       },
     },
   },
