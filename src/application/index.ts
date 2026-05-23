@@ -9,3 +9,6 @@
  * See `docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`
  * and `docs/adr-003-use-xstate-for-workflow-orchestration.md` for rationale.
  */
+
+export type { AppMachineAction, AppMachineEvent, AppMachineStateValue } from "./machines";
+export { appMachine } from "./machines";

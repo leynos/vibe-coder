@@ -162,7 +162,16 @@ The domain layer contains:
 
 - **XState machines**: `app.machine`, `run.machine`, `policy.machine`,
   `event.machine`, `progression.machine`, and `audio.machine`. All machines
-  live in `application/machines/`.
+  live in `src/application/machines/`. ADR 003 accepts this centralized
+  placement because these machines coordinate application workflows that cross
+  feature UI boundaries.
+- **Machine model tests**: the first machine harness uses XState v5 graph
+  utilities from `xstate/graph` under Bun tests. Prefer graph-generated path
+  coverage for reachability and impossible-state checks before wiring machines
+  into React views. App machines may expose named XState action IDs for
+  observability, but logging and metrics implementations must be provided at
+  the app shell or adapter composition boundary, not imported into
+  `src/application/machines/`.
 - **Application services**: `startRun`, `applyPolicy`, `resolveEvent`, and
   similar use-case entry points. These orchestrate ports and machines but do
   not contain domain equations.

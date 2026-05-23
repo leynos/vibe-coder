@@ -59,7 +59,7 @@ rules, and adapter shapes. See
   - Success: the chosen layout matches the module map in HLD §"Module layout"
     and a lint rule (Biome or custom) guards the boundary.
 
-- [ ] 1.1.3. Record the XState machine collocation strategy (feature-colocated
+- [x] 1.1.3. Record the XState machine collocation strategy (feature-colocated
   vs `application/machines/`) and the first model-test harness choice.
   - See `adr-003-use-xstate-for-workflow-orchestration.md` §Outstanding
     decisions.
