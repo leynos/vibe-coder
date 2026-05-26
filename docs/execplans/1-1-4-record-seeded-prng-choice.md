@@ -963,14 +963,85 @@ requires approval before ADR 005 is changed.
 
 ## Outcomes & Retrospective
 
-To be filled in after the planning commit and after the implementation
-milestones complete. Record:
+Implementation completed on 2026-05-26.
 
-- Whether ADR 005 was moved to `Accepted` or left `Proposed`.
-- The final shape of the developer-guide update.
-- Whether `users-guide.md` and `contents.md` remained unchanged.
-- Validation evidence (sequenced `/tmp` logs and CodeRabbit run
-  identifiers).
-- Any surprises encountered during implementation.
-- Lessons that should inform later items 1.3.2, 1.3.3, 1.4.x, and
-  2.4.3.
+- ADR 005 was moved from `Proposed` to `Accepted`. The remaining
+  fixed-point arithmetic bullet is a future optimisation question
+  rather than a foundational gap, mirroring how ADR 003 moved to
+  `Accepted` once 1.1.3 closed its outstanding decisions.
+- The developer's-guide update is a single new section
+  ("Determinism, randomness, and parameter packs") sited between the
+  "Theme and token conventions" and "CI pipeline" sections. The
+  section names sfc32 (bryc-2022), references the seeding and
+  substream-derivation strategy by way of ADR 005, and prohibits direct
+  use of `Math.random`, `crypto.getRandomValues`, `crypto.randomUUID`,
+  and `Date.now` in domain and application code. The adapter-table row
+  for `RandomSource` was refreshed from the stale
+  `adapters/rng/mulberry32.ts` placeholder to `adapters/rng/sfc32.ts`
+  so the table matches the accepted PRNG; that small fix is in scope
+  because the table is the same developer-guide page being touched.
+- `docs/users-guide.md` and `docs/contents.md` remained unchanged. The
+  change set introduces no player-visible behaviour and no new
+  top-level document; player-facing save-migration prompts are owned
+  by 2.4.x and beyond.
+- Validation evidence (sequenced `/tmp` logs):
+  - `/tmp/markdownlint-vibe-coder-1-1-4-record-seeded-prng-choice.out`
+    — clean after wrapping the pre-existing long title (`MD013`) and
+    the pre-existing options-considered trade-off table (`MD013`) in
+    `markdownlint-disable` comments, and after trimming one
+    pre-existing trailing blank line (`MD012`).
+  - `/tmp/nixie-vibe-coder-1-1-4-record-seeded-prng-choice.out` —
+    "All diagrams validated successfully".
+  - `/tmp/check-fmt-vibe-coder-1-1-4-record-seeded-prng-choice.out` —
+    "No fixes applied".
+  - `/tmp/lint-vibe-coder-1-1-4-record-seeded-prng-choice.out` —
+    Biome ci over `src tests tools`: no errors.
+  - `/tmp/typecheck-vibe-coder-1-1-4-record-seeded-prng-choice.out` —
+    `tsc --noEmit --skipLibCheck` clean.
+  - `/tmp/test-vibe-coder-1-1-4-record-seeded-prng-choice.out` — 94
+    pass, 0 fail.
+  - `/tmp/ff-vibe-coder-1-1-4-record-seeded-prng-choice.out` — `bun
+    ff` passed end-to-end, including the Playwright e2e stage. A
+    temporary `bun dev --host 127.0.0.1 --port 5173` server was
+    started for the e2e stage and stopped afterwards.
+  - `/tmp/coderabbit-1-1-4-implementation.out` — `coderabbit review
+    --agent` reported `findings: 0` on the implementation branch.
+- Surprises encountered during implementation:
+  - The pre-existing title and Table 1 of ADR 005 already exceeded the
+    80-column line limit and triggered `MD013` when the document was
+    re-linted at the touched-files grain. Resolved by adding
+    `markdownlint-disable` wrappers consistent with the pattern used
+    elsewhere in the repository. No rephrasing of pre-existing prose
+    was required.
+  - The developer's-guide adapter table named `mulberry32.ts` as the
+    `RandomSource` adapter. This pre-dated 1.1.4 and was inconsistent
+    with the now-ratified sfc32 choice. The line was refreshed to
+    `sfc32.ts`; this is treated as an in-scope clerical correction
+    because the same page is being amended for the determinism
+    section.
+- Lessons for later items:
+  - 1.2.2 (`RandomSource` port): the port surface must accept
+    snapshot, restore, and per-feature-substream operations, because
+    the migration policy requires `prngState: [a, b, c, d]` to be
+    persisted and rehydrated, and the substream-derivation pattern
+    relies on per-feature seed expansion rather than on jump-ahead.
+  - 1.3.3 (sfc32 adapter): implementation must include golden
+    seed-to-output vectors as test fixtures snapshotted across Bun,
+    Node, and browser targets. The boundary linter should be
+    tightened in this item to forbid direct
+    `Math.random`/`crypto.getRandomValues`/`crypto.randomUUID`/
+    `Date.now` imports in `src/domain/` and `src/application/`.
+  - 1.3.2 (`ParameterPack` type and content hash): the hash algorithm
+    is still open. Recommend BLAKE3 or SHA-256; the canonicalisation
+    must exclude `id` and `version`, JSON-sort keys, and normalise
+    number formatting (or carry the raw numeric subset in a
+    side-channel) so PATCH "numeric-subset-identical" comparisons are
+    well-defined.
+  - 1.4.x (Dexie schema and migrations): the `parameterPacks` store
+    must be append-only at the `(id, version, contentHash)` grain and
+    must enforce a foreign-key constraint that prevents deleting a
+    pack while any run pins its content hash.
+  - 2.4.3 (JSON import/export): the export format must embed the full
+    pack body so imports can validate the hash. `parameterPacks`
+    entries registered from imports must be flagged with `status:
+    "imported-from-save"`.
