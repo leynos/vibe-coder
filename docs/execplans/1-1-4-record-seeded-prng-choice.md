@@ -5,7 +5,7 @@ This ExecPlan (execution plan) is a living document. The sections
 `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work
 proceeds.
 
-Status: DRAFT
+Status: APPROVED — IMPLEMENTATION IN PROGRESS
 
 ## Purpose / big picture
 
@@ -821,17 +821,23 @@ requires approval before ADR 005 is changed.
   `bun tokens:build`, all gates passed. `bun ff` required a temporary
   `bun dev --host 127.0.0.1 --port 5173` server for the e2e stage; the
   server was stopped after `bun ff` exited 0.
-- [ ] Commit this ExecPlan for plan review.
-- [ ] Push the branch and open a draft pull request for plan review.
-- [ ] Receive explicit user approval to proceed with implementation.
-- [ ] Amend ADR 005 with the accepted PRNG decision, the accepted
-  migration policy, the updated status, and the trimmed outstanding
-  decisions.
-- [ ] Update `docs/developers-guide.md` with the short determinism,
-  randomness, and parameter-pack section.
-- [ ] Confirm `docs/users-guide.md` and `docs/contents.md` remain
-  unchanged for this task.
-- [ ] Mark only roadmap item 1.1.4 as done.
+- [x] (2026-05-23T01:30:00Z) Commit this ExecPlan for plan review.
+- [x] (2026-05-23T01:35:00Z) Push the branch and open a draft pull
+  request for plan review (PR #9).
+- [x] (2026-05-26T00:00:00Z) Received explicit user approval on PR #9
+  to proceed with implementation.
+- [x] (2026-05-26T00:10:00Z) Amended ADR 005 with the accepted PRNG
+  decision, the accepted migration policy, status changed from Proposed
+  to Accepted, and the outstanding-decisions list trimmed to the
+  remaining fixed-point arithmetic bullet only.
+- [x] (2026-05-26T00:15:00Z) Updated `docs/developers-guide.md` with the
+  short "Determinism, randomness, and parameter packs" section and
+  refreshed the stale `RandomSource` adapter row from `mulberry32.ts` to
+  `sfc32.ts` so the adapter table matches the accepted PRNG.
+- [x] (2026-05-26T00:15:00Z) Confirmed `docs/users-guide.md` and
+  `docs/contents.md` remain unchanged for this task; the change set
+  introduced no new top-level document and no player-visible behaviour.
+- [x] (2026-05-26T00:20:00Z) Marked only roadmap item 1.1.4 as done.
 - [ ] Run `coderabbit review --agent` after each major milestone and
   clear findings before moving on.
 - [ ] Run `make check-fmt`, `make lint`, `make typecheck`, `make test`,
