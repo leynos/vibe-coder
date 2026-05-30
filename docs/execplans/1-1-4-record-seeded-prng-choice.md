@@ -5,7 +5,7 @@ This ExecPlan (execution plan) is a living document. The sections
 `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work
 proceeds.
 
-Status: APPROVED — IMPLEMENTATION IN PROGRESS
+Status: COMPLETED
 
 ## Purpose / big picture
 
@@ -38,7 +38,7 @@ The observable success conditions are:
    it, and removes the migration-policy bullet from "Outstanding decisions".
 3. The fixed-point arithmetic question remains in "Outstanding decisions"
    because it is not part of this roadmap item.
-4. `docs/developers-guide.md` summarises the accepted PRNG name and the
+4. `docs/developers-guide.md` summarizes the accepted PRNG name and the
    summary form of the migration policy with a link back to ADR 005 for
    rationale.
 5. `docs/roadmap.md` marks only item 1.1.4 as done.
@@ -213,7 +213,7 @@ Do not begin implementation until the user has explicitly approved this plan.
   Likelihood: medium.
   Mitigation: Forbid silent advancement on any bump that changes the
   numeric subset of the pack. PATCH may silently rebind only when the
-  canonicalised numeric subset is byte-identical (so the hash changed only
+  canonicalized numeric subset is byte-identical (so the hash changed only
   because a comment or label changed). MINOR requires an explicit upgrade
   prompt. MAJOR quarantines the run.
 
@@ -471,7 +471,7 @@ In detail:
    - `version` is a semantic version string `MAJOR.MINOR.PATCH` per
      `semver.org`, with the bump rules below.
    - `contentHash` is a deterministic content hash over the
-     canonicalised, JSON-sorted pack body excluding `id` and `version`.
+     canonicalized, JSON-sorted pack body excluding `id` and `version`.
      The hash algorithm is recommended as BLAKE3 or SHA-256 and is to be
      fixed in 1.3.2 or 1.4.1 when the implementation lands. ADR 005
      does not pin the algorithm itself here.
@@ -484,7 +484,7 @@ In detail:
 
    - **PATCH**: comment, label, documentation, or other metadata edit
      that does not change any numeric simulation value. The hash differs
-     but the canonicalised numeric subset is byte-identical. May
+     but the canonicalized numeric subset is byte-identical. May
      silently rebind a run on load. A `PackRebindEvent` is logged so
      replays remain self-describing.
    - **MINOR**: additive or pure tuning. New optional field with a
@@ -510,7 +510,7 @@ In detail:
    | Pinned pack absent (JSON import from another machine) | Require import-or-archive flow; JSON export must embed the full pack body. |
    | Newer compatible pack version exists (same MAJOR, ≥ MINOR/PATCH) | Offer explicit "Upgrade run to pack X.Y.Z" action. Show diff summary. Never silent. |
    | Newer incompatible pack version exists (different MAJOR) | Mark run read-only and archive-only. |
-   | PATCH-only difference whose canonicalised numeric subset matches | Auto-rebind silently. Log `PackRebindEvent` to the run event log. |
+   | PATCH-only difference whose canonicalized numeric subset matches | Auto-rebind silently. Log `PackRebindEvent` to the run event log. |
 
    <!-- markdownlint-enable MD013 -->
 
@@ -626,7 +626,7 @@ The preferred direction is to mirror ADR 003's treatment: ADR 003 became
 `Accepted` after 1.1.3 closed its outstanding decisions, and 1.1.4 closes
 two of three ADR 005 outstanding decisions. The recommended approach is to
 move the ADR to `Accepted` because the fixed-point question is a future
-optimisation choice rather than a foundational gap; if implementation
+optimization choice rather than a foundational gap; if implementation
 disagrees, document the rationale.
 
 Fourth, update `docs/developers-guide.md`. Add a short "Determinism,
@@ -714,7 +714,7 @@ after:
 - ADR 005 contains the accepted PRNG decision and the accepted migration
   policy.
 - ADR 005 no longer carries the PRNG or migration-policy open questions.
-- `docs/developers-guide.md` summarises both decisions with an ADR-005
+- `docs/developers-guide.md` summarizes both decisions with an ADR-005
   back-link.
 - `docs/users-guide.md` and `docs/contents.md` remain unchanged (or have a
   recorded reason for change).
@@ -952,7 +952,7 @@ requires approval before ADR 005 is changed.
 - (2026-05-23) Recommend moving ADR 005's `Status` from `Proposed` to
   `Accepted` once the PRNG and migration-policy bullets are closed.
   Rationale: The remaining fixed-point arithmetic bullet is a future
-  optimisation question, not a foundational gap. ADR 003 was moved to
+  optimization question, not a foundational gap. ADR 003 was moved to
   `Accepted` on the same basis when 1.1.3 closed its outstanding
   decisions.
 - (2026-05-23) Recommend renaming the branch locally to
@@ -966,7 +966,7 @@ requires approval before ADR 005 is changed.
 Implementation completed on 2026-05-26.
 
 - ADR 005 was moved from `Proposed` to `Accepted`. The remaining
-  fixed-point arithmetic bullet is a future optimisation question
+  fixed-point arithmetic bullet is a future optimization question
   rather than a foundational gap, mirroring how ADR 003 moved to
   `Accepted` once 1.1.3 closed its outstanding decisions.
 - The developer's-guide update is a single new section
@@ -1032,8 +1032,8 @@ Implementation completed on 2026-05-26.
     `Math.random`/`crypto.getRandomValues`/`crypto.randomUUID`/
     `Date.now` imports in `src/domain/` and `src/application/`.
   - 1.3.2 (`ParameterPack` type and content hash): the hash algorithm
-    is still open. Recommend BLAKE3 or SHA-256; the canonicalisation
-    must exclude `id` and `version`, JSON-sort keys, and normalise
+    is still open. Recommend BLAKE3 or SHA-256; the canonicalization
+    must exclude `id` and `version`, JSON-sort keys, and normalize
     number formatting (or carry the raw numeric subset in a
     side-channel) so PATCH "numeric-subset-identical" comparisons are
     well-defined.
