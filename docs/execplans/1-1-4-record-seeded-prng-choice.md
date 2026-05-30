@@ -444,7 +444,8 @@ jump and long-jump polynomials, and a public-domain reference at
 parameter-pack MAJOR bump under the migration policy below.
 
 Property tests written with `fast-check` (which internally uses
-`pure-rand`) may continue to use the framework's own RNG. The game's
+`pure-rand`) may continue to use the framework's own random number
+generator (RNG). The game's
 deterministic stream and the property-test exploration stream serve
 different roles and must not be coupled. ADR 005 must say so explicitly.
 

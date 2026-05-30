@@ -180,8 +180,9 @@ policy" below).
 ### Property-test separation
 
 Property tests written with `fast-check` may continue to use the
-framework's own RNG (`pure-rand`). The game's deterministic stream and
-the property-test exploration stream serve different roles — replay
+framework's own random number generator (RNG), `pure-rand`. The game's
+deterministic stream and the property-test exploration stream serve
+different roles — replay
 reproducibility versus input-space exploration — and must not be
 coupled. Adding `fast-check` or `pure-rand` does not change the game's
 runtime PRNG choice.
@@ -214,6 +215,32 @@ contentHash)`:
   JSON-sorted pack body excluding `id` and `version`. The hash algorithm
   is recommended as BLAKE3 or SHA-256; the exact choice is deferred to
   roadmap item 1.3.2 or 1.4.1 when the implementation lands.
+
+Canonicalization, sketched so independent producers and consumers agree
+on the hashed bytes:
+
+- Recursively sort object keys lexicographically by Unicode code-point
+  order; arrays preserve their declared order.
+- Strip `id` and `version` from the top level before serialization.
+- Emit JSON without insignificant whitespace (no padding inside or
+  between tokens) and without a trailing newline.
+- Emit strings with the minimal JSON escape set (`"`, `\`, and control
+  characters U+0000 through U+001F) and use lowercase `\uXXXX` only
+  for control characters that have no shorter escape.
+- Represent numbers in a normalized form: integers as their shortest
+  decimal representation with no leading sign for non-negative values
+  and no leading zeros; non-integers as their shortest IEEE-754
+  round-trip decimal (the form `Number.prototype.toString` produces in
+  ECMAScript). Reject `NaN` and `+/-Infinity` at the validation
+  boundary so they never enter the hashed body.
+- Disallow duplicate keys at the validation boundary so canonical
+  output is unambiguous.
+
+These rules pin the hash bytes that distinguish a PATCH metadata edit
+(hash differs, numeric subset byte-identical) from a MINOR tuning
+change (hash differs, numeric subset differs). The exact serializer
+implementation, including the canonicalization library or hand-rolled
+encoder, is deferred to roadmap item 1.3.2 or 1.4.1.
 
 The Dexie `parameterPacks` store (already in ADR 004's illustrative
 schema) is append-only at the `(id, version, contentHash)` grain. A row

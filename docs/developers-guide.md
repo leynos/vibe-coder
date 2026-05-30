@@ -181,14 +181,18 @@ The domain layer contains:
 
 Concrete implementations of the driven ports:
 
-| Port                  | Adapter location                         |
-| --------------------- | ---------------------------------------- |
-| `GameStateRepository` | `adapters/persistence/dexie-*.ts`        |
-| `Clock`               | `adapters/clock/browser-clock.ts`        |
-| `RandomSource`        | `adapters/rng/sfc32.ts`                  |
-| `AudioEventSink`      | `adapters/audio/web-audio-engine.ts`     |
-| `AssetCatalogue`      | `adapters/assets/manifest-loader.ts`     |
-| `TelemetrySink`       | `adapters/telemetry/local-analytics.ts`  |
+<!-- markdownlint-disable MD013 MD060 -->
+
+| Port                  | Adapter location                                 |
+| --------------------- | ------------------------------------------------ |
+| `GameStateRepository` | `adapters/persistence/dexie-*.ts`                |
+| `Clock`               | `adapters/clock/browser-clock.ts`                |
+| `RandomSource`        | `adapters/rng/sfc32.ts` (planned; roadmap 1.3.3) |
+| `AudioEventSink`      | `adapters/audio/web-audio-engine.ts`             |
+| `AssetCatalogue`      | `adapters/assets/manifest-loader.ts`             |
+| `TelemetrySink`       | `adapters/telemetry/local-analytics.ts`          |
+
+<!-- markdownlint-enable MD013 MD060 -->
 
 Stub in-memory adapters (for tests) live alongside their real counterparts.
 
@@ -366,8 +370,9 @@ follow from this contract:
   in 1.3.3). Direct calls to `Math.random`, `crypto.getRandomValues`,
   `crypto.randomUUID`, and `Date.now` are forbidden in those layers; the
   import-boundary linter will be tightened to enforce this when the port
-  and adapter land. The property-test framework's own RNG (`pure-rand`
-  via `fast-check`) is intentionally decoupled from the game stream.
+  and adapter land. The property-test framework's own random number
+  generator (RNG), `pure-rand` via `fast-check`, is intentionally
+  decoupled from the game stream.
 
 Every saved run carries pinned parameter-pack identity (`id`, `version`,
 `contentHash`) and PRNG identity (`prngName`, `prngVariant`,
