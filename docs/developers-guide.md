@@ -181,14 +181,18 @@ The domain layer contains:
 
 Concrete implementations of the driven ports:
 
-| Port                  | Adapter location                         |
-| --------------------- | ---------------------------------------- |
-| `GameStateRepository` | `adapters/persistence/dexie-*.ts`        |
-| `Clock`               | `adapters/clock/browser-clock.ts`        |
-| `RandomSource`        | `adapters/rng/mulberry32.ts`             |
-| `AudioEventSink`      | `adapters/audio/web-audio-engine.ts`     |
-| `AssetCatalogue`      | `adapters/assets/manifest-loader.ts`     |
-| `TelemetrySink`       | `adapters/telemetry/local-analytics.ts`  |
+<!-- markdownlint-disable MD013 MD060 -->
+
+| Port                  | Adapter location                                 |
+| --------------------- | ------------------------------------------------ |
+| `GameStateRepository` | `adapters/persistence/dexie-*.ts`                |
+| `Clock`               | `adapters/clock/browser-clock.ts`                |
+| `RandomSource`        | `adapters/rng/sfc32.ts` (planned; roadmap 1.3.3) |
+| `AudioEventSink`      | `adapters/audio/web-audio-engine.ts`             |
+| `AssetCatalogue`      | `adapters/assets/manifest-loader.ts`             |
+| `TelemetrySink`       | `adapters/telemetry/local-analytics.ts`          |
+
+<!-- markdownlint-enable MD013 MD060 -->
 
 Stub in-memory adapters (for tests) live alongside their real counterparts.
 
@@ -345,6 +349,42 @@ implementation. The [game HUD mockup](vibe-coder-game-hud-mockup.html) is an
 example of the in-game visuals showing the main dashboard layout and player
 controls; treat it as the primary visual reference for run-screen
 implementation.
+
+---
+
+## Determinism, randomness, and parameter packs
+
+The simulation is deterministic. Given the same seed, parameter pack, command
+sequence, and tick ordering, a run must reproduce. Two engineering rules
+follow from this contract:
+
+- The seeded pseudo-random number generator is **sfc32** (Chris
+  Doty-Humphrey, in the bryc-2022 JavaScript reference port). Seeds are
+  hashed with `xmur3` when supplied as strings, expanded to the 128-bit
+  sfc32 state via four `SplitMix32` steps, and warmed with 12 discarded
+  outputs. Independent substreams derive per feature; sfc32 has no
+  jump-ahead by design. See ADR 005 for the rationale, the runner-up
+  algorithm (`xoshiro128++`), and the golden-vector test discipline.
+- Domain and application code must obtain randomness through the
+  `RandomSource` port (introduced in roadmap item 1.2.2 and implemented
+  in 1.3.3). Direct calls to `Math.random`, `crypto.getRandomValues`,
+  `crypto.randomUUID`, and `Date.now` are forbidden in those layers; the
+  import-boundary linter will be tightened to enforce this when the port
+  and adapter land. The property-test framework's own random number
+  generator (RNG), `pure-rand` via `fast-check`, is intentionally
+  decoupled from the game stream.
+
+Every saved run carries pinned parameter-pack identity (`id`, `version`,
+`contentHash`) and PRNG identity (`prngName`, `prngVariant`,
+`prngVersion`, `prngState`) alongside the schema version, simulation-tick
+contract version, seed, and event-log tail digest. The migration policy
+refuses silent advancement: PATCH-only metadata edits may rebind
+silently when the canonicalized numeric subset is byte-identical, MINOR
+bumps require an explicit player-initiated upgrade prompt, and MAJOR
+bumps quarantine existing runs as read-only and archive-only. Any PRNG
+change forces a parameter-pack MAJOR bump. JSON exports embed the full
+pack body so that imports on another machine can validate the hash. See
+ADR 005 for the full policy.
 
 ---
 

@@ -66,7 +66,7 @@ rules, and adapter shapes. See
   - Success: one accepted document confirms placement; the first machine test
     compiles and passes.
 
-- [ ] 1.1.4. Record the seeded pseudo-random number generator choice and the
+- [x] 1.1.4. Record the seeded pseudo-random number generator choice and the
   version migration policy for runs created under older parameter packs.
   - See `adr-005-use-deterministic-simulation-and-parameter-packs.md`
     §Outstanding decisions.
