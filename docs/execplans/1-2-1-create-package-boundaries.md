@@ -5,7 +5,7 @@ This ExecPlan (execution plan) is a living document. The sections
 `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work
 proceeds.
 
-Status: IN PROGRESS
+Status: PR PREPARATION IN PROGRESS
 
 ## Purpose / big picture
 
@@ -303,9 +303,7 @@ explicitly approved it.
 ## Progress
 
 - [x] Loaded `execplans`, `leta`, and `hexagonal-architecture` skills.
-- [x] Confirmed branch is `feat/hex-package-boundaries-plan` (or the renamed
-  `1-2-1-create-package-boundaries` branch tracking
-  `origin/1-2-1-create-package-boundaries`).
+- [x] Confirmed branch is `1-2-1-create-package-boundaries`.
 - [ ] Used a planning agent team for research (Biome + TS alias prior art
   and worktree reconnaissance ran in parallel).
 - [ ] Drafted this approval-gated ExecPlan.
@@ -321,12 +319,14 @@ explicitly approved it.
   imports, and forbidden imports.
 - [x] Ran `make check-fmt`, `make lint`, `make typecheck`, `make test`,
   `bun semantic`, and `bun ff` sequentially; all passed.
-- [ ] Updated `docs/developers-guide.md` with the alias map and the dual
+- [x] Updated `docs/developers-guide.md` with the alias map and the dual
   enforcement layers (Biome + custom guard).
-- [ ] Marked roadmap item 1.2.1 as done.
-- [ ] Committed in atomic, gate-passing increments.
-- [ ] Invoked `coderabbit review --agent` after each major milestone and
-  cleared findings before moving on.
+- [x] Marked roadmap item 1.2.1 as done.
+- [x] Committed implementation in an atomic, gate-passing increment.
+- [x] Invoked `coderabbit review --agent` after implementation and
+  documentation milestones; cleared findings before moving on.
+- [x] Ran documentation validation for the final developer-guide, roadmap, and
+  ExecPlan updates.
 - [ ] Renamed the branch to `1-2-1-create-package-boundaries` using
   GitHub's branch-rename flow, pushed, and opened a draft PR with the
   required title prefix `(1.2.1)`, execplan reference, and Lody session
@@ -377,6 +377,30 @@ explicitly approved it.
   Evidence: Worktree recon.
   Impact: `src/app/` is out of scope for this item. The existing tree is
   retained.
+
+- Observation: CodeRabbit rate limiting occurred during the implementation
+  review cycle.
+  Evidence: `coderabbit review --agent` returned a rate-limit message during
+  the clean-check review; the retry after `vsleep 78m` returned
+  `findings: 0`.
+  Impact: The required backoff process works and was recorded in `/tmp`
+  review logs. No implementation work proceeded until the clean review
+  completed.
+
+- Observation: The JSONC parser helper used by the Biome configuration tests
+  mishandled an unterminated block comment at end of file.
+  Evidence: CodeRabbit flagged that `skipBlockComment` returned `text.length +
+  1`, and focused tests now cover line comments, end-of-file line comments,
+  and unterminated block comments.
+  Impact: The helper is now safer for malformed configuration text, even
+  though committed `biome.jsonc` is valid.
+
+- Observation: `bun ff` requires a running Vite dev server.
+  Evidence: The first direct `bun ff` invocation failed because
+  `http://localhost:5173` was unavailable; rerunning with a temporary
+  `bun dev` process passed.
+  Impact: Final frontend gates are run by starting a temporary server,
+  waiting for readiness, running `bun ff`, and stopping only that process.
 
 - Observation: Existing imports under `src/` are mostly relative (`../`,
   `./`); test files use `../../src/...` and `../src/...`. No file uses an
@@ -480,6 +504,14 @@ explicitly approved it.
   faithful without touching other agents' processes.
   Date/Author: 2026-06-12 / Codex (implementation).
 
+- Decision: Keep JSONC parsing logic for documentation-style Biome tests
+  small and locally tested instead of adding a parser dependency.
+  Rationale: The helper only needs to strip JSONC comments from project-owned
+  configuration before `JSON.parse`. Adding an external parser would exceed
+  the no-new-dependency constraint for a narrow test helper, while focused
+  tests cover the edge cases found during review.
+  Date/Author: 2026-06-12 / Codex (implementation).
+
 - Decision: Record `src/app/` exemption as a deferred risk handed off to
   1.2.2 instead of widening 1.2.1 scope.
   Rationale: The React shell is permitted to import every layer. Adding
@@ -530,15 +562,48 @@ explicitly approved it.
 
 ## Outcomes & retrospective
 
-To be filled at completion. Summarise:
+Implementation and documentation are complete; final CodeRabbit and PR
+validation remain.
 
-- The final shape of the directory tree against the HLD module-layout
-  section, including any deferrals.
-- The exact contents of the alias map and the path Biome, Vite, and the
-  custom guard take to consume it.
-- Whether the Biome `noRestrictedImports` rule successfully caught a
-  deliberate-violation experiment.
+- The in-scope HLD tree now exists:
+  `src/domain/{model,services,rules,ports}/`,
+  `src/application/{machines,commands,selectors}/`, and
+  `src/adapters/{persistence,rng,audio,render,assets}/`. New leaf
+  directories contain JSDoc-only `index.ts` barrels. `src/optimisation/`,
+  `src/data/`, and any new `src/app/` subdirectories remain deferred.
+- The alias map is `@domain/* -> src/domain/*`,
+  `@application/* -> src/application/*`, and
+  `@adapters/* -> src/adapters/*`. `tools/path-aliases.ts` owns the typed
+  tuple; `tsconfig.json`, `vite.config.ts`, the AST guard, and tests validate
+  against it.
+- Biome catches literal forbidden imports in domain and application files.
+  The custom AST guard remains authoritative because it resolves relative
+  imports as well as aliases. Parity tests keep the forbidden package lists in
+  Biome and the AST guard aligned.
+- A deliberate Biome fixture under `tmp/` failed with the expected
+  `noRestrictedImports` diagnostics and was removed before commit. The
+  committed integration test recreates this check in an isolated temporary
+  directory.
+- CodeRabbit implementation review findings were cleared before documentation
+  work began. The final implementation clean-check returned `findings: 0`.
+- CodeRabbit documentation review returned `findings: 0` after all
+  deterministic gates had passed.
 - Surprises that informed future roadmap items.
+
+Validation evidence recorded during the documentation milestone:
+
+- `bun fmt` passed with no fixes applied.
+- `bunx markdownlint-cli docs/developers-guide.md docs/roadmap.md docs/execplans/1-2-1-create-package-boundaries.md`
+  passed.
+- `make check-fmt` passed.
+- `make lint` passed.
+- `make typecheck` passed.
+- `make test` passed with 112 tests across 17 files.
+- `bun semantic` passed; `lint-import-boundaries` scanned 29 files and found
+  0 violations.
+- `bun ff` passed with a temporary Vite dev server, including 112 Bun tests,
+  2 Vitest a11y tests, Fluent placeholder validation, semantic lint, and 1
+  Playwright a11y e2e test.
 
 ## Context and orientation
 
