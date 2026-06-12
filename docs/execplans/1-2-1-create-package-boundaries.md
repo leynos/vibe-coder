@@ -5,7 +5,7 @@ This ExecPlan (execution plan) is a living document. The sections
 `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work
 proceeds.
 
-Status: PR PREPARATION IN PROGRESS
+Status: COMPLETE
 
 ## Purpose / big picture
 
@@ -327,9 +327,9 @@ explicitly approved it.
   documentation milestones; cleared findings before moving on.
 - [x] Ran documentation validation for the final developer-guide, roadmap, and
   ExecPlan updates.
-- [ ] Renamed the branch to `1-2-1-create-package-boundaries` using
-  GitHub's branch-rename flow, pushed, and opened a draft PR with the
-  required title prefix `(1.2.1)`, execplan reference, and Lody session
+- [x] Confirmed the branch name is `1-2-1-create-package-boundaries`, pushed,
+  and updated draft PR <https://github.com/leynos/vibe-coder/pull/12> with
+  the required title suffix `(1.2.1)`, execplan reference, and Lody session
   link.
 
 ## Surprises & discoveries
@@ -562,8 +562,8 @@ explicitly approved it.
 
 ## Outcomes & retrospective
 
-Implementation and documentation are complete; final CodeRabbit and PR
-validation remain.
+Implementation, documentation, CodeRabbit review, and PR preparation are
+complete.
 
 - The in-scope HLD tree now exists:
   `src/domain/{model,services,rules,ports}/`,
