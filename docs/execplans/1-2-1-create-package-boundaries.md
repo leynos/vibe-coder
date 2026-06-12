@@ -1048,13 +1048,10 @@ Manual Biome boundary verification, executed only under `tmp/`:
 
 ```sh
 mkdir -p tmp/boundary-check/src/domain
-printf 'import "@adapters/persistence/db";\n' \
-  > tmp/boundary-check/src/domain/forbidden.ts
 cp biome.jsonc tmp/boundary-check/biome.jsonc
-(
-  cd tmp/boundary-check
-  bun biome lint src/domain/
-)
+printf 'import "`@adapters/persistence/db`";\n' \
+  > tmp/boundary-check/src/domain/forbidden.ts
+cd tmp/boundary-check && bunx biome lint src/domain/ ; cd -
 # Expect non-zero exit and the override message.
 rm -rf tmp/boundary-check
 git status --short tmp/ src/domain/ # confirm no residual fixtures
