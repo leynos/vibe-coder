@@ -85,6 +85,13 @@ export const DISALLOWED_APPLICATION_PACKAGES = new Map<string, string>([
 
 const NON_LITERAL_DYNAMIC_IMPORT = "__NON_LITERAL_DYNAMIC_IMPORT__";
 
+const LAYER_ROOTS: ReadonlyArray<readonly [SourceLayer, string]> = [
+  ["domain", "src/domain"],
+  ["application", "src/application"],
+  ["adapters", "src/adapters"],
+  ["app", "src/app"],
+];
+
 /**
  * Classify a repository path into the architectural layer it belongs to.
  *
@@ -99,17 +106,10 @@ const NON_LITERAL_DYNAMIC_IMPORT = "__NON_LITERAL_DYNAMIC_IMPORT__";
 export function classifySourcePath(path: string, options: BoundaryCheckOptions = {}): SourceLayer {
   const normalizedPath = normalizeForComparison(path, getBasePath(options));
 
-  if (normalizedPath.startsWith("src/domain/")) {
-    return "domain";
-  }
-  if (normalizedPath.startsWith("src/application/")) {
-    return "application";
-  }
-  if (normalizedPath.startsWith("src/adapters/")) {
-    return "adapters";
-  }
-  if (normalizedPath.startsWith("src/app/")) {
-    return "app";
+  for (const [layer, root] of LAYER_ROOTS) {
+    if (normalizedPath === root || normalizedPath.startsWith(`${root}/`)) {
+      return layer;
+    }
   }
 
   return "other";

@@ -28,6 +28,15 @@ describe("Biome noRestrictedImports boundary enforcement", () => {
       join(FIXTURE_ROOT, "src/application/forbidden-by-src-path.ts"),
       'import "src/adapters/audio/x";\n',
     );
+    writeFileSync(
+      join(FIXTURE_ROOT, "src/domain/forbidden-by-relative-adapter.ts"),
+      'import "../adapters/audio/x";\n',
+    );
+    mkdirSync(join(FIXTURE_ROOT, "src/domain/rules"), { recursive: true });
+    writeFileSync(
+      join(FIXTURE_ROOT, "src/domain/rules/forbidden-by-deep-relative-application.ts"),
+      'import "../../application/commands/x";\n',
+    );
     writeFileSync(join(FIXTURE_ROOT, "src/domain/other.ts"), "export const other = 1;\n");
     writeFileSync(join(FIXTURE_ROOT, "src/domain/allowed.ts"), 'import "./other";\n');
     writeFileSync(
@@ -48,7 +57,7 @@ describe("Biome noRestrictedImports boundary enforcement", () => {
       message: diagnostic.message,
     }));
 
-    expect(diagnostics).toHaveLength(2);
+    expect(diagnostics).toHaveLength(4);
     expect(diagnostics).toEqual(
       expect.arrayContaining([
         {
@@ -58,6 +67,14 @@ describe("Biome noRestrictedImports boundary enforcement", () => {
         {
           file: "src/application/forbidden-by-src-path.ts",
           message: expect.stringContaining("Application must not depend on adapters."),
+        },
+        {
+          file: "src/domain/forbidden-by-relative-adapter.ts",
+          message: expect.stringContaining("Domain must not depend on adapters or application."),
+        },
+        {
+          file: "src/domain/rules/forbidden-by-deep-relative-application.ts",
+          message: expect.stringContaining("Domain must not depend on adapters or application."),
         },
       ]),
     );

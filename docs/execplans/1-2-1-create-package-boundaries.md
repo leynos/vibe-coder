@@ -41,8 +41,8 @@ explicitly approved it.
   - `src/application/{machines,commands,selectors}/` (`machines/` already
     exists)
   - `src/adapters/{persistence,rng,audio,render,assets}/`
-  Do not create `src/optimisation/` or `src/data/`. ADR 002 keeps the
-  optimisation-tooling location as an open question, and `src/data/` belongs
+  Do not create `src/optimization/` or `src/data/`. ADR 002 keeps the
+  optimization location as an open question, and `src/data/` belongs
   to later parameter-pack and registry work (1.3.2 onward). The plan
   explicitly defers them.
 - Do not create `src/app/` subdirectories that do not already exist. `app/`
@@ -156,9 +156,10 @@ explicitly approved it.
   `@package`/`@private` annotations).
 - Alias source-of-truth: if `tsconfig.json`, `vite.config.ts`, and the
   custom guard cannot be kept in sync without hand-maintaining three lists,
-  stop and ask. The plan's preferred design is one constant inside
-  `scripts/import-boundary-paths.ts` (or a sibling helper) that all three
-  consumers read from.
+  stop and ask. The canonical constant lives in `tools/path-aliases.ts`;
+  `scripts/import-boundary-paths.ts` re-exports it for script consumers so
+  `tsconfig.json`, `vite.config.ts`, and the custom guard all read the same
+  alias contract.
 - Validation: if the same required gate fails twice after changes intended
   to fix this item, stop, record the evidence, and ask for direction.
 - Browser validation: if Playwright or `css-view` cannot be used because the
@@ -437,7 +438,7 @@ explicitly approved it.
   `scripts/lint-import-boundaries.ts`) as the authoritative enforcement
   layer and add Biome `noRestrictedImports` as a fast-feedback safety net.
   Rationale: Biome cannot express type-only exceptions and has fragile
-  multi-form alias coverage; the AST guard already normalises every form
+  multi-form alias coverage; the AST guard already normalizes every form
   through the TypeScript compiler API. Two layers catch typos in either
   configuration without one masking the other.
   Date/Author: 2026-06-02 / Claude (drafting).
@@ -546,8 +547,8 @@ explicitly approved it.
   roadmap items can adopt them as they touch existing files.
   Date/Author: 2026-06-02 / Claude (drafting).
 
-- Decision: Do not create `src/optimisation/` or `src/data/` in 1.2.1.
-  Rationale: ADR 002 still lists the optimisation-tooling location as an
+- Decision: Do not create `src/optimization/` or `src/data/` in 1.2.1.
+  Rationale: ADR 002 still lists the optimization location as an
   open question, and `src/data/` is downstream of the parameter-pack and
   registry items (1.3.2 onward).
   Date/Author: 2026-06-02 / Claude (drafting).
@@ -569,7 +570,7 @@ complete.
   `src/domain/{model,services,rules,ports}/`,
   `src/application/{machines,commands,selectors}/`, and
   `src/adapters/{persistence,rng,audio,render,assets}/`. New leaf
-  directories contain JSDoc-only `index.ts` barrels. `src/optimisation/`,
+  directories contain JSDoc-only `index.ts` barrels. `src/optimization/`,
   `src/data/`, and any new `src/app/` subdirectories remain deferred.
 - The alias map is `@domain/* -> src/domain/*`,
   `@application/* -> src/application/*`, and
@@ -604,6 +605,20 @@ Validation evidence recorded during the documentation milestone:
 - `bun ff` passed with a temporary Vite dev server, including 112 Bun tests,
   2 Vitest a11y tests, Fluent placeholder validation, semantic lint, and 1
   Playwright a11y e2e test.
+
+Post-PR finding verification:
+
+- Added Biome parent-relative patterns for domain and application layer
+  restrictions, with integration coverage for one-level and deeper relative
+  imports.
+- Fixed `classifySourcePath` so an expanded alias root such as `@adapters`
+  classifies as `adapters` instead of `other`.
+- Updated stale source-of-truth and manual Biome fixture instructions.
+- Updated Oxford spelling in this ExecPlan from `optimisation` and
+  `normalises` forms to `optimization` and `normalizes` forms.
+- Documented that the developer-guide adapter tree is the current 1.2.1
+  skeleton; the requested second occurrence of that tree was not present in
+  `docs/developers-guide.md`.
 
 ## Context and orientation
 
@@ -641,7 +656,7 @@ src/
     audio/        # new
     render/       # new
     assets/       # new
-  optimisation/   # out of scope (ADR 002 open question)
+  optimization/   # out of scope (ADR 002 open question)
   data/           # out of scope (downstream of 1.3.2)
 ```
 
@@ -1035,7 +1050,11 @@ Manual Biome boundary verification, executed only under `tmp/`:
 mkdir -p tmp/boundary-check/src/domain
 printf 'import "@adapters/persistence/db";\n' \
   > tmp/boundary-check/src/domain/forbidden.ts
-bunx biome lint tmp/boundary-check/src/domain/
+cp biome.jsonc tmp/boundary-check/biome.jsonc
+(
+  cd tmp/boundary-check
+  bun biome lint src/domain/
+)
 # Expect non-zero exit and the override message.
 rm -rf tmp/boundary-check
 git status --short tmp/ src/domain/ # confirm no residual fixtures

@@ -156,7 +156,13 @@
                       "src/application/**",
                       "src/adapters/**",
                       "application/**",
-                      "adapters/**"
+                      "adapters/**",
+                      "../application/**",
+                      "../../application/**",
+                      "../**/application/**",
+                      "../adapters/**",
+                      "../../adapters/**",
+                      "../**/adapters/**"
                     ],
                     "message": "Domain must not depend on adapters or application."
                   }
@@ -182,7 +188,14 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["@adapters/**", "src/adapters/**", "adapters/**"],
+                    "group": [
+                      "@adapters/**",
+                      "src/adapters/**",
+                      "adapters/**",
+                      "../adapters/**",
+                      "../../adapters/**",
+                      "../**/adapters/**"
+                    ],
                     "message": "Application must not depend on adapters."
                   }
                 ],

@@ -129,6 +129,11 @@ docs/            # HLD, ADRs, roadmap, user and developer guides
 public/          # Static assets: locale files, fonts, icons
 ```
 
+The `src/adapters/` tree above lists the current 1.2.1 skeleton. The adapter
+matrix below also names planned adapter families such as `clock/` and
+`telemetry/`; add those directories when their corresponding ports are
+implemented.
+
 ### Path aliases
 
 Use repository-local aliases when adding new imports across package
