@@ -5,7 +5,7 @@ This ExecPlan (execution plan) is a living document. The sections
 `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work
 proceeds.
 
-Status: DRAFT
+Status: IN PROGRESS
 
 ## Purpose / big picture
 
@@ -302,8 +302,8 @@ explicitly approved it.
 
 ## Progress
 
-- [ ] Loaded `execplans`, `leta`, and `hexagonal-architecture` skills.
-- [ ] Confirmed branch is `feat/hex-package-boundaries-plan` (or the renamed
+- [x] Loaded `execplans`, `leta`, and `hexagonal-architecture` skills.
+- [x] Confirmed branch is `feat/hex-package-boundaries-plan` (or the renamed
   `1-2-1-create-package-boundaries` branch tracking
   `origin/1-2-1-create-package-boundaries`).
 - [ ] Used a planning agent team for research (Biome + TS alias prior art
@@ -311,15 +311,15 @@ explicitly approved it.
 - [ ] Drafted this approval-gated ExecPlan.
 - [ ] Submitted the draft to a community-of-experts review (Logisphere) and
   recorded resulting revisions in `Decision Log`.
-- [ ] Received explicit user approval to implement.
-- [ ] Implemented the directory skeleton with JSDoc-only barrels.
-- [ ] Defined the alias map source-of-truth and wired it into
+- [x] Received explicit user approval to implement.
+- [x] Implemented the directory skeleton with JSDoc-only barrels.
+- [x] Defined the alias map source-of-truth and wired it into
   `tsconfig.json`, `vite.config.ts`, and the custom guard.
-- [ ] Configured Biome `noRestrictedImports` overrides for
+- [x] Configured Biome `noRestrictedImports` overrides for
   `src/domain/**` and `src/application/**`.
-- [ ] Added unit and integration tests covering alias resolution, allowed
+- [x] Added unit and integration tests covering alias resolution, allowed
   imports, and forbidden imports.
-- [ ] Ran `make check-fmt`, `make lint`, `make typecheck`, `make test`,
+- [x] Ran `make check-fmt`, `make lint`, `make typecheck`, `make test`,
   `bun semantic`, and `bun ff` sequentially; all passed.
 - [ ] Updated `docs/developers-guide.md` with the alias map and the dual
   enforcement layers (Biome + custom guard).
@@ -386,6 +386,26 @@ explicitly approved it.
   Impact: Migration is deferred; the plan only enables aliases for new
   code.
 
+- Observation: Biome `noRestrictedImports` checks only the literal import
+  specifier. It catches `@adapters/...`, `src/adapters/...`, and bare
+  `adapters/...` forms configured in `biome.jsonc`, but it does not resolve
+  `../adapters/...` relative imports to a layer path.
+  Evidence: A transient fixture under `tmp/biome-boundary-check/` reported
+  the expected domain alias violation, while an application fixture using
+  `../adapters/audio/x` did not produce a Biome diagnostic. The custom AST
+  guard continued to reject relative escapes in
+  `tests/import-boundaries.test.ts`.
+  Impact: The Biome integration test now verifies alias and `src/`-relative
+  forms. The custom guard remains authoritative for relative-path resolution.
+
+- Observation: `bun ff` requires a running Vite dev server for the Playwright
+  e2e phase.
+  Evidence: The first `bun ff` run reached `bash scripts/e2e.sh` and reported
+  `ERROR: Dev server not reachable at http://localhost:5173`. A rerun with a
+  temporary `bun dev` process passed.
+  Impact: Validation evidence records the successful server-backed run, and
+  the temporary process was stopped afterwards.
+
 ## Decision Log
 
 - Decision: Treat the existing custom guard
@@ -442,6 +462,23 @@ explicitly approved it.
   Rationale: Maintaining the same intent in two places invites drift; a
   comparison test makes drift fail CI.
   Date/Author: 2026-06-02 / Claude (drafting, post-review revision).
+
+- Decision: Keep Biome enforcement focused on alias, `src/`-relative, and bare
+  specifier forms, and rely on the AST guard for `../` relative path
+  resolution.
+  Rationale: Biome's rule operates on import specifier text, not resolved file
+  targets. Adding a finite list of `../` depth patterns would be incomplete and
+  easy to misread as authoritative. The custom guard already resolves relative
+  imports through the source-file set and has explicit regression tests for
+  directory-climbing escapes.
+  Date/Author: 2026-06-12 / Codex (implementation).
+
+- Decision: Validate `bun ff` with an explicitly managed temporary dev server.
+  Rationale: The repository e2e script expects `http://localhost:5173` to be
+  reachable and does not start Vite itself. Starting `bun dev`, waiting for the
+  server, running `bun ff`, and then stopping only that process keeps the gate
+  faithful without touching other agents' processes.
+  Date/Author: 2026-06-12 / Codex (implementation).
 
 - Decision: Record `src/app/` exemption as a deferred risk handed off to
   1.2.2 instead of widening 1.2.1 scope.

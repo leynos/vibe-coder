@@ -53,9 +53,19 @@ describe("findBoundaryViolations", () => {
       'import "../../domain/model/run-state";',
     ],
     [
+      "application to domain alias",
+      "src/application/selectors/risk-selectors.ts",
+      'import "@domain/model/run-state";',
+    ],
+    [
       "application to application",
       "src/application/services/build-dashboard.ts",
       'import "../selectors/dashboard-selectors";',
+    ],
+    [
+      "adapter to application alias",
+      "src/adapters/persistence/migrations.ts",
+      'import "@application/selectors/dashboard-selectors";',
     ],
     [
       "adapter to application and domain",

@@ -4,6 +4,14 @@ import { isAbsolute, normalize, relative, sep } from "node:path";
 
 import ts from "typescript";
 
+export {
+  PATH_ALIASES,
+  type AliasEntry,
+  type AliasPrefix,
+  type RepoRelativePath,
+} from "../tools/path-aliases";
+import { PATH_ALIASES } from "../tools/path-aliases";
+
 export const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx"] as const;
 
 /**
@@ -55,4 +63,27 @@ export function normalizeForComparison(path: string, basePath: string | undefine
  */
 export function getBasePath(options: { readonly basePath?: string }): string | undefined {
   return options.basePath;
+}
+
+/**
+ * Expand a repository-local path alias into the equivalent `src/` path.
+ *
+ * @example
+ * ```ts
+ * expandPathAlias("@domain/model/run");
+ * // "src/domain/model/run"
+ * ```
+ */
+export function expandPathAlias(importPath: string): string | undefined {
+  for (const [alias, target] of PATH_ALIASES) {
+    if (importPath === alias) {
+      return target;
+    }
+    const aliasPrefix = `${alias}/`;
+    if (importPath.startsWith(aliasPrefix)) {
+      return `${target}/${importPath.slice(aliasPrefix.length)}`;
+    }
+  }
+
+  return undefined;
 }

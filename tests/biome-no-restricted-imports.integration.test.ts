@@ -1,0 +1,117 @@
+/**
+ * @file End-to-end tests for Biome import-boundary restrictions.
+ */
+
+import { afterEach, describe, expect, it } from "bun:test";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
+import { type BiomeConfig, parseJsonc } from "./biome-config-helpers";
+
+const FIXTURE_ROOT = "tmp/biome-boundary-check";
+const BOUNDARY_LAYER_PATTERNS = ["src/domain/**", "src/application/**"] as const;
+
+describe("Biome noRestrictedImports boundary enforcement", () => {
+  afterEach(() => {
+    rmSync(FIXTURE_ROOT, { recursive: true, force: true });
+  });
+
+  it("rejects forbidden layer imports without matching unrelated packages", async () => {
+    mkdirSync(join(FIXTURE_ROOT, "src/domain"), { recursive: true });
+    mkdirSync(join(FIXTURE_ROOT, "src/application"), { recursive: true });
+    writeFileSync(join(FIXTURE_ROOT, "biome.jsonc"), buildFixtureBiomeConfig());
+    writeFileSync(
+      join(FIXTURE_ROOT, "src/domain/forbidden-by-alias.ts"),
+      'import "@adapters/persistence/db";\n',
+    );
+    writeFileSync(
+      join(FIXTURE_ROOT, "src/application/forbidden-by-src-path.ts"),
+      'import "src/adapters/audio/x";\n',
+    );
+    writeFileSync(join(FIXTURE_ROOT, "src/domain/other.ts"), "export const other = 1;\n");
+    writeFileSync(join(FIXTURE_ROOT, "src/domain/allowed.ts"), 'import "./other";\n');
+    writeFileSync(
+      join(FIXTURE_ROOT, "src/domain/third-party-name-collision.ts"),
+      'import "some-pkg-with-adapters-in-name";\n',
+    );
+
+    const result = Bun.spawnSync(["bun", "biome", "lint", "--reporter=json", "src"], {
+      cwd: FIXTURE_ROOT,
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+
+    expect(result.exitCode).not.toBe(0);
+    const report = JSON.parse(result.stdout.toString()) as BiomeJsonReport;
+    const diagnostics = report.diagnostics.map((diagnostic) => ({
+      file: getDiagnosticPath(diagnostic),
+      message: diagnostic.message,
+    }));
+
+    expect(diagnostics).toHaveLength(2);
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        {
+          file: "src/domain/forbidden-by-alias.ts",
+          message: expect.stringContaining("Domain must not depend on adapters or application."),
+        },
+        {
+          file: "src/application/forbidden-by-src-path.ts",
+          message: expect.stringContaining("Application must not depend on adapters."),
+        },
+      ]),
+    );
+    expect(diagnostics.some((diagnostic) => diagnostic.file === "src/domain/allowed.ts")).toBe(
+      false,
+    );
+    expect(
+      diagnostics.some(
+        (diagnostic) => diagnostic.file === "src/domain/third-party-name-collision.ts",
+      ),
+    ).toBe(false);
+  });
+});
+
+interface BiomeJsonReport {
+  readonly diagnostics: ReadonlyArray<{
+    readonly description: string;
+    readonly message: string;
+    readonly location?: {
+      readonly path?: string | { readonly file?: string };
+    };
+  }>;
+}
+
+function getDiagnosticPath(diagnostic: BiomeJsonReport["diagnostics"][number]): string | undefined {
+  const path = diagnostic.location?.path;
+  return typeof path === "string" ? path : path?.file;
+}
+
+function buildFixtureBiomeConfig(): string {
+  const config = parseJsonc(readFileSync("biome.jsonc", "utf8")) as BiomeConfig & {
+    readonly $schema?: string;
+  };
+
+  return `${JSON.stringify(
+    {
+      $schema: config.$schema,
+      files: {
+        includes: ["src/**/*"],
+        ignoreUnknown: true,
+      },
+      linter: {
+        enabled: true,
+        rules: {
+          recommended: false,
+        },
+      },
+      overrides: config.overrides?.filter((override) =>
+        override.includes?.some((include) =>
+          BOUNDARY_LAYER_PATTERNS.includes(include as (typeof BOUNDARY_LAYER_PATTERNS)[number]),
+        ),
+      ),
+    },
+    null,
+    2,
+  )}\n`;
+}

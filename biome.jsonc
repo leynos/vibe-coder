@@ -139,6 +139,63 @@
       "formatter": {
         "enabled": false
       }
+    },
+    {
+      "includes": ["src/domain/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@application/**",
+                      "@adapters/**",
+                      "src/application/**",
+                      "src/adapters/**",
+                      "application/**",
+                      "adapters/**"
+                    ],
+                    "message": "Domain must not depend on adapters or application."
+                  }
+                ],
+                "paths": {
+                  "react": "Domain must not import React.",
+                  "react-dom": "Domain must not import React DOM.",
+                  "dexie": "Domain must not import Dexie."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/application/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@adapters/**", "src/adapters/**", "adapters/**"],
+                    "message": "Application must not depend on adapters."
+                  }
+                ],
+                "paths": {
+                  "react": "Application must not import React.",
+                  "react-dom": "Application must not import React DOM.",
+                  "dexie": "Application must not import Dexie."
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }

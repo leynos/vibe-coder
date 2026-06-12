@@ -5,6 +5,8 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
+import { PATH_ALIASES } from "./tools/path-aliases";
+
 function normaliseBasePath(input: string | undefined): string {
   if (!input || input === "/") {
     return "/";
@@ -20,6 +22,9 @@ const TOKEN_OUTPUTS = [
   path.resolve(__dirname, "tokens/dist/tokens.css"),
   path.resolve(__dirname, "tokens/dist/tailwind.theme.cjs"),
 ];
+const resolveAliases = Object.fromEntries(
+  PATH_ALIASES.map(([alias, target]) => [alias, path.resolve(__dirname, target)]),
+);
 
 function watchGeneratedTokens() {
   return {
@@ -41,4 +46,7 @@ export default defineConfig({
   // Allow deployments to customise the served base path (e.g., GitHub Pages).
   base: basePath,
   plugins: [tailwindcss(), react(), watchGeneratedTokens()],
+  resolve: {
+    alias: resolveAliases,
+  },
 });

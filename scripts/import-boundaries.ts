@@ -5,6 +5,7 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import ts from "typescript";
 
 import {
+  expandPathAlias,
   getBasePath,
   getScriptKind,
   normalizeForComparison,
@@ -70,13 +71,13 @@ interface ImportReference {
   readonly column: number;
 }
 
-const DISALLOWED_DOMAIN_PACKAGES = new Map<string, string>([
+export const DISALLOWED_DOMAIN_PACKAGES = new Map<string, string>([
   ["react", "domain files must not import React"],
   ["react-dom", "domain files must not import React DOM"],
   ["dexie", "domain files must not import Dexie"],
 ]);
 
-const DISALLOWED_APPLICATION_PACKAGES = new Map<string, string>([
+export const DISALLOWED_APPLICATION_PACKAGES = new Map<string, string>([
   ["react", "application files must not import React"],
   ["react-dom", "application files must not import React DOM"],
   ["dexie", "application files must not import Dexie"],
@@ -272,6 +273,11 @@ function classifyImportTarget(
   sourcePathSet: ReadonlySet<string>,
   basePath: string | undefined,
 ): SourceLayer {
+  const expandedAlias = expandPathAlias(importPath);
+  if (expandedAlias) {
+    return classifySourcePath(expandedAlias, getOptionsForBasePath(basePath));
+  }
+
   if (importPath.startsWith(".")) {
     return classifySourcePath(
       resolveRelativeImport(sourcePath, importPath, sourcePathSet, basePath),

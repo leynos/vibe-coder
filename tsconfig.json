@@ -19,6 +19,11 @@
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": false,
+    "paths": {
+      "@domain/*": ["./src/domain/*"],
+      "@application/*": ["./src/application/*"],
+      "@adapters/*": ["./src/adapters/*"]
+    },
     "types": ["bun-types", "vite/client", "react", "react-dom", "vitest"],
     "noEmit": true
   },
