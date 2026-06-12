@@ -934,9 +934,10 @@ Stage E configures Biome's `noRestrictedImports`.
 
   ```sh
   mkdir -p tmp/boundary-check/src/domain
-  printf 'import "@adapters/persistence/db";\n' \
+  cp biome.jsonc tmp/boundary-check/biome.jsonc
+  printf 'import "`@adapters/persistence/db`";\n' \
     > tmp/boundary-check/src/domain/forbidden.ts
-  bunx biome lint tmp/boundary-check/src/domain/
+  cd tmp/boundary-check && bunx biome lint src/domain/ ; cd -
   # Expect non-zero exit and the override message.
   rm -rf tmp/boundary-check
   ```
