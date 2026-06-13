@@ -47,10 +47,12 @@ explicitly approved it.
   explicitly defers them.
 - Do not create `src/app/` subdirectories that do not already exist. `app/`
   is the inbound-adapter shell; its tree was settled before 1.2.1.
-- Path aliases must read from `tsconfig.json` `compilerOptions.paths` as the
-  single source of truth. Vite and the custom import-boundary guard must
-  derive their alias maps from the same configuration (programmatically or
-  via a tiny shared constant).
+- `tools/path-aliases.ts` is the single source of truth for path aliases.
+  `tsconfig.json` (`compilerOptions.paths`), `vite.config.ts`
+  (`resolve.alias`), and the custom import-boundary guard
+  (`scripts/import-boundary-paths.ts`) must all derive their alias maps
+  programmatically from `tools/path-aliases.ts`; no alias may be added in
+  only one consumer.
 - Initial barrel files must be valid TypeScript modules under the project's
   `isolatedModules: true` and `moduleDetection: "force"` settings. They must
   contain only a `/** @file ... */` header. They must not re-export from a
@@ -195,9 +197,10 @@ explicitly approved it.
   programmatically.
   Severity: low.
   Likelihood: high.
-  Mitigation: Define one alias map in TypeScript, import it from both
-  `vite.config.ts` and `scripts/import-boundary-paths.ts`, and write a unit
-  test asserting it matches `tsconfig.json` `compilerOptions.paths`.
+  Mitigation: Define the alias map once in `tools/path-aliases.ts`, derive
+  `tsconfig.json` `compilerOptions.paths`, `vite.config.ts`
+  `resolve.alias`, and `scripts/import-boundary-paths.ts` from that constant,
+  and write a unit test asserting the derived consumers stay in sync.
 
 - Risk: Biome `noRestrictedImports.patterns.group` uses gitignore-style
   matching; an unanchored pattern such as `**/adapters/**` will match
@@ -211,9 +214,9 @@ explicitly approved it.
   violation is emitted.
 
 - Risk: A future alias (for example, `@parameter-packs/*` in roadmap
-  1.3.2) lands in `tsconfig.json` and `vite.config.ts` but the Biome
-  override is missed, silently disabling boundary enforcement for the new
-  layer.
+  1.3.2) is added to `tools/path-aliases.ts` and appears in derived
+  `tsconfig.json` and `vite.config.ts` consumers, but the Biome override is
+  missed, silently disabling boundary enforcement for the new layer.
   Severity: high.
   Likelihood: high.
   Mitigation: Derive Biome's expected pattern set from the alias-map
@@ -273,7 +276,8 @@ explicitly approved it.
   Severity: high.
   Likelihood: high.
   Mitigation: Teach `classifyImportTarget` and the pre-resolution helpers
-  about the alias map before the new aliases are wired into `tsconfig.json`.
+  about the alias map before new aliases from `tools/path-aliases.ts` are
+  exposed through the derived `tsconfig.json` consumer.
   Cover this with at least four new cases in
   `tests/import-boundary-violation-cases.ts` and
   `tests/import-boundaries.test.ts`.
