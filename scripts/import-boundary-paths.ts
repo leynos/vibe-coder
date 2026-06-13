@@ -12,6 +12,9 @@ export {
 } from "../tools/path-aliases";
 import { PATH_ALIASES } from "../tools/path-aliases";
 
+/**
+ * File extensions recognised as TypeScript or JavaScript source files.
+ */
 export const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx"] as const;
 
 /**

@@ -22,10 +22,16 @@ export type AliasPrefix = `@${string}` & {
   readonly __brand: "AliasPrefix";
 };
 
+/**
+ * Branded string type for a repository-relative `src/` path.
+ */
 export type RepoRelativePath = `src/${string}` & {
   readonly __brand: "RepoRelativePath";
 };
 
+/**
+ * Tuple pairing an {@link AliasPrefix} with a {@link RepoRelativePath}.
+ */
 export type AliasEntry = readonly [AliasPrefix, RepoRelativePath];
 
 /** Brand a literal `@...` prefix for use in the shared alias tuple. */
@@ -34,6 +40,9 @@ const aliasPrefix = (value: `@${string}`): AliasPrefix => value as AliasPrefix;
 /** Brand a literal `src/...` repository path for use in the shared alias tuple. */
 const repoRelativePath = (value: `src/${string}`): RepoRelativePath => value as RepoRelativePath;
 
+/**
+ * Frozen list of alias-to-target pairs shared by TypeScript, Vite, and boundary tooling.
+ */
 export const PATH_ALIASES = Object.freeze([
   [aliasPrefix("@domain"), repoRelativePath("src/domain")],
   [aliasPrefix("@application"), repoRelativePath("src/application")],

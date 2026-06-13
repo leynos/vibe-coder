@@ -7,6 +7,9 @@ export interface RestrictedImportPattern {
   readonly message: string;
 }
 
+/**
+ * Biome `noRestrictedImports` rule shape used by boundary tests.
+ */
 export interface NoRestrictedImportsRule {
   readonly level: "error" | "warn" | "info";
   readonly options: {
@@ -15,6 +18,9 @@ export interface NoRestrictedImportsRule {
   };
 }
 
+/**
+ * A single Biome override entry with include globs and optional linter rules.
+ */
 export interface BiomeOverride {
   readonly includes?: readonly string[];
   readonly linter?: {
@@ -26,6 +32,9 @@ export interface BiomeOverride {
   };
 }
 
+/**
+ * Top-level Biome configuration subset read by boundary tests.
+ */
 export interface BiomeConfig {
   readonly overrides?: readonly BiomeOverride[];
 }

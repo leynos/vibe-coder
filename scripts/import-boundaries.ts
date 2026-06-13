@@ -71,6 +71,9 @@ interface ImportReference {
   readonly column: number;
 }
 
+/**
+ * Third-party packages that domain files must not import directly.
+ */
 export const DISALLOWED_DOMAIN_PACKAGES = new Map<string, string>([
   ["react", "domain files must not import React"],
   ["react-dom", "domain files must not import React DOM"],
@@ -78,6 +81,9 @@ export const DISALLOWED_DOMAIN_PACKAGES = new Map<string, string>([
   ["dexie", "domain files must not import Dexie"],
 ]);
 
+/**
+ * Third-party packages that application files must not import directly.
+ */
 export const DISALLOWED_APPLICATION_PACKAGES = new Map<string, string>([
   ["react", "application files must not import React"],
   ["react-dom", "application files must not import React DOM"],

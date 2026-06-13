@@ -1,7 +1,13 @@
 /** @file Shared locale metadata consumed by the i18n runtime and UI controls. */
 
+/**
+ * Text direction used for document and control layout metadata.
+ */
 export type TextDirection = "ltr" | "rtl";
 
+/**
+ * Locale metadata displayed in selectors and passed to i18next.
+ */
 export type SupportedLocale = {
   /** BCP-47 code used by i18next and Fluent when loading .ftl bundles. */
   code: string;
@@ -65,9 +71,19 @@ const RAW_SUPPORTED_LOCALES = [
   { code: "zh-TW", label: "Chinese (Traditional)", nativeLabel: "繁體中文" },
 ] as const satisfies readonly SupportedLocale[];
 
+/**
+ * Deduplicated, non-empty list of locales supported by the application.
+ */
 export const SUPPORTED_LOCALES = dedupeSupportedLocales(RAW_SUPPORTED_LOCALES);
 
+/**
+ * Default locale used when detection yields no supported language.
+ */
 export const DEFAULT_LOCALE = SUPPORTED_LOCALES[0].code;
+
+/**
+ * Ordered i18next detector sources used by the browser runtime.
+ */
 export const DETECTION_ORDER = ["querystring", "localStorage"] as const;
 
 const LOCALE_MAP: Record<string, SupportedLocale> = SUPPORTED_LOCALES.reduce(
@@ -92,6 +108,12 @@ const defaultLocaleMetadata = (() => {
   return locale;
 })();
 
+/**
+ * Return metadata for a locale code, falling back to language-only and default matches.
+ *
+ * @param code - Optional BCP-47 locale code to look up.
+ * @returns Supported locale metadata for the best available match.
+ */
 export const getLocaleMetadata = (code: string | undefined): SupportedLocale => {
   if (!code) {
     return defaultLocaleMetadata;
@@ -106,10 +128,22 @@ export const getLocaleMetadata = (code: string | undefined): SupportedLocale => 
   );
 };
 
+/**
+ * Return the text direction for a locale code.
+ *
+ * @param code - Optional BCP-47 locale code to inspect.
+ * @returns The locale direction, defaulting to left-to-right.
+ */
 export const getLocaleDirection = (code: string | undefined): TextDirection => {
   return getLocaleMetadata(code).direction ?? "ltr";
 };
 
+/**
+ * Check whether a locale should be rendered right-to-left.
+ *
+ * @param code - Optional BCP-47 locale code to inspect.
+ * @returns True when the resolved locale direction is right-to-left.
+ */
 export const isRtlLocale = (code: string | undefined): boolean => {
   return getLocaleDirection(code) === "rtl";
 };

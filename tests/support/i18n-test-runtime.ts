@@ -67,6 +67,12 @@ const createFetchProxy = (target: typeof globalThis): GlobalFetch => {
   return proxy;
 };
 
+/**
+ * Prepare i18n for tests by serving locale assets through a fetch proxy.
+ *
+ * @param target - Global-like object whose fetch and storage should be patched.
+ * @returns A promise that resolves once i18next has loaded the default locale.
+ */
 export async function setupI18nTestHarness(target: typeof globalThis = globalThis): Promise<void> {
   const patchedFetch = createFetchProxy(target);
   target.fetch = patchedFetch;

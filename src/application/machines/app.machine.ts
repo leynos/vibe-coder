@@ -20,18 +20,30 @@
 
 import { createMachine } from "xstate";
 
+/**
+ * Events accepted by the application boot workflow machine.
+ */
 export type AppMachineEvent =
   | { readonly type: "BOOT_READY" }
   | { readonly type: "BOOT_FAILED" }
   | { readonly type: "RETRY_BOOT" };
 
+/**
+ * State values exposed by the application boot workflow machine.
+ */
 export type AppMachineStateValue = "booting" | "failed" | "title";
 
+/**
+ * Named actions emitted by boot workflow transitions for adapters to observe.
+ */
 export type AppMachineAction =
   | { readonly type: "recordBootFailed" }
   | { readonly type: "recordBootRetryRequested" }
   | { readonly type: "recordBootSucceeded" };
 
+/**
+ * XState machine that models boot success, boot failure, and retry reachability.
+ */
 export const appMachine = createMachine({
   id: "app",
   types: {} as {
