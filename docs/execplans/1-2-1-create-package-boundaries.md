@@ -619,6 +619,14 @@ Post-PR finding verification:
 - Documented that the developer-guide adapter tree is the current 1.2.1
   skeleton; the requested second occurrence of that tree was not present in
   `docs/developers-guide.md`.
+- Added `fast-check` property tests for alias expansion and layer
+  classification invariants.
+- Added a follow-up `fast-check` property after CodeRabbit review to exercise
+  bare alias expansion, proving `@domain`, `@application`, and `@adapters`
+  resolve to their exact configured roots.
+- Added TypeScript compile-fail assertions for the branded alias types using
+  `@ts-expect-error`, which is the TypeScript equivalent of Rust `trybuild`
+  coverage for this browser-only project.
 
 ## Context and orientation
 
@@ -1165,12 +1173,11 @@ Acceptance is met when all of these are true:
 - The draft PR exists with the title prefix `(1.2.1)`, references this
   ExecPlan, and contains a Lody session link in `## References`.
 
-Property tests with `fast-check` are not required because this item
-introduces no domain invariant. Behavioural Gherkin tests are not
-required because no externally observable workflow changes. End-to-end
-Playwright tests are exercised through `bun ff` for regression
-detection. A LemmaScript proof is not required because the change does
-not introduce a business axiom.
+Property tests with `fast-check` cover alias expansion and layer
+classification invariants. Behavioural Gherkin tests are not required because
+no externally observable workflow changes. End-to-end Playwright tests are
+exercised through `bun ff` for regression detection. A LemmaScript proof is not
+required because the change does not introduce a business axiom.
 
 ## Idempotence and recovery
 

@@ -19,6 +19,7 @@ describe("parseJsonc", () => {
   });
 
   it("rejects unterminated block comments at end of file", () => {
+    expect(() => parseJsonc('{ "key": 1 } /* unfinished')).toThrow(SyntaxError);
     expect(() => parseJsonc('{ "key": 1 } /* unfinished')).toThrow("Unterminated block comment");
   });
 });

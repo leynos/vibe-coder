@@ -137,6 +137,13 @@ export function getNoRestrictedImportsOverride(
   return rule;
 }
 
+/**
+ * Skip a `//` JSONC comment and return the newline or EOF index.
+ *
+ * @param text - Source text being parsed by {@link parseJsonc}.
+ * @param startIndex - Index immediately after the opening `//`.
+ * @returns The index of the newline that ended the comment, or EOF.
+ */
 function skipLineComment(text: string, startIndex: number): number {
   let index = startIndex;
   while (index < text.length && text[index] !== "\n") {
@@ -145,6 +152,14 @@ function skipLineComment(text: string, startIndex: number): number {
   return index;
 }
 
+/**
+ * Skip a `/* ... *\/` JSONC comment, rejecting comments that run to EOF.
+ *
+ * @param text - Source text being parsed by {@link parseJsonc}.
+ * @param startIndex - Index immediately after the opening `/*`.
+ * @returns The index of the closing `/` in the block-comment terminator.
+ * @throws {SyntaxError} If no closing block-comment terminator is found.
+ */
 function skipBlockComment(text: string, startIndex: number): number {
   let index = startIndex;
   while (index < text.length) {
@@ -154,5 +169,5 @@ function skipBlockComment(text: string, startIndex: number): number {
     index += 1;
   }
 
-  throw new Error("Unterminated block comment");
+  throw new SyntaxError("Unterminated block comment");
 }

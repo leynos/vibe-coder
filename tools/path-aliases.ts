@@ -28,7 +28,10 @@ export type RepoRelativePath = `src/${string}` & {
 
 export type AliasEntry = readonly [AliasPrefix, RepoRelativePath];
 
+/** Brand a literal `@...` prefix for use in the shared alias tuple. */
 const aliasPrefix = (value: `@${string}`): AliasPrefix => value as AliasPrefix;
+
+/** Brand a literal `src/...` repository path for use in the shared alias tuple. */
 const repoRelativePath = (value: `src/${string}`): RepoRelativePath => value as RepoRelativePath;
 
 export const PATH_ALIASES = Object.freeze([
