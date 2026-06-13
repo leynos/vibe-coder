@@ -852,7 +852,13 @@ Stage E configures Biome's `noRestrictedImports`.
                     "src/adapters/**",
                     "src/application/**",
                     "adapters/**",
-                    "application/**"
+                    "application/**",
+                    "../application/**",
+                    "../../application/**",
+                    "../**/application/**",
+                    "../adapters/**",
+                    "../../adapters/**",
+                    "../**/adapters/**"
                   ],
                   "message": "Domain must not depend on adapters or application."
                 }
@@ -860,6 +866,7 @@ Stage E configures Biome's `noRestrictedImports`.
               "paths": {
                 "react": "Domain must not import React.",
                 "react-dom": "Domain must not import React DOM.",
+                "react-dom/client": "Domain must not import React DOM.",
                 "dexie": "Domain must not import Dexie."
               }
             }
@@ -881,13 +888,18 @@ Stage E configures Biome's `noRestrictedImports`.
                   "group": [
                     "@adapters/**",
                     "src/adapters/**",
-                    "adapters/**"
+                    "adapters/**",
+                    "../adapters/**",
+                    "../../adapters/**",
+                    "../**/adapters/**"
                   ],
                   "message": "Application must not depend on adapters."
                 }
               ],
               "paths": {
+                "react": "Application must not import React.",
                 "react-dom": "Application must not import React DOM.",
+                "react-dom/client": "Application must not import React DOM.",
                 "dexie": "Application must not import Dexie."
               }
             }
