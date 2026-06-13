@@ -153,5 +153,6 @@ function skipBlockComment(text: string, startIndex: number): number {
     }
     index += 1;
   }
-  return text.length;
+
+  throw new Error("Unterminated block comment");
 }

@@ -18,7 +18,7 @@ describe("parseJsonc", () => {
     expect(parseJsonc('{ "key": 1 } // EOF comment\n')).toEqual({ key: 1 });
   });
 
-  it("handles unterminated block comments at end of file", () => {
-    expect(parseJsonc('{ "key": 1 } /* unfinished')).toEqual({ key: 1 });
+  it("rejects unterminated block comments at end of file", () => {
+    expect(() => parseJsonc('{ "key": 1 } /* unfinished')).toThrow("Unterminated block comment");
   });
 });

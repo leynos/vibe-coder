@@ -935,7 +935,7 @@ Stage E configures Biome's `noRestrictedImports`.
   ```sh
   mkdir -p tmp/boundary-check/src/domain
   cp biome.jsonc tmp/boundary-check/biome.jsonc
-  printf 'import "`@adapters/persistence/db`";\n' \
+  printf 'import "@adapters/persistence/db";\n' \
     > tmp/boundary-check/src/domain/forbidden.ts
   cd tmp/boundary-check && bunx biome lint src/domain/ ; cd -
   # Expect non-zero exit and the override message.
@@ -1050,7 +1050,7 @@ Manual Biome boundary verification, executed only under `tmp/`:
 ```sh
 mkdir -p tmp/boundary-check/src/domain
 cp biome.jsonc tmp/boundary-check/biome.jsonc
-printf 'import "`@adapters/persistence/db`";\n' \
+printf 'import "@adapters/persistence/db";\n' \
   > tmp/boundary-check/src/domain/forbidden.ts
 cd tmp/boundary-check && bunx biome lint src/domain/ ; cd -
 # Expect non-zero exit and the override message.
@@ -1140,9 +1140,10 @@ Acceptance is met when all of these are true:
   `/** @file ... */` barrel.
 - `tsconfig.json` exposes `paths` for `@domain/*`, `@application/*`,
   and `@adapters/*`, and `bun check:types` passes on the empty skeleton.
-- `vite.config.ts` consumes the alias map from
-  `scripts/import-boundary-paths.ts` (or a sibling module) without
-  hand-maintained duplication.
+- `vite.config.ts` consumes the canonical alias map from
+  `tools/path-aliases.ts` (or a sibling module under `tools/`) without
+  hand-maintained duplication. Production code, including `vite.config.ts`,
+  must not import from `scripts/`.
 - The custom guard resolves alias imports and reports cross-layer
   violations; `bun run lint:imports` exits 0 on the committed tree.
 - Biome's `noRestrictedImports` override rejects an `@adapters/...`
@@ -1186,8 +1187,8 @@ under `/tmp`, update `Surprises & Discoveries`, and ask for direction
 before committing.
 
 If a temporary manual-verification fixture is left behind in
-`src/domain/__boundary-check__/` after Stage E, delete it before any
-commit; the fixture must not enter version control.
+`tmp/boundary-check/` after Stage E, delete it before any commit; the fixture
+must not enter version control.
 
 ## Artifacts and notes
 
