@@ -170,6 +170,7 @@
                 "paths": {
                   "react": "Domain must not import React.",
                   "react-dom": "Domain must not import React DOM.",
+                  "react-dom/client": "Domain must not import React DOM.",
                   "dexie": "Domain must not import Dexie."
                 }
               }
@@ -202,6 +203,7 @@
                 "paths": {
                   "react": "Application must not import React.",
                   "react-dom": "Application must not import React DOM.",
+                  "react-dom/client": "Application must not import React DOM.",
                   "dexie": "Application must not import Dexie."
                 }
               }

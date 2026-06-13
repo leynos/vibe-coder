@@ -74,12 +74,14 @@ interface ImportReference {
 export const DISALLOWED_DOMAIN_PACKAGES = new Map<string, string>([
   ["react", "domain files must not import React"],
   ["react-dom", "domain files must not import React DOM"],
+  ["react-dom/client", "domain files must not import React DOM"],
   ["dexie", "domain files must not import Dexie"],
 ]);
 
 export const DISALLOWED_APPLICATION_PACKAGES = new Map<string, string>([
   ["react", "application files must not import React"],
   ["react-dom", "application files must not import React DOM"],
+  ["react-dom/client", "application files must not import React DOM"],
   ["dexie", "application files must not import Dexie"],
 ]);
 

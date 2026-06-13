@@ -10,6 +10,38 @@ import { type BiomeConfig, parseJsonc } from "./biome-config-helpers";
 
 const FIXTURE_ROOT = "tmp/biome-boundary-check";
 const BOUNDARY_LAYER_PATTERNS = ["src/domain/**", "src/application/**"] as const;
+const RESTRICTED_PACKAGE_FIXTURES = [
+  {
+    file: "src/domain/forbidden-react.ts",
+    importPath: "react",
+    message: "Domain must not import React.",
+  },
+  {
+    file: "src/domain/forbidden-react-dom-client.ts",
+    importPath: "react-dom/client",
+    message: "Domain must not import React DOM.",
+  },
+  {
+    file: "src/domain/forbidden-dexie.ts",
+    importPath: "dexie",
+    message: "Domain must not import Dexie.",
+  },
+  {
+    file: "src/application/forbidden-react.ts",
+    importPath: "react",
+    message: "Application must not import React.",
+  },
+  {
+    file: "src/application/forbidden-react-dom-client.ts",
+    importPath: "react-dom/client",
+    message: "Application must not import React DOM.",
+  },
+  {
+    file: "src/application/forbidden-dexie.ts",
+    importPath: "dexie",
+    message: "Application must not import Dexie.",
+  },
+] as const;
 
 describe("Biome noRestrictedImports boundary enforcement", () => {
   afterEach(() => {
@@ -37,6 +69,9 @@ describe("Biome noRestrictedImports boundary enforcement", () => {
       join(FIXTURE_ROOT, "src/domain/rules/forbidden-by-deep-relative-application.ts"),
       'import "../../application/commands/x";\n',
     );
+    for (const fixture of RESTRICTED_PACKAGE_FIXTURES) {
+      writeFileSync(join(FIXTURE_ROOT, fixture.file), `import "${fixture.importPath}";\n`);
+    }
     writeFileSync(join(FIXTURE_ROOT, "src/domain/other.ts"), "export const other = 1;\n");
     writeFileSync(join(FIXTURE_ROOT, "src/domain/allowed.ts"), 'import "./other";\n');
     writeFileSync(
@@ -57,7 +92,7 @@ describe("Biome noRestrictedImports boundary enforcement", () => {
       message: diagnostic.message,
     }));
 
-    expect(diagnostics).toHaveLength(4);
+    expect(diagnostics).toHaveLength(10);
     expect(diagnostics).toEqual(
       expect.arrayContaining([
         {
@@ -76,6 +111,10 @@ describe("Biome noRestrictedImports boundary enforcement", () => {
           file: "src/domain/rules/forbidden-by-deep-relative-application.ts",
           message: expect.stringContaining("Domain must not depend on adapters or application."),
         },
+        ...RESTRICTED_PACKAGE_FIXTURES.map((fixture) => ({
+          file: fixture.file,
+          message: expect.stringContaining(fixture.message),
+        })),
       ]),
     );
     expect(diagnostics.some((diagnostic) => diagnostic.file === "src/domain/allowed.ts")).toBe(
@@ -99,11 +138,22 @@ interface BiomeJsonReport {
   }>;
 }
 
+/**
+ * Extract the file path from one Biome JSON diagnostic.
+ *
+ * @param diagnostic - Diagnostic emitted by `biome lint --reporter=json`.
+ * @returns The repository-relative fixture path when Biome reports one.
+ */
 function getDiagnosticPath(diagnostic: BiomeJsonReport["diagnostics"][number]): string | undefined {
   const path = diagnostic.location?.path;
   return typeof path === "string" ? path : path?.file;
 }
 
+/**
+ * Build a fixture-local Biome config that keeps only the boundary overrides.
+ *
+ * @returns A JSON config string rooted at the temporary fixture tree.
+ */
 function buildFixtureBiomeConfig(): string {
   const config = parseJsonc(readFileSync("biome.jsonc", "utf8")) as BiomeConfig & {
     readonly $schema?: string;

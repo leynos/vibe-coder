@@ -50,11 +50,27 @@ describe("Biome noRestrictedImports boundary overrides", () => {
     const applicationPaths =
       getNoRestrictedImportsOverride(config, "src/application/**").options.paths ?? {};
 
-    expect(Object.keys(domainPaths).sort()).toEqual(["dexie", "react", "react-dom"]);
-    expect(Object.keys(applicationPaths).sort()).toEqual(["dexie", "react", "react-dom"]);
+    expect(Object.keys(domainPaths).sort()).toEqual([
+      "dexie",
+      "react",
+      "react-dom",
+      "react-dom/client",
+    ]);
+    expect(Object.keys(applicationPaths).sort()).toEqual([
+      "dexie",
+      "react",
+      "react-dom",
+      "react-dom/client",
+    ]);
   });
 });
 
+/**
+ * Derive the expected Biome glob patterns for forbidden layer imports.
+ *
+ * @param layers - Architectural target layers that should be blocked.
+ * @returns The unique alias, absolute, bare, and parent-relative patterns.
+ */
 function buildForbiddenPatterns(layers: ReadonlyArray<"application" | "adapters">): string[] {
   const layerSet = new Set(layers);
 

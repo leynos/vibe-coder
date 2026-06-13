@@ -305,11 +305,12 @@ explicitly approved it.
 
 - [x] Loaded `execplans`, `leta`, and `hexagonal-architecture` skills.
 - [x] Confirmed branch is `1-2-1-create-package-boundaries`.
-- [ ] Used a planning agent team for research (Biome + TS alias prior art
-  and worktree reconnaissance ran in parallel).
-- [ ] Drafted this approval-gated ExecPlan.
-- [ ] Submitted the draft to a community-of-experts review (Logisphere) and
-  recorded resulting revisions in `Decision Log`.
+- [x] Recorded that no separate planning agent team was used; Biome,
+  TypeScript alias, and worktree reconnaissance ran locally in this branch.
+- [x] Drafted and maintained this approval-gated ExecPlan through
+  implementation, review, and follow-up findings.
+- [x] Recorded that no separate Logisphere draft review was performed;
+  CodeRabbit agent reviews covered the implementation and follow-up changes.
 - [x] Received explicit user approval to implement.
 - [x] Implemented the directory skeleton with JSDoc-only barrels.
 - [x] Defined the alias map source-of-truth and wired it into
@@ -627,6 +628,12 @@ Post-PR finding verification:
 - Added TypeScript compile-fail assertions for the branded alias types using
   `@ts-expect-error`, which is the TypeScript equivalent of Rust `trybuild`
   coverage for this browser-only project.
+- Added Biome integration fixtures for restricted package imports from domain
+  and application layers, covering `react`, `react-dom/client`, and `dexie`.
+- Verified the follow-up package-restriction change with `make check-fmt`,
+  Markdownlint for this ExecPlan, `make lint`, `make typecheck`, `make test`,
+  `bun semantic`, `bun ff`, and the manual `tmp/boundary-check/` Biome
+  boundary fixture.
 
 ## Context and orientation
 
@@ -941,8 +948,9 @@ Stage E configures Biome's `noRestrictedImports`.
 - Verify manually with a transient fixture under `tmp/`:
 
   ```sh
-  mkdir -p tmp/boundary-check/src/domain
+  mkdir -p tmp/boundary-check/src/domain tmp/boundary-check/tools
   cp biome.jsonc tmp/boundary-check/biome.jsonc
+  cp -R tools/grit tmp/boundary-check/tools/grit
   printf 'import "@adapters/persistence/db";\n' \
     > tmp/boundary-check/src/domain/forbidden.ts
   cd tmp/boundary-check && bunx biome lint src/domain/ ; cd -
@@ -1056,8 +1064,9 @@ Browser validation:
 Manual Biome boundary verification, executed only under `tmp/`:
 
 ```sh
-mkdir -p tmp/boundary-check/src/domain
+mkdir -p tmp/boundary-check/src/domain tmp/boundary-check/tools
 cp biome.jsonc tmp/boundary-check/biome.jsonc
+cp -R tools/grit tmp/boundary-check/tools/grit
 printf 'import "@adapters/persistence/db";\n' \
   > tmp/boundary-check/src/domain/forbidden.ts
 cd tmp/boundary-check && bunx biome lint src/domain/ ; cd -
@@ -1118,13 +1127,13 @@ work.
 
 ## Test plan
 
-- [ ] `make check-fmt`
-- [ ] `make lint`
-- [ ] `make typecheck`
-- [ ] `make test`
-- [ ] `bun semantic`
-- [ ] `bun ff`
-- [ ] Manual Biome boundary check (see ExecPlan, Stage E)
+- [x] `make check-fmt`
+- [x] `make lint`
+- [x] `make typecheck`
+- [x] `make test`
+- [x] `bun semantic`
+- [x] `bun ff`
+- [x] Manual Biome boundary check (see ExecPlan, Stage E)
 
 ## References
 
