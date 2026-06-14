@@ -84,10 +84,15 @@ function buildForbiddenPatterns(layers: ReadonlyArray<"application" | "adapters"
     }
 
     return [
+      `${prefix}`,
       `${prefix}/**`,
+      `${target}`,
       `${target}/**`,
+      `${layer}`,
       `${layer}/**`,
+      `../${layer}`,
       `../${layer}/**`,
+      `../../${layer}`,
       `../../${layer}/**`,
       `../**/${layer}/**`,
     ];

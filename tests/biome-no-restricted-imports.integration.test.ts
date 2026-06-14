@@ -42,6 +42,28 @@ const RESTRICTED_PACKAGE_FIXTURES = [
     message: "Application must not import Dexie.",
   },
 ] as const;
+const FORBIDDEN_LAYER_FIXTURES = [
+  {
+    file: "src/domain/forbidden-by-alias.ts",
+    importPath: "@adapters/persistence/db",
+    message: "Domain must not depend on adapters or application.",
+  },
+  {
+    file: "src/domain/forbidden-by-bare-adapter-alias.ts",
+    importPath: "@adapters",
+    message: "Domain must not depend on adapters or application.",
+  },
+  {
+    file: "src/domain/forbidden-by-bare-application-alias.ts",
+    importPath: "@application",
+    message: "Domain must not depend on adapters or application.",
+  },
+  {
+    file: "src/application/forbidden-by-bare-adapter-alias.ts",
+    importPath: "@adapters",
+    message: "Application must not depend on adapters.",
+  },
+] as const;
 
 describe("Biome noRestrictedImports boundary enforcement", () => {
   afterEach(() => {
@@ -52,10 +74,9 @@ describe("Biome noRestrictedImports boundary enforcement", () => {
     mkdirSync(join(FIXTURE_ROOT, "src/domain"), { recursive: true });
     mkdirSync(join(FIXTURE_ROOT, "src/application"), { recursive: true });
     writeFileSync(join(FIXTURE_ROOT, "biome.jsonc"), buildFixtureBiomeConfig());
-    writeFileSync(
-      join(FIXTURE_ROOT, "src/domain/forbidden-by-alias.ts"),
-      'import "@adapters/persistence/db";\n',
-    );
+    for (const fixture of FORBIDDEN_LAYER_FIXTURES) {
+      writeFileSync(join(FIXTURE_ROOT, fixture.file), `import "${fixture.importPath}";\n`);
+    }
     writeFileSync(
       join(FIXTURE_ROOT, "src/application/forbidden-by-src-path.ts"),
       'import "src/adapters/audio/x";\n',
@@ -92,13 +113,9 @@ describe("Biome noRestrictedImports boundary enforcement", () => {
       message: diagnostic.message,
     }));
 
-    expect(diagnostics).toHaveLength(10);
+    expect(diagnostics).toHaveLength(13);
     expect(diagnostics).toEqual(
       expect.arrayContaining([
-        {
-          file: "src/domain/forbidden-by-alias.ts",
-          message: expect.stringContaining("Domain must not depend on adapters or application."),
-        },
         {
           file: "src/application/forbidden-by-src-path.ts",
           message: expect.stringContaining("Application must not depend on adapters."),
@@ -111,6 +128,10 @@ describe("Biome noRestrictedImports boundary enforcement", () => {
           file: "src/domain/rules/forbidden-by-deep-relative-application.ts",
           message: expect.stringContaining("Domain must not depend on adapters or application."),
         },
+        ...FORBIDDEN_LAYER_FIXTURES.map((fixture) => ({
+          file: fixture.file,
+          message: expect.stringContaining(fixture.message),
+        })),
         ...RESTRICTED_PACKAGE_FIXTURES.map((fixture) => ({
           file: fixture.file,
           message: expect.stringContaining(fixture.message),

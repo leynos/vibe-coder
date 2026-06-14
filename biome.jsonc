@@ -151,16 +151,26 @@
                 "patterns": [
                   {
                     "group": [
+                      "@application",
                       "@application/**",
+                      "@adapters",
                       "@adapters/**",
+                      "src/application",
                       "src/application/**",
+                      "src/adapters",
                       "src/adapters/**",
+                      "application",
                       "application/**",
+                      "adapters",
                       "adapters/**",
+                      "../application",
                       "../application/**",
+                      "../../application",
                       "../../application/**",
                       "../**/application/**",
+                      "../adapters",
                       "../adapters/**",
+                      "../../adapters",
                       "../../adapters/**",
                       "../**/adapters/**"
                     ],
@@ -190,10 +200,15 @@
                 "patterns": [
                   {
                     "group": [
+                      "@adapters",
                       "@adapters/**",
+                      "src/adapters",
                       "src/adapters/**",
+                      "adapters",
                       "adapters/**",
+                      "../adapters",
                       "../adapters/**",
+                      "../../adapters",
                       "../../adapters/**",
                       "../**/adapters/**"
                     ],

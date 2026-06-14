@@ -65,10 +65,10 @@ explicitly approved it.
   between the two layers must be treated as a Biome configuration bug, not
   as a domain rule change.
 - Boundary patterns supplied to Biome `noRestrictedImports.patterns.group`
-  must be anchored. Use forms like `@adapters/**`, `src/adapters/**`, and
-  `adapters/**`. Do not use leading `**/` because Biome treats those as
-  gitignore-style patterns that match third-party files under
-  `node_modules/` and any unrelated path containing the segment.
+  must avoid bare leading `**/` forms. Use anchored forms like
+  `@adapters`, `@adapters/**`, `src/adapters`, `src/adapters/**`, and
+  `adapters/**`; if a parent-relative wildcard is needed, document it
+  explicitly and keep the AST guard authoritative for deep relative escapes.
 - The shared alias-map constant must live in `tools/path-aliases.ts` so
   that production code (`vite.config.ts`) does not import from `scripts/`.
   `scripts/import-boundary-paths.ts` may re-export the constant for the
@@ -836,8 +836,10 @@ Stage D teaches the custom guard about the new aliases.
 Stage E configures Biome's `noRestrictedImports`.
 
 - Add two `overrides` entries to `biome.jsonc`. The `group` arrays must
-  use only anchored patterns. The forbidden alias and `src/`-relative
-  forms are listed; no pattern uses a leading `**/`.
+  avoid bare leading `**/` forms. The forbidden alias, `src/`-relative, bare
+  layer, and parent-relative forms are listed; `../**/<layer>/**` is kept only
+  for documented parent-relative escapes while the AST guard remains
+  authoritative for deep relative escapes.
 
   ```jsonc
   {
@@ -851,16 +853,26 @@ Stage E configures Biome's `noRestrictedImports`.
               "patterns": [
                 {
                   "group": [
+                    "@adapters",
                     "@adapters/**",
+                    "@application",
                     "@application/**",
+                    "src/adapters",
                     "src/adapters/**",
+                    "src/application",
                     "src/application/**",
+                    "adapters",
                     "adapters/**",
+                    "application",
                     "application/**",
+                    "../application",
                     "../application/**",
+                    "../../application",
                     "../../application/**",
                     "../**/application/**",
+                    "../adapters",
                     "../adapters/**",
+                    "../../adapters",
                     "../../adapters/**",
                     "../**/adapters/**"
                   ],
@@ -890,10 +902,15 @@ Stage E configures Biome's `noRestrictedImports`.
               "patterns": [
                 {
                   "group": [
+                    "@adapters",
                     "@adapters/**",
+                    "src/adapters",
                     "src/adapters/**",
+                    "adapters",
                     "adapters/**",
+                    "../adapters",
                     "../adapters/**",
+                    "../../adapters",
                     "../../adapters/**",
                     "../**/adapters/**"
                   ],
@@ -1259,18 +1276,25 @@ The shared alias map interface lives in `tools/path-aliases.ts`:
 
 ```typescript
 // tools/path-aliases.ts
-export type AliasPrefix = `@${string}`;
-export type RepoRelativePath = string & {
+export type AliasPrefix = `@${string}` & {
+  readonly __brand: "AliasPrefix";
+};
+
+export type RepoRelativePath = `src/${string}` & {
   readonly __brand: "RepoRelativePath";
 };
 
 export type AliasEntry = readonly [AliasPrefix, RepoRelativePath];
 
-export const PATH_ALIASES: readonly AliasEntry[] = Object.freeze([
-  ["@domain", "src/domain" as RepoRelativePath],
-  ["@application", "src/application" as RepoRelativePath],
-  ["@adapters", "src/adapters" as RepoRelativePath],
-] as const);
+const aliasPrefix = (value: `@${string}`): AliasPrefix => value as AliasPrefix;
+const repoRelativePath = (value: `src/${string}`): RepoRelativePath =>
+  value as RepoRelativePath;
+
+export const PATH_ALIASES = Object.freeze([
+  [aliasPrefix("@domain"), repoRelativePath("src/domain")],
+  [aliasPrefix("@application"), repoRelativePath("src/application")],
+  [aliasPrefix("@adapters"), repoRelativePath("src/adapters")],
+] as const satisfies readonly AliasEntry[]);
 ```
 
 `scripts/import-boundary-paths.ts` re-exports the constant and adds the
