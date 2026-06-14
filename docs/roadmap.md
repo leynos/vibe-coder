@@ -80,7 +80,7 @@ compilable TypeScript tree with enforced import boundaries. It unblocks all
 later domain and adapter work. See HLD §"Module layout" and
 `adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`.
 
-- [ ] 1.2.1. Create the `domain/`, `application/`, and `adapters/` package
+- [x] 1.2.1. Create the `domain/`, `application/`, and `adapters/` package
   boundaries with index files and Biome/TSConfig path aliases.
   - Requires 1.1.2.
   - Mirror the directory tree in HLD §"Module layout".

@@ -75,7 +75,12 @@ function getTsxFiles(): string[] {
   return Array.from(glob.scanSync(PROJECT_ROOT));
 }
 
-/** Build the Unicode-aware word matcher used to detect literals. */
+/**
+ * Build the Unicode-aware word matcher used to detect literals.
+ *
+ * @param minLength - Minimum number of consecutive letters to flag.
+ * @returns A regular expression that matches words at least that long.
+ */
 export function buildWordRegex(minLength: number): RegExp {
   return new RegExp(`\\p{L}{${minLength},}`, "u");
 }
@@ -185,6 +190,14 @@ function shouldSkipNode(node: ts.Node, source: ts.SourceFile, directives: LintDi
   return directives.disabledLines.has(line);
 }
 
+/**
+ * Analyse one TSX file and append hard-coded string violations to the result list.
+ *
+ * @param filePath - Absolute or repository-relative path to the TSX file.
+ * @param wordRegex - Word matcher produced by {@link buildWordRegex}.
+ * @param attrSet - User-facing JSX attributes whose string values are checked.
+ * @param results - Mutable collection that receives any detected violations.
+ */
 export function analyseFile(
   filePath: string,
   wordRegex: RegExp,

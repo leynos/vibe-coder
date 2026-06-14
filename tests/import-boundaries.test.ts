@@ -13,6 +13,7 @@ import {
   findBoundaryViolations,
   type SourceFileInput,
 } from "../scripts/import-boundaries";
+import { expandPathAlias } from "../scripts/import-boundary-paths";
 import { violationCases } from "./import-boundary-violation-cases";
 
 const BASE_PATH = "/project";
@@ -24,9 +25,17 @@ describe("classifySourcePath", () => {
     expect(classifySourcePath("src/application/index.ts", CHECK_OPTIONS)).toBe("application");
     expect(classifySourcePath("src/adapters/index.ts", CHECK_OPTIONS)).toBe("adapters");
     expect(classifySourcePath("src/app/app.tsx", CHECK_OPTIONS)).toBe("app");
+    expect(classifySourcePath("src/adapters", CHECK_OPTIONS)).toBe("adapters");
     expect(classifySourcePath("src/main.tsx", CHECK_OPTIONS)).toBe("other");
     expect(classifySourcePath("/project/src/domain/index.ts", CHECK_OPTIONS)).toBe("domain");
     expect(classifySourcePath("/project/src/adapters/index.ts", CHECK_OPTIONS)).toBe("adapters");
+  });
+
+  it("classifies expanded alias roots by layer", () => {
+    const expandedAlias = expandPathAlias("@adapters");
+
+    expect(expandedAlias).toBe("src/adapters");
+    expect(classifySourcePath(expandedAlias ?? "", CHECK_OPTIONS)).toBe("adapters");
   });
 });
 
@@ -53,9 +62,19 @@ describe("findBoundaryViolations", () => {
       'import "../../domain/model/run-state";',
     ],
     [
+      "application to domain alias",
+      "src/application/selectors/risk-selectors.ts",
+      'import "@domain/model/run-state";',
+    ],
+    [
       "application to application",
       "src/application/services/build-dashboard.ts",
       'import "../selectors/dashboard-selectors";',
+    ],
+    [
+      "adapter to application alias",
+      "src/adapters/persistence/migrations.ts",
+      'import "@application/selectors/dashboard-selectors";',
     ],
     [
       "adapter to application and domain",

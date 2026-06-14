@@ -211,8 +211,10 @@ export const applyDocumentLocale = (language: string | undefined): void => {
  * await i18nReady;
  * // i18n.hasLoadedNamespace("common") === true (given fetch succeeded)
  * ```
+ *
+ * The promise is created immediately so React components can rely on Suspense
+ * to wait for `.ftl` bundles.
  */
-// Initialise immediately so that React components can rely on Suspense to wait for .ftl bundles.
 export const i18nReady = i18n
   .use(FluentBackend)
   .use(LanguageDetector)

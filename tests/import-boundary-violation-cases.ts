@@ -197,4 +197,37 @@ export const violationCases: ReadonlyArray<ImportBoundaryViolationCase> = [
     },
     expected: { message: "domain files must not import adapter files" },
   },
+  {
+    name: "rejects domain files importing adapter aliases",
+    extraFile: {
+      path: "src/domain/services/simulate-tick.ts",
+      sourceText: 'import "@adapters/persistence/db";',
+    },
+    expected: {
+      importPath: "@adapters/persistence/db",
+      message: "domain files must not import adapter files",
+    },
+  },
+  {
+    name: "rejects domain files importing application aliases",
+    extraFile: {
+      path: "src/domain/services/simulate-tick.ts",
+      sourceText: 'import "@application/machines/app.machine";',
+    },
+    expected: {
+      importPath: "@application/machines/app.machine",
+      message: "domain files must not import application files",
+    },
+  },
+  {
+    name: "rejects application files importing adapter aliases",
+    extraFile: {
+      path: "src/application/selectors/chart-selectors.ts",
+      sourceText: 'import "@adapters/audio/x";',
+    },
+    expected: {
+      importPath: "@adapters/audio/x",
+      message: "application files must not import adapter files",
+    },
+  },
 ];

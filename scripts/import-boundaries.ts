@@ -5,6 +5,7 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import ts from "typescript";
 
 import {
+  expandPathAlias,
   getBasePath,
   getScriptKind,
   normalizeForComparison,
@@ -70,19 +71,34 @@ interface ImportReference {
   readonly column: number;
 }
 
-const DISALLOWED_DOMAIN_PACKAGES = new Map<string, string>([
+/**
+ * Third-party packages that domain files must not import directly.
+ */
+export const DISALLOWED_DOMAIN_PACKAGES = new Map<string, string>([
   ["react", "domain files must not import React"],
   ["react-dom", "domain files must not import React DOM"],
+  ["react-dom/client", "domain files must not import React DOM"],
   ["dexie", "domain files must not import Dexie"],
 ]);
 
-const DISALLOWED_APPLICATION_PACKAGES = new Map<string, string>([
+/**
+ * Third-party packages that application files must not import directly.
+ */
+export const DISALLOWED_APPLICATION_PACKAGES = new Map<string, string>([
   ["react", "application files must not import React"],
   ["react-dom", "application files must not import React DOM"],
+  ["react-dom/client", "application files must not import React DOM"],
   ["dexie", "application files must not import Dexie"],
 ]);
 
 const NON_LITERAL_DYNAMIC_IMPORT = "__NON_LITERAL_DYNAMIC_IMPORT__";
+
+const LAYER_ROOTS: ReadonlyArray<readonly [SourceLayer, string]> = [
+  ["domain", "src/domain"],
+  ["application", "src/application"],
+  ["adapters", "src/adapters"],
+  ["app", "src/app"],
+];
 
 /**
  * Classify a repository path into the architectural layer it belongs to.
@@ -98,17 +114,10 @@ const NON_LITERAL_DYNAMIC_IMPORT = "__NON_LITERAL_DYNAMIC_IMPORT__";
 export function classifySourcePath(path: string, options: BoundaryCheckOptions = {}): SourceLayer {
   const normalizedPath = normalizeForComparison(path, getBasePath(options));
 
-  if (normalizedPath.startsWith("src/domain/")) {
-    return "domain";
-  }
-  if (normalizedPath.startsWith("src/application/")) {
-    return "application";
-  }
-  if (normalizedPath.startsWith("src/adapters/")) {
-    return "adapters";
-  }
-  if (normalizedPath.startsWith("src/app/")) {
-    return "app";
+  for (const [layer, root] of LAYER_ROOTS) {
+    if (normalizedPath === root || normalizedPath.startsWith(`${root}/`)) {
+      return layer;
+    }
   }
 
   return "other";
@@ -272,6 +281,11 @@ function classifyImportTarget(
   sourcePathSet: ReadonlySet<string>,
   basePath: string | undefined,
 ): SourceLayer {
+  const expandedAlias = expandPathAlias(importPath);
+  if (expandedAlias) {
+    return classifySourcePath(expandedAlias, getOptionsForBasePath(basePath));
+  }
+
   if (importPath.startsWith(".")) {
     return classifySourcePath(
       resolveRelativeImport(sourcePath, importPath, sourcePathSet, basePath),

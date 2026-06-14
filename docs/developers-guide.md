@@ -93,8 +93,20 @@ bun semantic     # Full semantic lint pass
 src/
   app/           # React shell, routing, providers, layout (inbound adapter)
   domain/        # Domain model, pure simulation rules, driven-port interfaces
+    model/
+    services/
+    rules/
+    ports/
   application/   # XState machines, application services, selectors
+    machines/
+    commands/
+    selectors/
   adapters/      # Concrete driven-adapter implementations
+    persistence/
+    rng/
+    audio/
+    render/
+    assets/
   i18n.ts        # i18next initialization and locale loading
   global.d.ts    # Module augmentations (SVG, CSS, i18next namespace)
   index.css      # Root stylesheet (design tokens + Tailwind base)
@@ -116,6 +128,35 @@ tools/           # Semantic lint scripts, semgrep rules, stylelint config
 docs/            # HLD, ADRs, roadmap, user and developer guides
 public/          # Static assets: locale files, fonts, icons
 ```
+
+The `src/adapters/` tree above lists the current 1.2.1 skeleton. The adapter
+matrix below also names planned adapter families such as `clock/` and
+`telemetry/`; add those directories when their corresponding ports are
+implemented.
+
+### Path aliases
+
+Use repository-local aliases when adding new imports across package
+boundaries:
+
+<!-- markdownlint-disable MD013 MD060 -->
+
+| Alias              | Target                 | Intended use                         |
+| ------------------ | ---------------------- | ------------------------------------ |
+| `@domain/*`        | `src/domain/*`         | Domain model, rules, services, and ports |
+| `@application/*`   | `src/application/*`    | Application machines, commands, and selectors |
+| `@adapters/*`      | `src/adapters/*`       | Concrete adapter implementations     |
+
+<!-- markdownlint-enable MD013 MD060 -->
+
+`tools/path-aliases.ts` is the source of truth for the alias tuple. The
+TypeScript configuration, Vite resolver, custom import-boundary guard, and
+Biome configuration tests all validate against that tuple. Do not add an alias
+directly to only one consumer.
+
+Existing relative imports were deliberately left in place when the aliases
+were introduced. Migrate imports opportunistically with the feature work that
+touches the files; avoid a standalone churn-only rewrite.
 
 ### The three domain layers
 
@@ -139,9 +180,22 @@ adapters  →  application  →  domain
 
 <!-- markdownlint-enable MD013 MD060 -->
 
-Violations of these boundaries are caught by the custom TypeScript import
-guard. Run `bun run lint:imports` directly while changing layer boundaries;
-`bun semantic` also runs the guard as part of the full semantic lint suite.
+Boundary enforcement has two layers:
+
+- Biome `noRestrictedImports` overrides provide fast feedback for literal
+  alias, `src/`-relative, and bare layer-package imports in `src/domain/**`
+  and `src/application/**`.
+- The custom TypeScript import guard remains authoritative. It resolves
+  relative imports, understands the path aliases, and runs through
+  `bun run lint:imports` and `bun semantic`.
+
+If Biome and the custom guard disagree, treat the Biome configuration as the
+bug. The AST guard is the canonical boundary rule because it resolves the
+actual import graph.
+
+`src/app/` remains the inbound-adapter shell and may import every layer. It
+must not accumulate business rules; that gap is tracked for later architecture
+work rather than enforced by the 1.2.1 boundary skeleton.
 
 ### Domain layer contents
 
