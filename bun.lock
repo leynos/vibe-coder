@@ -30,7 +30,7 @@
         "react-i18next": "^16.3.1",
         "tailwindcss": "^4.3.2",
         "valibot": "^1.4.2",
-        "xstate": "^5.32.2",
+        "xstate": "^5.32.3",
       },
       "devDependencies": {
         "@axe-core/playwright": "^4.12.1",
@@ -1180,7 +1180,7 @@
 
     "xmlchars": ["xmlchars@2.2.0", "", {}, "sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw=="],
 
-    "xstate": ["xstate@5.32.2", "", {}, "sha512-uDrojEQYYb4cEeB/SpKDBQlnL2969N5ltmVak4jUMUC6VVRuhi7PCnTBxe4YlQ8YLzdaOEOuVR48CRQPE2o0Uw=="],
+    "xstate": ["xstate@5.32.3", "", {}, "sha512-I8PDV+D9f5iuAGR/CjiQwf/7A+iiSWHsd16jWe/2Z1GQh4T4JQBYvpauqBK+SAU3TegOBtTvxcqAjhJnqeT0sg=="],
 
     "yallist": ["yallist@5.0.0", "", {}, "sha512-YgvUTfwqyc7UXVMrB+SImsVYSmTS8X/tSrtdNZMImM+n7+QTriRXyXim0mBrTXNeqzVF0KWGgHPeiyViFFrNDw=="],
 
