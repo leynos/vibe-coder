@@ -21,7 +21,7 @@
         "@tanstack/react-router": "^1.170.17",
         "clsx": "^2.1.1",
         "daisyui": "^5.6.3",
-        "i18next": "^26.3.1",
+        "i18next": "^26.3.4",
         "i18next-browser-languagedetector": "^8.2.0",
         "i18next-fluent": "^2.0.0",
         "i18next-fluent-backend": "^1.0.0",
@@ -770,7 +770,7 @@
 
     "hyperdyperid": ["hyperdyperid@1.2.0", "", {}, "sha512-Y93lCzHYgGWdrJ66yIktxiaGULYc6oGiABxhcO5AufBeOyoIdZF7bIfLaOrbM0iGIOXQQgxxRrFEnb+Y6w1n4A=="],
 
-    "i18next": ["i18next@26.3.1", "", { "peerDependencies": { "typescript": "^5 || ^6" }, "optionalPeers": ["typescript"] }, "sha512-txQqd5EULsqEh9OJqRH15aCaOuy/nLJyhw5EHCSKLKJE1aBbb3Zve2+uQIxgWhPm1QqUQoWyQBm2kfmmIrzkcQ=="],
+    "i18next": ["i18next@26.3.4", "", { "peerDependencies": { "typescript": "^5 || ^6" }, "optionalPeers": ["typescript"] }, "sha512-pa7m0d7pBDqGHZxljT+WPFeyFgQ7P7SciPPo1tTqYuO0z4sqADYhwnBESmmGp/wEof1inwdls/k8ZgTg8rxFHA=="],
 
     "i18next-browser-languagedetector": ["i18next-browser-languagedetector@8.2.1", "", { "dependencies": { "@babel/runtime": "^7.23.2" } }, "sha512-bZg8+4bdmaOiApD7N7BPT9W8MLZG+nPTOFlLiJiT8uzKXFjhxw4v2ierCXOwB5sFDMtuA5G4kgYZ0AznZxQ/cw=="],
 
