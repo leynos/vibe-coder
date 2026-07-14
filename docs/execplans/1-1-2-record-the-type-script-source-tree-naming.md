@@ -317,7 +317,7 @@ names the intended tree under `src/`, including:
 src/domain/
 src/application/
 src/adapters/
-src/optimisation/
+src/optimization/
 src/data/
 ```
 
@@ -602,7 +602,7 @@ If `bun ff` fails for an unrelated pre-existing reason, preserve the log under
 `/tmp`, update `Surprises & Discoveries`, and ask for direction before
 committing.
 
-## Artifacts and notes
+## Artefacts and notes
 
 Wyvern planning reports contributed these findings:
 

@@ -98,7 +98,7 @@ actual correctness envelope that needs formal checking.
 ### Option C: Use XState for the promotion lifecycle only
 
 XState can describe executable workflow states in TypeScript. It is useful for
-optimisation-lab user interfaces and orchestration code, but it does not explore
+optimization-lab user interfaces and orchestration code, but it does not explore
 bad worker behaviour or prove safety invariants across nondeterministic
 interleavings.
 

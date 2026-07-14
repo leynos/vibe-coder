@@ -122,7 +122,7 @@ function formatCssBlock(selector, declarations) {
   return `${selector} {\n${lines}\n}\n`;
 }
 
-function deriveThemeArtifacts(meta, semantic, resolvedTokens) {
+function deriveThemeArtefacts(meta, semantic, resolvedTokens) {
   const neutral = resolvedTokens.color?.neutral ?? {};
   const radius = resolvedTokens.radius ?? {};
 
@@ -266,7 +266,7 @@ const themes = themeFiles.map((fileName) => {
     colorScheme: rawTheme.colorScheme,
   };
   const semantic = resolveReferences(unwrap(rawTheme.semantic ?? {}), tokenLookup);
-  return deriveThemeArtifacts(meta, semantic, resolvedTokens);
+  return deriveThemeArtefacts(meta, semantic, resolvedTokens);
 });
 
 // Build CSS payload (`tokens/dist/tokens.css`)
