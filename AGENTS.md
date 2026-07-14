@@ -70,7 +70,7 @@
 - **Committing:**
 
   - Only changes that meet all the quality gates above should be committed.
-  - Write clear, descriptive commit messages summarising the change, following
+  - Write clear, descriptive commit messages summarizing the change, following
     these formatting guidelines:
 
     - **Imperative Mood:** Use the imperative mood in the subject line (e.g.,
@@ -87,7 +87,7 @@
 
 ## Refactoring Heuristics & Workflow
 
-- **Recognising Refactoring Needs:** Regularly assess the codebase for potential
+- **Recognizing Refactoring Needs:** Regularly assess the codebase for potential
   refactoring opportunities. Consider refactoring when you observe:
 - **Long Methods/Functions:** Functions or methods that are excessively long
     or try to do too many things.
@@ -237,7 +237,7 @@ Keep docs close to code.
 
 - **Cancellation**: Accept `AbortSignal` for any async that can hang (fetches,
   long UI work). Wire signals through TanStack Query via `signal` in fetchers.
-- **Time & RNG**: Centralise `now()` and `rng()` adapters; never call
+- **Time & RNG**: Centralize `now()` and `rng()` adapters; never call
   `Date.now()` or `Math.random()` directly in business logic.
 
 ### Error Handling (Frontend)
@@ -256,7 +256,7 @@ Keep docs close to code.
   deterministic and parallel‑safe.
 - **Fixtures**: Use factories/builders for component props and server
   responses. Avoid ad hoc object literals in tests.
-- **Parameterised tests**: Drive variations with helper builders or tight loops
+- **Parameterized tests**: Drive variations with helper builders or tight loops
   rather than copy‑pasting cases.
 - **Mocking**: Prefer dependency injection. When stubbing modules, lean on
   the `mock` helpers provided by `bun:test`.
@@ -300,7 +300,7 @@ Keep docs close to code.
   Avoid `refetchOnWindowFocus` unless the data truly needs it.
 - **Async**: Avoid `await` inside loops; batch with `Promise.allSettled`. Use
   `async` iterables/streams for large data.
-- **Rendering**: Enable React StrictMode in dev; memoise expensive components;
+- **Rendering**: Enable React StrictMode in dev; memoize expensive components;
   prefer derived data via selectors.
 - **Stability**: Keep JSON stable (deterministic key order) for snapshots and
   client‑side caches.
@@ -309,11 +309,11 @@ Keep docs close to code.
 
 - **CSP**: Ship a Content Security Policy where deployment allows it. For SPA
   hosting, prefer hashed scripts and forbid `eval`/`new Function`.
-- **Trusted Types**: If embedding third‑party HTML, gate through a sanitiser
+- **Trusted Types**: If embedding third‑party HTML, gate through a sanitizer
   and (where supported) Trusted Types policies.
 - **Secrets**: Never hard‑code secrets in client bundles. Use public,
   least‑privilege tokens only; treat everything as public.
-- **Origin hygiene**: Centralise fetch base URLs; validate response schemas;
+- **Origin hygiene**: Centralize fetch base URLs; validate response schemas;
   handle opaque redirects.
 - **Storage**: Encrypt sensitive data server‑side; treat client storage as
   untrusted. Namespaced keys; versioned payloads; schema‑validated reads.
@@ -348,16 +348,16 @@ Keep docs close to code.
   `select` to project server data for components. Wire `AbortSignal` to
   fetches. Use `retry` policies appropriate to the endpoint.
 - **Router** (if used): Code‑split per route; prefetch data on navigation where
-  it improves perceived performance. Handle not‑found/unauthorised with typed
+  it improves perceived performance. Handle not‑found/unauthorized with typed
   loaders.
-- **Table** (if used): Keep row models pure; virtualise for large sets; memoise
+- **Table** (if used): Keep row models pure; virtualize for large sets; memoize
   column defs.
 - **State**: Encapsulate server state with TanStack Query and model complex
   local state with reducers or state machines inside custom hooks.
 
-### Internationalisation
+### Internationalization
 
-- **Setup**: Initialise `react-i18next` with `i18next-fluent-backend` and
+- **Setup**: Initialize `react-i18next` with `i18next-fluent-backend` and
   `i18next-browser-languagedetector`; set the default locale to the project's
   configured default.
 - **Translations**: Store locale files under
@@ -368,7 +368,7 @@ Keep docs close to code.
 - **Hardcoded strings**: Run `bun run lint:hardcoded-strings` to detect
   user-facing strings not wrapped in `t(...)`. All user-visible text and
   user-facing attributes (`aria-label`, `placeholder`, `title`, `alt`) must be
-  localised.
+  localized.
 
 ### Testing (`bun test` & Playwright)
 
@@ -393,7 +393,7 @@ Keep docs close to code.
   strings in prod.
 - **Metrics**: Basic RUM—navigation timings, error counts, and SPA route
   transitions. Sample aggressively to preserve privacy and cost.
-- **Feature flags**: Centralise flags; keep a kill‑switch for risky features;
+- **Feature flags**: Centralize flags; keep a kill‑switch for risky features;
   document fallback behaviour.
 
 ### Documentation & Examples
@@ -486,6 +486,15 @@ The following tooling is available in this environment:
   environment. In CI, installed via `astral-sh/setup-uv@v4`. Locally,
   install with `curl -Ls https://astral.sh/uv/install.sh | sh` or via
   a system package manager.
+
+## Spelling gate
+
+Run `make spelling` after changing Markdown. The shared
+`typos-config-builder` CLI refreshes the untracked shared en-GB-oxendict
+dictionary when its remote authority is newer and verifies the generated,
+tracked `typos.toml`. Use `make spelling-config-write` to regenerate the file.
+Add only narrow repository terminology to `typos.local.toml`; never edit
+`typos.toml` by hand. The focused consumer helper runs with Python 3.14.
 
 ## Key Takeaway
 

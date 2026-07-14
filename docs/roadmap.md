@@ -630,7 +630,7 @@ trivial dominant policy exists. See HLD §"Self-play agents" and
 - [ ] 5.3.3. Run a parameter sweep over three candidate packs, score with the
   fun score, and promote one pack as the new default after human review.
   - Requires 5.3.2.
-  - See HLD §"Optimisation process" and
+  - See HLD §"Optimization process" and
     `adr-006-use-adversarial-self-play-for-parameter-tuning.md`.
   - Success: the promoted pack has no lock-on-victory strategy according to
     the exploit hunter; the balancing report is committed to the repository.

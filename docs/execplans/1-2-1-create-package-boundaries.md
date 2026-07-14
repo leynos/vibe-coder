@@ -1239,7 +1239,7 @@ If a temporary manual-verification fixture is left behind in
 `tmp/boundary-check/` after Stage E, delete it before any commit; the fixture
 must not enter version control.
 
-## Artifacts and notes
+## Artefacts and notes
 
 Planning research findings recorded by the agent team:
 

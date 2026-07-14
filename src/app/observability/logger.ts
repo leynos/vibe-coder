@@ -11,10 +11,10 @@ interface LogEntry {
 }
 
 /**
- * Serialise `value` to a JSON string without throwing.
+ * Serialize `value` to a JSON string without throwing.
  *
  * Handles circular references by replacing them with `"[Circular]"` and
- * serialises `Error` instances to include `name`, `message`, and `stack` so
+ * serializes `Error` instances to include `name`, `message`, and `stack` so
  * diagnostic details are preserved in log output.
  */
 function safeStringify(value: unknown): string {

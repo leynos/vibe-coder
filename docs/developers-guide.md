@@ -447,12 +447,12 @@ ADR 005 for the full policy.
 The CI workflow runs the same gate sequence as local development:
 
 ```text
-check-fmt → lint → typecheck → test → bun semantic
+check-fmt → lint → typecheck → test → spelling → bun semantic
 ```
 
-The semantic lint job (`semantic-lint.yml`) uses `astral-sh/setup-uv@v4` to
-install `uv`, then runs `uvx semgrep` without a separate Python environment.
-No other Python installation is required.
+The semantic lint job (`semantic-lint.yml`) uses `astral-sh/setup-uv@v8.2.0`
+to install `uv`. It runs `make spelling` before the existing `bun semantic`
+gate, without requiring a separate persistent Python environment.
 
 ---
 
@@ -478,10 +478,16 @@ No other Python installation is required.
 
 The project uses Oxford -ize throughout:
 
-- civilization (not civilisation)
-- visualization (not visualisation)
-- quantization (not quantisation)
-- optimization (not optimisation)
+- civilization
+- visualization
+- quantization
+- optimization
+
+Run `make spelling` to verify the generated `typos.toml` and scan tracked
+Markdown. Use `make spelling-config-write` to regenerate the file from the
+shared estate dictionary and `typos.local.toml` overlay. The shared
+`typos-config-builder` CLI refreshes its untracked cache only when the remote
+authority is newer. Never edit generated `typos.toml` by hand.
 
 Design documents must use neutral phrasing — avoid first-person pronouns
 (`we`, `our`, `I`, `us`).

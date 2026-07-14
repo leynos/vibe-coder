@@ -17,20 +17,20 @@ import { appLogger, reportError } from "./app/observability/logger";
 const supportedLngs = SUPPORTED_LOCALES.map((locale) => locale.code);
 
 /**
- * Normalise a raw Vite `BASE_URL` value to a consistent
+ * Normalize a raw Vite `BASE_URL` value to a consistent
  * leading-slash, trailing-slash form.
  *
  * @param rawBase - The raw base path (e.g. `import.meta.env.BASE_URL`).
- * @returns A normalised path such as `"/"`, `"/app/"`, or `"/sub-path/"`.
+ * @returns A normalized path such as `"/"`, `"/app/"`, or `"/sub-path/"`.
  *
  * @example
  * ```ts
- * normaliseBasePath(undefined)    // "/"
- * normaliseBasePath("app")        // "/app/"
- * normaliseBasePath("/game/")     // "/game/"
+ * normalizeBasePath(undefined)    // "/"
+ * normalizeBasePath("app")        // "/app/"
+ * normalizeBasePath("/game/")     // "/game/"
  * ```
  */
-export const normaliseBasePath = (rawBase: string | undefined): string => {
+export const normalizeBasePath = (rawBase: string | undefined): string => {
   const candidate = rawBase && rawBase.length > 0 ? rawBase : "/";
   const withLeading = candidate.startsWith("/") ? candidate : `/${candidate}`;
   return withLeading.endsWith("/") ? withLeading : `${withLeading}/`;
@@ -50,7 +50,7 @@ export const normaliseBasePath = (rawBase: string | undefined): string => {
  * ```
  */
 export const buildFluentLoadPath = (rawBase: string | undefined): string => {
-  const basePath = normaliseBasePath(rawBase);
+  const basePath = normalizeBasePath(rawBase);
   const path = "locales/{{lng}}/{{ns}}.ftl";
   return `${basePath}${path}`;
 };
@@ -201,7 +201,7 @@ export const applyDocumentLocale = (language: string | undefined): void => {
 };
 
 /**
- * Promise that resolves when i18next has finished initialising and the first
+ * Promise that resolves when i18next has finished initializing and the first
  * locale bundle is available. React Suspense boundaries await this indirectly
  * via `useTranslation`; direct consumers can `await i18nReady` before
  * rendering locale-sensitive logic outside React.

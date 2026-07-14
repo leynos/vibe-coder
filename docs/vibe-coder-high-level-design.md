@@ -24,13 +24,13 @@ and consequence.
 
 ## What problem does Vibe Coder solve, and for whom?
 
-Vibe Coder solves a very specific itch: many idle games offer automation fantasy, but most collapse into either click-farming, spreadsheet worship, or opaque exponential soup. Vibe Coder instead offers a systems-design fantasy for players who enjoy software, organisational dynamics, ethical trade-offs, emergent simulation, and absurd escalation from “one tired goblin at a CRT” to “thermodynamic governance at stellar scale”.
+Vibe Coder solves a very specific itch: many idle games offer automation fantasy, but most collapse into either click-farming, spreadsheet worship, or opaque exponential soup. Vibe Coder instead offers a systems-design fantasy for players who enjoy software, organizational dynamics, ethical trade-offs, emergent simulation, and absurd escalation from “one tired goblin at a CRT” to “thermodynamic governance at stellar scale”.
 
 Target players include:
 
 | Persona              | What they want                                                          | What Vibe Coder gives them                                                     |
 | -------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Systems tinkerer     | Coupled variables, visible feedback loops, optimisation without twitch  | Policies, budgets, telemetry, regime shifts                                    |
+| Systems tinkerer     | Coupled variables, visible feedback loops, optimization without twitch  | Policies, budgets, telemetry, regime shifts                                    |
 | Software gremlin     | Satirical recognition of tech debt, CVEs, OSS, agents, startup nonsense | A simulation that treats code, debt, brand, trust, and power as linked systems |
 | Idle-game enjoyer    | Progress while away, low pressure, satisfying unlocks                   | Offline progress, policy automation, ambient simulation                        |
 | Narrative strategist | Consequences, end states, ethical choices                               | Karma, alignment, politics, collapse, utopia, Skynet, Borg, OSS-on-UBI         |
@@ -57,7 +57,7 @@ The unique value proposition is a strange little chimera: an idle game with the 
 - **Adversarial tuning:** self-play agents hunt for boring optima, lock-on-victory strategies, and exploit paths.
 - **Local-first trust:** the MVP stores progress locally and works offline.
 
-The attached PWA guidance supports this local-first stance: the Wildside design says the UI should render from local state first, treat the network as optional, and make synchronisation explicit rather than magical.  For Vibe Coder's MVP, the project can go further: no network dependency at all, with future sync treated as a new adapter rather than a foundational assumption.
+The attached PWA guidance supports this local-first stance: the Wildside design says the UI should render from local state first, treat the network as optional, and make synchronization explicit rather than magical.  For Vibe Coder's MVP, the project can go further: no network dependency at all, with future sync treated as a new adapter rather than a foundational assumption.
 
 ---
 
@@ -83,7 +83,7 @@ System must support XState state graphs for app lifecycle, save/load, run lifecy
 
 System must keep domain logic independent from React, Dexie, browser APIs, Web Audio, image assets, and analytics. That follows ports-and-adapters practice: external actors interact through ports, while adapters translate between technologies and the application core. 
 
-System must provide a game-parameter optimisation harness using adversarial self-play and explicit “fun” metrics.
+System must provide a game-parameter optimization harness using adversarial self-play and explicit “fun” metrics.
 
 System must keep generated art and generated music assets out of gameplay-critical truth. The Skyjoust and Agentland documents both repeat this useful principle: generated imagery can establish source references and production inputs, but live gameplay text, counters, state labels, and authoritative values belong to the renderer/runtime. 
 
@@ -95,7 +95,7 @@ System must keep generated art and generated music assets out of gameplay-critic
 | Policy rebalance     | Player notices drift or event | inspect systems, adjust allocations, edit constraints, commit policy | consequences change within readable time          |
 | Incident response    | Security/debt/alignment event | choose disclosure, mitigation, ignore, cover-up, civic response      | event affects karma, brand, debt, PMF, cash       |
 | Progression unlock   | Threshold reached             | review unlock risks, accept/defer, update simulation stage           | new regime changes available strategies           |
-| Offline return       | App resumes                   | compute bounded catch-up, summarise changes, surface major events    | player understands what happened while away       |
+| Offline return       | App resumes                   | compute bounded catch-up, summarize changes, surface major events    | player understands what happened while away       |
 | End-state resolution | Threshold crossed             | determine ending, play final scene, allow archive/new run            | ending feels earned, not random                   |
 | Self-play tuning     | Developer tool/CI             | run agents, score fun, detect exploits, emit parameter report        | designers receive actionable balancing deltas     |
 | Asset authoring      | Dev workflow                  | create prompt, generate source, validate, process, manifest          | runtime loads only approved processed assets      |
@@ -121,7 +121,7 @@ For design: measurable fun proxies that detect degenerate strategies before the 
 | Storage     | Dexie over IndexedDB                                      | Local saves, event log, parameter packs, run archive, settings, asset manifests                                         |
 | Rendering   | React UI + Canvas/OffscreenCanvas world visualizer        | DOM for accessible controls, Canvas for animated city-aquarium                                                          |
 | Audio       | Web Audio API + worklet-ready scheduler                   | State-driven music layers, procedural motifs, SFX event bus                                                             |
-| Styling     | Design tokens + CSS variables + Tailwind/DaisyUI optional | Tokenise palette, spacing, typography, state colours                                                                    |
+| Styling     | Design tokens + CSS variables + Tailwind/DaisyUI optional | Tokenize palette, spacing, typography, state colours                                                                    |
 | Testing     | Vitest, fast-check, Playwright, axe                       | Unit, property, simulation, accessibility, browser flows                                                                |
 | Build/PWA   | Vite PWA plugin or custom service worker                  | App shell precache, local asset caching, offline boot                                                                   |
 
@@ -131,7 +131,7 @@ The v2a stack documents describe a broader architecture with Dexie for durable b
 
 Hexagonal architecture fits this unusually well because the sim wants to survive technology swaps. React, Dexie, Web Audio, Canvas, imagegen outputs, telemetry, and future cloud sync should orbit the game domain rather than invade it wearing muddy boots.
 
-The domain/application core contains entities, value objects, pure simulation functions, policy services, progression rules, event rules, and balancing metadata. Inbound adapters drive it. Outbound adapters implement storage, clocks, random sources, audio, visualisation, and telemetry. Hexagonal guidance from the attached architecture notes distinguishes driving actors, which initiate interaction, from driven actors, which the application calls through ports; it also places port interfaces inside the core while adapter implementations live outside. 
+The domain/application core contains entities, value objects, pure simulation functions, policy services, progression rules, event rules, and balancing metadata. Inbound adapters drive it. Outbound adapters implement storage, clocks, random sources, audio, visualization, and telemetry. Hexagonal guidance from the attached architecture notes distinguishes driving actors, which initiate interaction, from driven actors, which the application calls through ports; it also places port interfaces inside the core while adapter implementations live outside.
 
 ### Proposed architecture diagram
 
@@ -289,7 +289,7 @@ src/
       manifest-loader.ts
       atlas-loader.ts
 
-  optimisation/
+  optimization/
     agents/
       exploiter.agent.ts
       ethical-steward.agent.ts
@@ -522,7 +522,7 @@ Skyjoust uses explicit state resources for app runtime, lifecycle, events, scori
 
 ## Storage principles
 
-The MVP is offline-only. Dexie should own local durability, but not gameplay semantics. The Wildside model explicitly treats Dexie as durable storage for heavier assets and outbox-like records, not as a synchronisation worldview; Vibe Coder can use the same philosophy for saves, event logs, content packs, and optimisation reports. 
+The MVP is offline-only. Dexie should own local durability, but not gameplay semantics. The Wildside model explicitly treats Dexie as durable storage for heavier assets and outbox-like records, not as a synchronization worldview; Vibe Coder can use the same philosophy for saves, event logs, content packs, and optimization reports.
 
 ## Dexie schema
 
@@ -547,7 +547,7 @@ Use periodic snapshots plus an append-only event log. That gives three useful pr
 - Snapshot every N ticks or every M seconds of active simulation.
 - Log policy commits, unlock decisions, event resolutions, random seeds, parameter pack hash, and major domain events.
 - On load, restore latest snapshot and replay subsequent events.
-- On offline return, apply bounded catch-up and summarise skipped time rather than dumping 10,000 tiny incidents into the player’s lap.
+- On offline return, apply bounded catch-up and summarize skipped time rather than dumping 10,000 tiny incidents into the player’s lap.
 
 Skyjoust’s persistence and replay section stores schema version, seed, active modifiers, currencies, unlocks, penalties, configuration hash, asset manifest hash, and per-tick inputs; Vibe Coder should keep the same spirit with run seed, parameter pack hash, asset manifest hash, policy/event log, and replayable state actions. 
 
@@ -570,7 +570,7 @@ Core screens:
 | Power & Heat         | Late-game economy                   | power draw, generation mix, waste heat budget                               |
 | Progression Tree     | Unlocks and regime shifts           | stage nodes, gates, risk warnings                                           |
 | Incident Prompt      | Meaningful event decisions          | cause, options, consequences, uncertainty                                   |
-| Optimisation Lab     | Dev-only self-play                  | parameter packs, agent results, exploit reports                             |
+| Optimization Lab     | Dev-only self-play                  | parameter packs, agent results, exploit reports                             |
 | Archive / Endings    | Run history                         | ending cards, score, replay summary                                         |
 
 The visual design docs emphasize that generated art can guide focal order and layer grammar, but runtime owns layout, text, panels, charts, status semantics, hit areas, lighting, and animation timing.  That maps cleanly to Vibe Coder: the dashboard can look painterly and lush, but the player must never need to read generated micro-text to understand a CVE incident.
@@ -642,7 +642,7 @@ type ParameterPack = {
 };
 ```
 
-Parameter packs make self-play, balancing, player-visible difficulty variants, and reproducibility easier. They also prevent “tiny constants smeared across files” syndrome, which is a recognised cousin of config drift goblinry.
+Parameter packs make self-play, balancing, player-visible difficulty variants, and reproducibility easier. They also prevent “tiny constants smeared across files” syndrome, which is a recognized cousin of config drift goblinry.
 
 ---
 
@@ -660,7 +660,7 @@ Third, process intensity matters. Vibe Coder should not just display huge tables
 
 ## Fun score
 
-The optimisation harness should not optimise for “biggest number” or “longest session”. That would summon the metrics demon and give it a lanyard.
+The optimization harness should not optimize for “biggest number” or “longest session”. That would summon the metrics demon and give it a lanyard.
 
 Use a composite score:
 
@@ -702,18 +702,18 @@ FunScore =
 
 | Agent               | Purpose                                            |
 | ------------------- | -------------------------------------------------- |
-| Growth goblin       | Maximise LoC, cash, and stage unlocks              |
-| Debt janitor        | Minimise debt, maximise reliability                |
+| Growth goblin       | Maximize LoC, cash, and stage unlocks              |
+| Debt janitor        | Minimize debt, maximize reliability                |
 | Ethical steward     | Maintain karma and alignment                       |
 | Backroom baron      | Use dark patterns, influence, and fossil shortcuts |
-| OSS saint           | Maximise open source, community, brand             |
+| OSS saint           | Maximize open source, community, brand             |
 | Heat death gremlin  | Chase compute until waste heat breaks everything   |
 | Exploit hunter      | Search for degenerate loops and lock-on-victory    |
 | Casual player model | Make sparse, plausible policy updates              |
 
 The exploit hunter matters most. It should try to prove that the challenge can be bypassed: for example, a policy that opens OSS just enough to farm brand while hiding CVEs, or a power build that disables quality checks without visible punishment.
 
-## Optimisation process
+## Optimization process
 
 1. Generate candidate parameter packs.
 2. Run self-play agents over many seeds.

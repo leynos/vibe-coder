@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { buildFluentLoadPath, normaliseBasePath } from "../src/i18n";
+import { buildFluentLoadPath, normalizeBasePath } from "../src/i18n";
 
 describe("i18n load path", () => {
   it("prefixes the Fluent bundle path with BASE_URL when provided", () => {
@@ -8,9 +8,9 @@ describe("i18n load path", () => {
     expect(loadPath).toBe("/example-app/locales/{{lng}}/{{ns}}.ftl");
   });
 
-  it("normalises missing slashes on base paths", () => {
-    expect(normaliseBasePath("example-app")).toBe("/example-app/");
-    expect(normaliseBasePath("/example-app")).toBe("/example-app/");
-    expect(normaliseBasePath(undefined)).toBe("/");
+  it("normalizes missing slashes on base paths", () => {
+    expect(normalizeBasePath("example-app")).toBe("/example-app/");
+    expect(normalizeBasePath("/example-app")).toBe("/example-app/");
+    expect(normalizeBasePath(undefined)).toBe("/");
   });
 });
