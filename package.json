@@ -44,7 +44,7 @@
     "@tanstack/react-router": "^1.170.17",
     "clsx": "^2.1.1",
     "daisyui": "^5.6.16",
-    "i18next": "^26.3.4",
+    "i18next": "^26.3.5",
     "i18next-browser-languagedetector": "^8.2.0",
     "i18next-fluent": "^2.0.0",
     "i18next-fluent-backend": "^1.0.0",
