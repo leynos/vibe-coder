@@ -21,4 +21,6 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Validate runner contracts
         run: bun test tests/workflow-runners.config.test.ts
+      - name: Validate the TypeDoc documentation gate
+        run: bun run docs:check
       - run: bun semantic
