@@ -1,9 +1,11 @@
 /**
- * @file Application machine exports.
+ * Application machine exports.
  *
  * This barrel keeps inbound adapters and tests on the accepted
  * `src/application/machines/` boundary without exposing future machine
  * internals before their roadmap slices exist.
+ *
+ * @module
  */
 
 export type { AppMachineAction, AppMachineEvent, AppMachineStateValue } from "./app.machine";

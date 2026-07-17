@@ -40,6 +40,7 @@ declare module "@tanstack/react-router" {
   }
 }
 
+/** Props accepted by {@link AppRoutes}. */
 export interface AppRoutesProps {
   /**
    * Optional router instance. Tests can supply their own router to control the
