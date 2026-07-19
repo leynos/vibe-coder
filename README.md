@@ -1,5 +1,8 @@
 # 🎮 Vibe Coder
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](
+https://deepwiki.com/leynos/vibe-coder)
+
 *An offline-first idle strategy game where you manage a software civilization.*
 
 You do not grind clicks. You express intent — allocating effort across shipping,
