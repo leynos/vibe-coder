@@ -1,9 +1,8 @@
 # Record TypeScript source-tree naming and boundary linting
 
-This ExecPlan (execution plan) is a living document. The sections
-`Constraints`, `Tolerances`, `Risks`, `Progress`, `Surprises & Discoveries`,
-`Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work
-proceeds.
+This ExecPlan (execution plan) is a living document. The sections `Constraints`,
+`Tolerances`, `Risks`, `Progress`, `Surprises & Discoveries`, `Decision Log`,
+and `Outcomes & Retrospective` must be kept up to date as work proceeds.
 
 Status: COMPLETE
 
@@ -11,10 +10,10 @@ Status: COMPLETE
 
 Roadmap item 1.1.2 closes the naming and enforcement decision that protects the
 future simulation core before feature work starts. After this change, a
-developer can open ADR 002 and see that the source tree uses
-`src/domain/`, `src/application/`, and `src/adapters/` rather than
-`src/core/`, and can run the repository lint gates to prove that imports still
-respect that dependency direction.
+developer can open ADR 002 and see that the source tree uses `src/domain/`,
+`src/application/`, and `src/adapters/` rather than `src/core/`, and can run
+the repository lint gates to prove that imports still respect that dependency
+direction.
 
 This plan is only the approval draft. Do not implement it until the user has
 explicitly approved the plan.
@@ -83,42 +82,33 @@ explicitly approved the plan.
 ## Risks
 
 - Risk: Biome may not provide a built-in import-boundary rule that can express
-  the repository's hexagonal matrix without extra tooling.
-  Severity: medium.
-  Likelihood: high.
-  Mitigation: Use a custom TypeScript script first, wired into
+  the repository's hexagonal matrix without extra tooling. Severity: medium.
+  Likelihood: high. Mitigation: Use a custom TypeScript script first, wired into
   `semantic:lint`, while documenting that this is the selected "custom" rule
   strategy allowed by the roadmap.
 
 - Risk: A docs-only reading of 1.1.2 would leave no executable guard, but the
-  roadmap success text requires a lint rule that guards the boundary.
-  Severity: high.
-  Likelihood: medium.
-  Mitigation: Treat the implementation as documentation plus a tested lint
-  gate, not as documentation alone.
+  roadmap success text requires a lint rule that guards the boundary. Severity:
+  high. Likelihood: medium. Mitigation: Treat the implementation as
+  documentation plus a tested lint gate, not as documentation alone.
 
 - Risk: Existing barrel files under `src/domain/`, `src/application/`, and
   `src/adapters/` may make the boundary checker look complete before the full
-  HLD tree exists.
-  Severity: medium.
-  Likelihood: medium.
-  Mitigation: Check imports by path prefix and leave creation of the full
-  directory skeleton to roadmap item 1.2.1.
+  HLD tree exists. Severity: medium. Likelihood: medium. Mitigation: Check
+  imports by path prefix and leave creation of the full directory skeleton to
+  roadmap item 1.2.1.
 
 - Risk: Full `bun ff` may expose unrelated pre-existing failures.
-  Severity: medium.
-  Likelihood: medium.
-  Mitigation: Run gates sequentially with `/tmp` logs and record unrelated
-  failures rather than hiding or working around them.
+  Severity: medium. Likelihood: medium. Mitigation: Run gates sequentially with
+  `/tmp` logs and record unrelated failures rather than hiding or working
+  around them.
 
 - Risk: The request references frontend and accessibility documents that are
-  absent from this worktree.
-  Severity: low.
-  Likelihood: high.
-  Mitigation: Record the missing references and rely on available project
-  sources: HLD, ADRs, roadmap, developer guide, user guide, design-system HTML,
-  and existing test/lint scripts. UI-specific localization and WCAG acceptance
-  remain non-applicable unless implementation touches UI.
+  absent from this worktree. Severity: low. Likelihood: high. Mitigation:
+  Record the missing references and rely on available project sources: HLD,
+  ADRs, roadmap, developer guide, user guide, design-system HTML, and existing
+  test/lint scripts. UI-specific localization and WCAG acceptance remain
+  non-applicable unless implementation touches UI.
 
 ## Progress
 
@@ -154,17 +144,17 @@ explicitly approved the plan.
 - [x] (2026-05-10T12:21:02Z) Implemented the import-boundary lint guard, wired
   `lint:imports` into `semantic:lint`, and added focused `bun:test` coverage.
 - [x] (2026-05-10T12:21:02Z) Ran `bun run lint:imports`,
-  `bun test tests/import-boundaries.test.ts`, `make check-fmt`, `make lint`,
-  and `make typecheck` for the import-boundary milestone; all passed.
+  `bun test tests/import-boundaries.test.ts`, `make check-fmt`, `make lint`, and
+  `make typecheck` for the import-boundary milestone; all passed.
 - [x] (2026-05-10T12:21:02Z) Re-ran
   `coderabbit review --agent --type uncommitted`; it still failed because the
   account has no usage credits.
 - [x] (2026-05-10T12:21:02Z) Marked roadmap item 1.1.2 as done after the ADR
   decision, executable guard, package wiring, and focused tests were in place.
 - [x] (2026-05-10T12:33:05Z) Ran final validation gates sequentially:
-  `make check-fmt`, `make lint`, `make typecheck`, `make test`,
-  `bun semantic`, `bun ff`, focused Markdown lint for touched docs, and
-  `bunx nixie`; all passed.
+  `make check-fmt`, `make lint`, `make typecheck`, `make test`, `bun semantic`,
+  `bun ff`, focused Markdown lint for touched docs, and `bunx nixie`; all
+  passed.
 - [x] (2026-05-10T12:33:05Z) Ran css-view against the local validation server
   and wrote `/tmp/css-view-vibe-coder-1-1-2.json`.
 - [x] (2026-05-10T12:33:05Z) Stopped the local validation dev server started
@@ -176,60 +166,54 @@ explicitly approved the plan.
 
 - Observation: `docs/v2a-front-end-stack.md` and the requested Tailwind,
   daisyUI, localization, and accessibility reference documents are not present
-  in this worktree.
-  Evidence: Wyvern planning review and the existing 1.1.1 ExecPlan both list
-  these documents as absent.
-  Impact: This plan treats those UI-specific sources as unavailable for 1.1.2.
-  Because 1.1.2 is an architecture/lint task with no UI behaviour change,
-  locale additions, card model data, and WCAG component tests are not part of
-  the implementation unless the approved approach later touches UI.
+  in this worktree. Evidence: Wyvern planning review and the existing 1.1.1
+  ExecPlan both list these documents as absent. Impact: This plan treats those
+  UI-specific sources as unavailable for 1.1.2. Because 1.1.2 is an
+  architecture/lint task with no UI behaviour change, locale additions, card
+  model data, and WCAG component tests are not part of the implementation
+  unless the approved approach later touches UI.
 
 - Observation: `src/domain/index.ts`, `src/application/index.ts`, and
-  `src/adapters/index.ts` already exist as barrels.
-  Evidence: Wyvern source/config review found the three boundary directories
-  already present.
+  `src/adapters/index.ts` already exist as barrels. Evidence: Wyvern
+  source/config review found the three boundary directories already present.
   Impact: The implementation should not create the full HLD tree in 1.1.2; it
   should document the naming decision and enforce the boundary for existing and
   future files.
 
 - Observation: Biome is already extended with many Grit plugins, but no
-  import-boundary check exists.
-  Evidence: `biome.jsonc` lists accessibility, semantic class, DaisyUI, and
-  testing rules, while `package.json` has semantic lint scripts but no
-  `lint:imports`.
-  Impact: The lowest-risk enforcement route is a custom TypeScript script
-  integrated into `semantic:lint`.
+  import-boundary check exists. Evidence: `biome.jsonc` lists accessibility,
+  semantic class, DaisyUI, and testing rules, while `package.json` has semantic
+  lint scripts but no `lint:imports`. Impact: The lowest-risk enforcement route
+  is a custom TypeScript script integrated into `semantic:lint`.
 
 - Observation: Full-repository Markdown linting currently fails on pre-existing
-  documents unrelated to this plan.
-  Evidence: `bunx markdownlint-cli "*.md" "docs/**/*.md"` reports existing
-  line-length, table-alignment, multiple-H1, and trailing-space findings in
-  ADRs, `docs/users-guide.md`, and `docs/vibe-coder-high-level-design.md`.
-  Impact: The plan file was linted directly and passed. The later
-  implementation should still run full Markdown linting, but pre-existing
-  repository-wide failures may require separate remediation or user direction.
+  documents unrelated to this plan. Evidence:
+  `bunx markdownlint-cli "*.md" "docs/**/*.md"` reports existing line-length,
+  table-alignment, multiple-H1, and trailing-space findings in ADRs,
+  `docs/users-guide.md`, and `docs/vibe-coder-high-level-design.md`. Impact:
+  The plan file was linted directly and passed. The later implementation should
+  still run full Markdown linting, but pre-existing repository-wide failures
+  may require separate remediation or user direction.
 
 - Observation: `make test` needs write-capable execution in this sandbox for
-  Bun snapshot access.
-  Evidence: The first run after installing dependencies failed to open the
-  checked-in route-tree snapshot file; the elevated run passed with 41 tests,
-  0 failures, and 2 snapshots.
-  Impact: Future test runs in this environment may need the same permission
-  path even when source changes are unrelated to snapshots.
+  Bun snapshot access. Evidence: The first run after installing dependencies
+  failed to open the checked-in route-tree snapshot file; the elevated run
+  passed with 41 tests, 0 failures, and 2 snapshots. Impact: Future test runs
+  in this environment may need the same permission path even when source
+  changes are unrelated to snapshots.
 
 - Observation: CodeRabbit is currently unavailable for actionable milestone
-  review in this branch.
-  Evidence: `coderabbit review --agent` failed with `payload_too_large` for
-  the full branch diff. `coderabbit review --agent --type uncommitted` reduced
-  the reviewed diff but failed with an account usage-credit error. A final
-  attempt later failed because authentication was no longer available.
-  Impact: Continue to invoke CodeRabbit after major milestones as requested,
-  but do not block indefinitely on unavailable external review capacity. Record
-  each failed attempt and rely on repository gates plus focused self-review.
+  review in this branch. Evidence: `coderabbit review --agent` failed with
+  `payload_too_large` for the full branch diff.
+  `coderabbit review --agent --type uncommitted` reduced the reviewed diff but
+  failed with an account usage-credit error. A final attempt later failed
+  because authentication was no longer available. Impact: Continue to invoke
+  CodeRabbit after major milestones as requested, but do not block indefinitely
+  on unavailable external review capacity. Record each failed attempt and rely
+  on repository gates plus focused self-review.
 
 - Observation: `bun ff` requires generated token CSS and a reachable Vite dev
-  server for its e2e phase.
-  Evidence: The first `bun ff` attempt failed because
+  server for its e2e phase. Evidence: The first `bun ff` attempt failed because
   `tokens/dist/tokens.css` was missing. After `bun tokens:build`, a second
   attempt reached e2e and failed because `http://localhost:5173` was not
   reachable. Starting `bun dev` for validation made the final `bun ff` pass.
@@ -237,50 +221,43 @@ explicitly approved the plan.
   validation dev server before `bun ff`.
 
 - Observation: Playwright MCP browser automation was unavailable, but the
-  repository Playwright e2e gate ran successfully.
-  Evidence: The MCP call failed because `chrome-for-testing` is not installed;
-  the `bun ff` e2e phase passed `tests/e2e/a11y.pw.ts` in Chromium.
-  Impact: Browser validation evidence comes from the repository Playwright e2e
-  suite and css-view rather than a Playwright MCP screenshot.
+  repository Playwright e2e gate ran successfully. Evidence: The MCP call
+  failed because `chrome-for-testing` is not installed; the `bun ff` e2e phase
+  passed `tests/e2e/a11y.pw.ts` in Chromium. Impact: Browser validation
+  evidence comes from the repository Playwright e2e suite and css-view rather
+  than a Playwright MCP screenshot.
 
 ## Decision Log
 
 - Decision: Draft 1.1.2 as a documentation plus executable lint-guard change,
-  not as a documentation-only change.
-  Rationale: The roadmap success criterion explicitly requires a boundary lint
-  rule, and the developer guide already promises import-boundary lint once
-  roadmap step 1.1.2 is complete.
+  not as a documentation-only change. Rationale: The roadmap success criterion
+  explicitly requires a boundary lint rule, and the developer guide already
+  promises import-boundary lint once roadmap step 1.1.2 is complete.
   Date/Author: 2026-05-09T12:50:51Z / Codex.
 
 - Decision: Prefer `src/domain/`, `src/application/`, and `src/adapters/`, and
-  reject `src/core/`.
-  Rationale: ADR 002's outstanding-decision text already sets aside `core/`,
-  and the HLD module layout names `domain/`, `application/`, and `adapters/`.
-  Date/Author: 2026-05-09T12:50:51Z / Codex.
+  reject `src/core/`. Rationale: ADR 002's outstanding-decision text already
+  sets aside `core/`, and the HLD module layout names `domain/`,
+  `application/`, and `adapters/`. Date/Author: 2026-05-09T12:50:51Z / Codex.
 
 - Decision: Prefer a custom TypeScript lint script for import-boundary
-  enforcement.
-  Rationale: The repository already has custom semantic lint scripts, Biome is
-  not currently configured for import-boundary policy, and the roadmap allows
-  either Biome or a custom rule.
-  Date/Author: 2026-05-09T12:50:51Z / Codex.
+  enforcement. Rationale: The repository already has custom semantic lint
+  scripts, Biome is not currently configured for import-boundary policy, and
+  the roadmap allows either Biome or a custom rule. Date/Author:
+  2026-05-09T12:50:51Z / Codex.
 
 - Decision: Move the plan from draft to implementation after explicit user
-  approval.
-  Rationale: The user approved implementation on 2026-05-10 and requested
-  frequent commits plus `coderabbit review --agent` after major milestones.
-  Date/Author: 2026-05-10T12:21:02Z / Codex.
+  approval. Rationale: The user approved implementation on 2026-05-10 and
+  requested frequent commits plus `coderabbit review --agent` after major
+  milestones. Date/Author: 2026-05-10T12:21:02Z / Codex.
 
 - Decision: Amend ADR 002 directly rather than creating a separate decision-log
-  document.
-  Rationale: The naming and lint-strategy decision belongs with the existing
-  architecture record, avoids a new document category, and matches the plan's
-  preferred path.
-  Date/Author: 2026-05-10T12:21:02Z / Codex.
+  document. Rationale: The naming and lint-strategy decision belongs with the
+  existing architecture record, avoids a new document category, and matches the
+  plan's preferred path. Date/Author: 2026-05-10T12:21:02Z / Codex.
 
 - Decision: Split the import-boundary implementation into pure logic and a CLI
-  wrapper.
-  Rationale: `scripts/import-boundaries.ts` can be covered directly by
+  wrapper. Rationale: `scripts/import-boundaries.ts` can be covered directly by
   `bun:test`, while `scripts/lint-import-boundaries.ts` remains a small
   side-effecting wrapper for filesystem scanning and process exit codes.
   Date/Author: 2026-05-10T12:21:02Z / Codex.
@@ -291,8 +268,8 @@ Implementation is complete. ADR 002 records the accepted `src/domain/`,
 `src/application/`, and `src/adapters/` source-tree names and rejects
 `src/core/`. The developer guide points contributors to `bun run lint:imports`,
 the custom TypeScript import guard is wired into `bun semantic`, focused tests
-cover allowed and forbidden imports, and roadmap item 1.1.2 is marked done.
-The required validation gates passed after generating ignored token output and
+cover allowed and forbidden imports, and roadmap item 1.1.2 is marked done. The
+required validation gates passed after generating ignored token output and
 starting a local dev server for the e2e phase of `bun ff`.
 
 ## Context and orientation
@@ -300,14 +277,14 @@ starting a local dev server for the e2e phase of `bun ff`.
 The roadmap entry lives in `docs/roadmap.md` under "1. Foundational contracts
 and build spine", step 1.1, task 1.1.2. It asks the project to record the
 TypeScript source-tree naming choice and import-boundary lint strategy. The
-success text requires the chosen layout to match the HLD module map and a
-Biome or custom lint rule to guard the boundary.
+success text requires the chosen layout to match the HLD module map and a Biome
+or custom lint rule to guard the boundary.
 
 ADR 002 is
-`docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`. It
-adopts hexagonal architecture for Vibe Coder and already says the source tree
-uses `domain/`, `application/`, and `adapters/`, with `core/` set aside. It
-also says import-boundary lint rules will be enforced via Biome or a custom
+`docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`. It adopts
+hexagonal architecture for Vibe Coder and already says the source tree uses
+`domain/`, `application/`, and `adapters/`, with `core/` set aside. It also
+says import-boundary lint rules will be enforced via Biome or a custom
 TypeScript rule once the scaffold exists.
 
 The HLD is `docs/vibe-coder-high-level-design.md`. Its "Module layout" section
@@ -331,19 +308,18 @@ adapters  ->  application  ->  domain
 ```
 
 In plain language, `domain` is the pure simulation and policy layer,
-`application` orchestrates use cases and state machines, and `adapters`
-connect browser, persistence, rendering, audio, and tooling infrastructure to
-the inner layers. Domain code must not import React, Dexie, Web Audio, browser
-APIs, app shell code, application code, or adapter code. Application code must
-not import adapters or app shell code. Adapters may import domain and
-application code.
+`application` orchestrates use cases and state machines, and `adapters` connect
+browser, persistence, rendering, audio, and tooling infrastructure to the inner
+layers. Domain code must not import React, Dexie, Web Audio, browser APIs, app
+shell code, application code, or adapter code. Application code must not import
+adapters or app shell code. Adapters may import domain and application code.
 
-The current repository has `src/domain/index.ts`,
-`src/application/index.ts`, and `src/adapters/index.ts`, but not the full HLD
-tree. `package.json` contains `semantic:lint`, `lint:classlist`,
-`lint:class-duplicates`, and `lint:hardcoded-strings`. `Makefile` exposes
-`make check-fmt`, `make typecheck`, `make lint`, and `make test`. `biome.jsonc`
-contains many Grit plugin rules but no import-boundary enforcement.
+The current repository has `src/domain/index.ts`, `src/application/index.ts`,
+and `src/adapters/index.ts`, but not the full HLD tree. `package.json` contains
+`semantic:lint`, `lint:classlist`, `lint:class-duplicates`, and
+`lint:hardcoded-strings`. `Makefile` exposes `make check-fmt`, `make typecheck`,
+`make lint`, and `make test`. `biome.jsonc` contains many Grit plugin rules
+but no import-boundary enforcement.
 
 Relevant skills and documents for implementation:
 
@@ -388,14 +364,13 @@ Then edit ADR 002's "Outstanding decisions" section so the source-tree naming
 and lint-strategy bullets are no longer open questions. Leave the optimization
 tooling location question open because it belongs to a later decision.
 
-Stage C updates developer documentation. Edit `docs/developers-guide.md` in
-the "The three domain layers" area so it no longer says the boundary will be
-caught once lint is configured. Instead, point developers at the concrete
-script and command that enforce the boundary after Stage D. If a separate
-decision-log file is created rather than an ADR 002 amendment, add it to
-`docs/contents.md`. The preferred path is to amend ADR 002 directly so the
-decision stays with the architecture record and `docs/contents.md` does not
-need to change.
+Stage C updates developer documentation. Edit `docs/developers-guide.md` in the
+"The three domain layers" area so it no longer says the boundary will be caught
+once lint is configured. Instead, point developers at the concrete script and
+command that enforce the boundary after Stage D. If a separate decision-log
+file is created rather than an ADR 002 amendment, add it to `docs/contents.md`.
+The preferred path is to amend ADR 002 directly so the decision stays with the
+architecture record and `docs/contents.md` does not need to change.
 
 Stage D implements the import-boundary guard. Add
 `scripts/lint-import-boundaries.ts`. The script should use the TypeScript
@@ -463,8 +438,8 @@ and revise the plan to include localization, accessibility, Playwright, and
 Gherkin coverage before proceeding.
 
 Stage G updates roadmap state. Mark only item 1.1.2 in `docs/roadmap.md` as
-`[x]` after ADR 002 and the executable guard are complete and validated. Do
-not mark 1.2.1 or any later item done; creating the full source skeleton is
+`[x]` after ADR 002 and the executable guard are complete and validated. Do not
+mark 1.2.1 or any later item done; creating the full source skeleton is
 separate work.
 
 Stage H validates, commits, and records outcomes. Run all gates listed below
@@ -494,8 +469,8 @@ Expected branch output:
 feat/plan-source-tree-naming
 ```
 
-After approval, edit the files named in `Plan of work` using small patches.
-Run the new focused checker directly while developing:
+After approval, edit the files named in `Plan of work` using small patches. Run
+the new focused checker directly while developing:
 
 ```sh
 bun run lint:imports 2>&1 | tee /tmp/imports-vibe-coder-feat-plan-source-tree-naming.out
@@ -585,9 +560,9 @@ forbidden import makes the command pass.
 
 ## Idempotence and recovery
 
-The documentation edits are idempotent: if a patch is partially applied, inspect
-the relevant headings and re-apply only the missing paragraphs. Do not duplicate
-decision-log entries.
+The documentation edits are idempotent: if a patch is partially applied,
+inspect the relevant headings and re-apply only the missing paragraphs. Do not
+duplicate decision-log entries.
 
 The import-boundary checker should be deterministic and side-effect free. It
 must not write files while scanning. It can be run repeatedly without changing
@@ -663,10 +638,10 @@ developer guide. Focused Markdown lint passed for the touched documentation.
 CodeRabbit review attempts were recorded as unavailable due to payload and
 usage-credit errors, so validation continues with local gates.
 
-Revision note: Stage D, Stage E, and Stage F completed. The new
-`lint:imports` script passes on the current source tree, focused boundary tests
-pass, and formatting/lint/typecheck gates pass for the implementation
-milestone. CodeRabbit remains unavailable due to account usage credits.
+Revision note: Stage D, Stage E, and Stage F completed. The new `lint:imports`
+script passes on the current source tree, focused boundary tests pass, and
+formatting/lint/typecheck gates pass for the implementation milestone.
+CodeRabbit remains unavailable due to account usage credits.
 
 Revision note: Stage G completed by marking only roadmap item 1.1.2 as done.
 Final repository validation is now in progress.

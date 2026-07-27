@@ -82,8 +82,8 @@ _Table 1: Trade-offs for ADR 008._
 
 The project will use image generation as a development-time creative workflow.
 Generated imagery can become reference art, source art, or processed runtime
-assets only after manifest, validation, and post-processing gates. Runtime image
-generation is out of scope unless a separate future decision accepts it.
+assets only after manifest, validation, and post-processing gates. Runtime
+image generation is out of scope unless a separate future decision accepts it.
 
 ## Goals and non-goals
 
@@ -130,4 +130,3 @@ This decision follows the attached image-generation workflow and asset
 specification. The creative pipe remains a paintbrush, not a courthouse. It can
 inspire the look of a rainy startup district, but it cannot decide whether a
 policy slider sums to one hundred.
-

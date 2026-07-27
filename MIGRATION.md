@@ -2,9 +2,8 @@
 
 ## Theme identifier rename (initial release)
 
-The theme identifiers and the localStorage key used to persist the active
-theme were renamed between the pre-release prototype and the initial
-public release.
+The theme identifiers and the localStorage key used to persist the active theme
+were renamed between the pre-release prototype and the initial public release.
 
 ### What changed
 
@@ -16,11 +15,10 @@ public release.
 
 ### Migration is automatic
 
-No manual action is required. On first load after the update,
-`ThemeProvider` detects the legacy `vibecoder.theme` key, maps the stored
-value to its renamed equivalent, writes the result under the new
-`vibe-coder.theme` key, and removes the old key. The selected theme is
-preserved across the rename.
+No manual action is required. On first load after the update, `ThemeProvider`
+detects the legacy `vibecoder.theme` key, maps the stored value to its renamed
+equivalent, writes the result under the new `vibe-coder.theme` key, and removes
+the old key. The selected theme is preserved across the rename.
 
 If the legacy key holds an unrecognized value, the key is removed and the
 application falls back to the default theme (`vibe-coder-night`).

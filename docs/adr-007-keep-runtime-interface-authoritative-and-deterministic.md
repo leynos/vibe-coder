@@ -122,8 +122,7 @@ layout, hit areas, and accessibility semantics.
 
 ## Architectural rationale
 
-This preserves the design bible as art direction rather than a fragile source of
-gameplay truth. The runtime becomes a reliable cockpit: the rain can be
-beautiful, the goblin can have seventeen mugs, and the CVE counter still remains
-correct.
-
+This preserves the design bible as art direction rather than a fragile source
+of gameplay truth. The runtime becomes a reliable cockpit: the rain can be
+beautiful, the goblin can have seventeen mugs, and the CVE counter still
+remains correct.

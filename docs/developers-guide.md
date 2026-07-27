@@ -7,18 +7,18 @@ For the product thesis, simulation design, and domain model, see
 `docs/vibe-coder-high-level-design.md`. For per-decision rationale, see the
 ADRs in `docs/adr-*.md`. For the delivery roadmap, see `docs/roadmap.md`.
 
----
+______________________________________________________________________
 
 ## Toolchain requirements
 
 <!-- markdownlint-disable MD013 MD060 -->
 
-| Tool               | Minimum version | Purpose                                         |
-| ------------------ | --------------- | ----------------------------------------------- |
-| Bun                | 1.3.0           | Package runner, bundler, and test runner.        |
-| Node.js            | 20 LTS          | Required by some build plugins.                 |
-| Python 3 via `uv`  | any             | Runs `semgrep` through `uvx semgrep`.           |
-| `uv`               | 0.4+            | Python package runner; installs `semgrep` on demand. |
+| Tool              | Minimum version | Purpose                                              |
+| ----------------- | --------------- | ---------------------------------------------------- |
+| Bun               | 1.3.0           | Package runner, bundler, and test runner.            |
+| Node.js           | 20 LTS          | Required by some build plugins.                      |
+| Python 3 via `uv` | any             | Runs `semgrep` through `uvx semgrep`.                |
+| `uv`              | 0.4+            | Python package runner; installs `semgrep` on demand. |
 
 <!-- markdownlint-enable MD013 MD060 -->
 
@@ -43,7 +43,7 @@ installability checks, and standard update handling. Custom worker code is a
 later extension only when required runtime behaviour cannot be expressed
 through plugin configuration.
 
----
+______________________________________________________________________
 
 ## Development workflow
 
@@ -55,8 +55,8 @@ bun dev
 
 ### Running all commit gates
 
-Gates must pass before every commit. Run them sequentially — the codebase
-uses build caching that benefits from sequential execution.
+Gates must pass before every commit. Run them sequentially — the codebase uses
+build caching that benefits from sequential execution.
 
 ```sh
 make check-fmt   # Format check (Biome formatter)
@@ -79,11 +79,10 @@ bun semantic     # Full semantic lint pass
 4. **Hardcoded-string check** — flags user-visible string literals that should
    be internationalized via the i18n pipeline.
 5. **Semgrep** — runs the custom rule set in `tools/semgrep-semantic.yml`
-   against TypeScript source and test files. Requires `uvx` (provided by
-   `uv`).
+   against TypeScript source and test files. Requires `uvx` (provided by `uv`).
 6. **Stylelint** — validates CSS files against `tools/stylelint.config.cjs`.
 
----
+______________________________________________________________________
 
 ## Directory structure and boundary rules
 
@@ -136,16 +135,15 @@ implemented.
 
 ### Path aliases
 
-Use repository-local aliases when adding new imports across package
-boundaries:
+Use repository-local aliases when adding new imports across package boundaries:
 
 <!-- markdownlint-disable MD013 MD060 -->
 
-| Alias              | Target                 | Intended use                         |
-| ------------------ | ---------------------- | ------------------------------------ |
-| `@domain/*`        | `src/domain/*`         | Domain model, rules, services, and ports |
-| `@application/*`   | `src/application/*`    | Application machines, commands, and selectors |
-| `@adapters/*`      | `src/adapters/*`       | Concrete adapter implementations     |
+| Alias            | Target              | Intended use                                  |
+| ---------------- | ------------------- | --------------------------------------------- |
+| `@domain/*`      | `src/domain/*`      | Domain model, rules, services, and ports      |
+| `@application/*` | `src/application/*` | Application machines, commands, and selectors |
+| `@adapters/*`    | `src/adapters/*`    | Concrete adapter implementations              |
 
 <!-- markdownlint-enable MD013 MD060 -->
 
@@ -154,8 +152,8 @@ TypeScript configuration, Vite resolver, custom import-boundary guard, and
 Biome configuration tests all validate against that tuple. Do not add an alias
 directly to only one consumer.
 
-Existing relative imports were deliberately left in place when the aliases
-were introduced. Migrate imports opportunistically with the feature work that
+Existing relative imports were deliberately left in place when the aliases were
+introduced. Migrate imports opportunistically with the feature work that
 touches the files; avoid a standalone churn-only rewrite.
 
 ### The three domain layers
@@ -171,20 +169,20 @@ adapters  →  application  →  domain
 
 <!-- markdownlint-disable MD013 MD060 -->
 
-| Layer         | File path         | May import from     | Must not import from      |
-| ------------- | ----------------- | ------------------- | ------------------------- |
-| Domain        | `src/domain/`     | nothing (pure)      | application, adapters, app, React, Dexie, Web Audio |
-| Application   | `src/application/`| domain only         | adapters, app, React DOM, Dexie |
-| Adapters      | `src/adapters/`   | domain, application | React component tree (use ports instead) |
-| App shell     | `src/app/`        | all layers          | must not contain business rules |
+| Layer       | File path          | May import from     | Must not import from                                |
+| ----------- | ------------------ | ------------------- | --------------------------------------------------- |
+| Domain      | `src/domain/`      | nothing (pure)      | application, adapters, app, React, Dexie, Web Audio |
+| Application | `src/application/` | domain only         | adapters, app, React DOM, Dexie                     |
+| Adapters    | `src/adapters/`    | domain, application | React component tree (use ports instead)            |
+| App shell   | `src/app/`         | all layers          | must not contain business rules                     |
 
 <!-- markdownlint-enable MD013 MD060 -->
 
 Boundary enforcement has two layers:
 
 - Biome `noRestrictedImports` overrides provide fast feedback for literal
-  alias, `src/`-relative, and bare layer-package imports in `src/domain/**`
-  and `src/application/**`.
+  alias, `src/`-relative, and bare layer-package imports in `src/domain/**` and
+  `src/application/**`.
 - The custom TypeScript import guard remains authoritative. It resolves
   relative imports, understands the path aliases, and runs through
   `bun run lint:imports` and `bun semantic`.
@@ -202,15 +200,13 @@ work rather than enforced by the 1.2.1 boundary skeleton.
 The domain layer contains:
 
 - **Value types**: `RunState`, `Resources`, `TechDebtVector`,
-  `AllocationPolicy`, `EthicsPolicy`, and the remaining aggregates from
-  the HLD.
+  `AllocationPolicy`, `EthicsPolicy`, and the remaining aggregates from the HLD.
 - **Pure simulation functions**: `simulateTick` and its constituent rule
-  functions. These must not import React, Dexie, Web Audio, or any browser
-  API.
+  functions. These must not import React, Dexie, Web Audio, or any browser API.
 - **Port interfaces**: The six driven ports —
   `GameStateRepository`, `Clock`, `RandomSource`, `AudioEventSink`,
-  `AssetCatalogue`, and `TelemetrySink`. Interfaces live in
-  `domain/ports/`. Adapters implement them in `src/adapters/`.
+  `AssetCatalogue`, and `TelemetrySink`. Interfaces live in `domain/ports/`.
+  Adapters implement them in `src/adapters/`.
 
 ### Application layer contents
 
@@ -250,7 +246,7 @@ Concrete implementations of the driven ports:
 
 Stub in-memory adapters (for tests) live alongside their real counterparts.
 
----
+______________________________________________________________________
 
 ## Ports and adapters — conventions
 
@@ -302,7 +298,7 @@ used in unit tests and in the self-play runner (which runs without a browser).
 
 Name the stub `<port-name>-stub.ts` and place it adjacent to the real adapter.
 
----
+______________________________________________________________________
 
 ## Test conventions
 
@@ -351,7 +347,7 @@ Component accessibility checks use `@axe-core/playwright`. The
 bun test:a11y
 ```
 
----
+______________________________________________________________________
 
 ## i18n conventions
 
@@ -370,14 +366,14 @@ Locale files are Fluent (`.ftl`) files in `public/locales/<locale>/`. The
 default locale is `en`. Add new locales by adding a directory and registering
 the locale in `src/app/i18n/supported-locales.ts`.
 
----
+______________________________________________________________________
 
 ## Theme and token conventions
 
 ### Theme identifiers
 
-The two built-in themes are `vibe-coder-night` and `vibe-coder-day`. Do not
-use the legacy `vibecoder-*` form.
+The two built-in themes are `vibe-coder-night` and `vibe-coder-day`. Do not use
+the legacy `vibecoder-*` form.
 
 ### localStorage key
 
@@ -404,43 +400,42 @@ example of the in-game visuals showing the main dashboard layout and player
 controls; treat it as the primary visual reference for run-screen
 implementation.
 
----
+______________________________________________________________________
 
 ## Determinism, randomness, and parameter packs
 
 The simulation is deterministic. Given the same seed, parameter pack, command
-sequence, and tick ordering, a run must reproduce. Two engineering rules
-follow from this contract:
+sequence, and tick ordering, a run must reproduce. Two engineering rules follow
+from this contract:
 
 - The seeded pseudo-random number generator is **sfc32** (Chris
-  Doty-Humphrey, in the bryc-2022 JavaScript reference port). Seeds are
-  hashed with `xmur3` when supplied as strings, expanded to the 128-bit
-  sfc32 state via four `SplitMix32` steps, and warmed with 12 discarded
-  outputs. Independent substreams derive per feature; sfc32 has no
-  jump-ahead by design. See ADR 005 for the rationale, the runner-up
-  algorithm (`xoshiro128++`), and the golden-vector test discipline.
+  Doty-Humphrey, in the bryc-2022 JavaScript reference port). Seeds are hashed
+  with `xmur3` when supplied as strings, expanded to the 128-bit sfc32 state
+  via four `SplitMix32` steps, and warmed with 12 discarded outputs.
+  Independent substreams derive per feature; sfc32 has no jump-ahead by design.
+  See ADR 005 for the rationale, the runner-up algorithm (`xoshiro128++`), and
+  the golden-vector test discipline.
 - Domain and application code must obtain randomness through the
-  `RandomSource` port (introduced in roadmap item 1.2.2 and implemented
-  in 1.3.3). Direct calls to `Math.random`, `crypto.getRandomValues`,
+  `RandomSource` port (introduced in roadmap item 1.2.2 and implemented in
+  1.3.3). Direct calls to `Math.random`, `crypto.getRandomValues`,
   `crypto.randomUUID`, and `Date.now` are forbidden in those layers; the
-  import-boundary linter will be tightened to enforce this when the port
-  and adapter land. The property-test framework's own random number
-  generator (RNG), `pure-rand` via `fast-check`, is intentionally
-  decoupled from the game stream.
+  import-boundary linter will be tightened to enforce this when the port and
+  adapter land. The property-test framework's own random number generator (RNG),
+  `pure-rand` via `fast-check`, is intentionally decoupled from the game
+  stream.
 
 Every saved run carries pinned parameter-pack identity (`id`, `version`,
-`contentHash`) and PRNG identity (`prngName`, `prngVariant`,
-`prngVersion`, `prngState`) alongside the schema version, simulation-tick
-contract version, seed, and event-log tail digest. The migration policy
-refuses silent advancement: PATCH-only metadata edits may rebind
-silently when the canonicalized numeric subset is byte-identical, MINOR
-bumps require an explicit player-initiated upgrade prompt, and MAJOR
-bumps quarantine existing runs as read-only and archive-only. Any PRNG
-change forces a parameter-pack MAJOR bump. JSON exports embed the full
-pack body so that imports on another machine can validate the hash. See
-ADR 005 for the full policy.
+`contentHash`) and PRNG identity (`prngName`, `prngVariant`, `prngVersion`,
+`prngState`) alongside the schema version, simulation-tick contract version,
+seed, and event-log tail digest. The migration policy refuses silent
+advancement: PATCH-only metadata edits may rebind silently when the
+canonicalized numeric subset is byte-identical, MINOR bumps require an explicit
+player-initiated upgrade prompt, and MAJOR bumps quarantine existing runs as
+read-only and archive-only. Any PRNG change forces a parameter-pack MAJOR bump.
+JSON exports embed the full pack body so that imports on another machine can
+validate the hash. See ADR 005 for the full policy.
 
----
+______________________________________________________________________
 
 ## CI pipeline
 
@@ -450,29 +445,29 @@ The CI workflow runs the same gate sequence as local development:
 check-fmt → lint → typecheck → test → spelling → bun semantic
 ```
 
-The semantic lint job (`semantic-lint.yml`) uses `astral-sh/setup-uv@v8.2.0`
-to install `uv`. It runs `make spelling` before the existing `bun semantic`
-gate, without requiring a separate persistent Python environment.
+The semantic lint job (`semantic-lint.yml`) uses `astral-sh/setup-uv@v8.2.0` to
+install `uv`. It runs `make spelling` before the existing `bun semantic` gate,
+without requiring a separate persistent Python environment.
 
----
+______________________________________________________________________
 
 ## ADR index
 
-| ADR  | Decision                                                         |
-| ---- | ---------------------------------------------------------------- |
-| 001  | Build an offline-first React PWA.                                |
-| 002  | Adopt hexagonal architecture for domain boundaries.              |
-| 003  | Use XState for workflow orchestration.                           |
-| 004  | Persist runs with Dexie snapshots and event logs.                |
-| 005  | Use deterministic simulation and parameter packs.                |
-| 006  | Use adversarial self-play for parameter tuning.                  |
-| 007  | Keep the runtime interface authoritative and deterministic.      |
-| 008  | Use development-time image generation with asset promotion.      |
-| 009  | Use semantic audio events for reactive sound.                    |
-| 010  | Run fixed-tick simulation outside React rendering.               |
-| 011  | Use TLA+ for self-play promotion safety.                         |
+| ADR | Decision                                                    |
+| --- | ----------------------------------------------------------- |
+| 001 | Build an offline-first React PWA.                           |
+| 002 | Adopt hexagonal architecture for domain boundaries.         |
+| 003 | Use XState for workflow orchestration.                      |
+| 004 | Persist runs with Dexie snapshots and event logs.           |
+| 005 | Use deterministic simulation and parameter packs.           |
+| 006 | Use adversarial self-play for parameter tuning.             |
+| 007 | Keep the runtime interface authoritative and deterministic. |
+| 008 | Use development-time image generation with asset promotion. |
+| 009 | Use semantic audio events for reactive sound.               |
+| 010 | Run fixed-tick simulation outside React rendering.          |
+| 011 | Use TLA+ for self-play promotion safety.                    |
 
----
+______________________________________________________________________
 
 ## Spelling conventions
 
@@ -489,5 +484,5 @@ shared estate dictionary and `typos.local.toml` overlay. The shared
 `typos-config-builder` CLI refreshes its untracked cache only when the remote
 authority is newer. Never edit generated `typos.toml` by hand.
 
-Design documents must use neutral phrasing — avoid first-person pronouns
-(`we`, `our`, `I`, `us`).
+Design documents must use neutral phrasing — avoid first-person pronouns (`we`,
+`our`, `I`, `us`).

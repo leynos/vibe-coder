@@ -52,8 +52,8 @@ rather than an enormous state-machine context.
 
 ### Option A: React component state
 
-Component state is simple at first, but complex workflow combinations can become
-implicit and hard to test.
+Component state is simple at first, but complex workflow combinations can
+become implicit and hard to test.
 
 ### Option B: Reducers and context only
 
@@ -62,8 +62,8 @@ and dev-tool visibility are weaker than a formal machine model.
 
 ### Option C: XState for workflow orchestration
 
-XState provides explicit state nodes, guards, actions, model testing, and visual
-inspection while leaving numerical simulation outside the graph.
+XState provides explicit state nodes, guards, actions, model testing, and
+visual inspection while leaving numerical simulation outside the graph.
 
 <!-- markdownlint-disable MD013 MD060 -->
 
@@ -82,8 +82,8 @@ _Table 1: Trade-offs for ADR 003._
 
 The project will use XState for application and interaction workflows. Machines
 will coordinate lifecycle, editing, prompt, unlock, autopilot, and audio mood
-states. Domain services will continue to own resource calculation and simulation
-transitions.
+states. Domain services will continue to own resource calculation and
+simulation transitions.
 
 Machines are centralized under `src/application/machines/`. This is an
 application-layer choice, not a generic pattern transplant: the first planned
@@ -142,8 +142,8 @@ That modelling choice is accepted here, but this ADR does not implement
 
 ## Architectural rationale
 
-A policy-driven idle game remains interactive only when player intent and system
-response form a clear conversation. Explicit state machines help the application
-listen to player commands, think through guarded workflow transitions, and speak
-through legible user interface states without smearing those responsibilities
-across React components.
+A policy-driven idle game remains interactive only when player intent and
+system response form a clear conversation. Explicit state machines help the
+application listen to player commands, think through guarded workflow
+transitions, and speak through legible user interface states without smearing
+those responsibilities across React components.

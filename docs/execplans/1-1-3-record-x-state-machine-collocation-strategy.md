@@ -1,9 +1,8 @@
 # Record XState machine collocation and model-test harness
 
-This ExecPlan (execution plan) is a living document. The sections
-`Constraints`, `Tolerances`, `Risks`, `Progress`, `Surprises & Discoveries`,
-`Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work
-proceeds.
+This ExecPlan (execution plan) is a living document. The sections `Constraints`,
+`Tolerances`, `Risks`, `Progress`, `Surprises & Discoveries`, `Decision Log`,
+and `Outcomes & Retrospective` must be kept up to date as work proceeds.
 
 Status: COMPLETE
 
@@ -17,8 +16,8 @@ the repository's hexagonal boundaries.
 
 The observable success condition is not only documentation. The implementation
 must also add the first minimal machine test so that the chosen placement and
-harness compile and pass under the repository's Bun test spine. Do not implement
-this plan until the user has explicitly approved it.
+harness compile and pass under the repository's Bun test spine. Do not
+implement this plan until the user has explicitly approved it.
 
 ## Constraints
 
@@ -31,8 +30,8 @@ this plan until the user has explicitly approved it.
 - Ratify one machine placement strategy in ADR 003. The planned direction is
   `src/application/machines/` because ADR 003, the HLD module map, and
   `docs/developers-guide.md` already point there. If implementation discovers a
-  stronger reason to choose feature-colocated machines instead, stop and ask for
-  approval before changing direction.
+  stronger reason to choose feature-colocated machines instead, stop and ask
+  for approval before changing direction.
 - Ratify one first model-test harness in ADR 003. Current official XState v5
   documentation says graph and model-test utilities are available from the
   `xstate/graph` export, while the legacy `@xstate/test` page says the latest
@@ -45,8 +44,8 @@ this plan until the user has explicitly approved it.
 - Do not put resource values, debt vectors, save payloads, or simulation
   equations in XState context. Machines coordinate workflow state and call
   application services; domain services own game policy and numerical state.
-- If adding dependencies is required, add only direct dependencies needed for the
-  first compiling machine and model-test harness. Expected candidates are
+- If adding dependencies is required, add only direct dependencies needed for
+  the first compiling machine and model-test harness. Expected candidates are
   `xstate` for the machine and graph utilities, and possibly `@xstate/react`
   only if implementation cannot avoid React integration, which is not expected
   for 1.1.3.
@@ -64,8 +63,8 @@ this plan until the user has explicitly approved it.
   avoid UI strings; if it cannot, locale coverage becomes a blocker rather than
   optional polish.
 - Maintain WCAG 2.2 compliance for any UI-visible change. This task is expected
-  to be non-visual; if UI is touched, add appropriate unit, component, a11y, and
-  end-to-end coverage before marking the roadmap item done.
+  to be non-visual; if UI is touched, add appropriate unit, component, a11y,
+  and end-to-end coverage before marking the roadmap item done.
 - Use semantic classes for any UI CSS. This task is expected not to change CSS.
 - Update `docs/developers-guide.md` because the accepted placement and machine
   test harness are developer-facing architecture practice.
@@ -111,48 +110,39 @@ this plan until the user has explicitly approved it.
 ## Risks
 
 - Risk: ADR 003 already names `@xstate/test`, but official XState v5
-  documentation now points model-test usage through graph utilities.
-  Severity: high.
-  Likelihood: high.
-  Mitigation: Treat harness selection as the real decision in this task. Record
-  the maintained XState v5 choice in ADR 003 and include a compiling test that
-  proves the import path works with Bun.
+  documentation now points model-test usage through graph utilities. Severity:
+  high. Likelihood: high. Mitigation: Treat harness selection as the real
+  decision in this task. Record the maintained XState v5 choice in ADR 003 and
+  include a compiling test that proves the import path works with Bun.
 
 - Risk: A documentation-only implementation would satisfy "one accepted
-  document" but not the roadmap's machine-test success condition.
-  Severity: high.
-  Likelihood: medium.
-  Mitigation: Include a minimal `app.machine` or equivalent first machine shell
-  and a focused test that exercises model path generation or coverage through
-  the chosen harness. Do not mark 1.1.3 done until that test passes.
+  document" but not the roadmap's machine-test success condition. Severity:
+  high. Likelihood: medium. Mitigation: Include a minimal `app.machine` or
+  equivalent first machine shell and a focused test that exercises model path
+  generation or coverage through the chosen harness. Do not mark 1.1.3 done
+  until that test passes.
 
 - Risk: Adding XState before domain value types exist could tempt the
-  implementation to model future gameplay details prematurely.
-  Severity: medium.
-  Likelihood: medium.
-  Mitigation: Keep the first machine intentionally small, such as an app boot or
-  title workflow shell with no simulation context. Document that richer machines
-  belong to roadmap item 1.5.1.
+  implementation to model future gameplay details prematurely. Severity:
+  medium. Likelihood: medium. Mitigation: Keep the first machine intentionally
+  small, such as an app boot or title workflow shell with no simulation
+  context. Document that richer machines belong to roadmap item 1.5.1.
 
 - Risk: The requested frontend reference documents are not present in this
-  worktree.
-  Severity: low.
-  Likelihood: high.
-  Mitigation: Record their absence and rely on available in-repo sources:
-  `AGENTS.md`, the roadmap, ADRs, HLD, developer guide, user guide, existing
-  semantic lint tooling, and existing tests.
+  worktree. Severity: low. Likelihood: high. Mitigation: Record their absence
+  and rely on available in-repo sources: `AGENTS.md`, the roadmap, ADRs, HLD,
+  developer guide, user guide, existing semantic lint tooling, and existing
+  tests.
 
 - Risk: Locale metadata and actual locale bundle coverage do not match.
-  Severity: medium.
-  Likelihood: high.
-  Mitigation: Avoid UI strings in this task. If implementation touches UI, stop
-  until the locale coverage scope is confirmed.
+  Severity: medium. Likelihood: high. Mitigation: Avoid UI strings in this
+  task. If implementation touches UI, stop until the locale coverage scope is
+  confirmed.
 
 - Risk: Full `bun ff` may expose pre-existing failures unrelated to this item.
-  Severity: medium.
-  Likelihood: medium.
-  Mitigation: Run gates sequentially with `/tmp` logs, preserve evidence, and do
-  not hide or work around unrelated failures.
+  Severity: medium. Likelihood: medium. Mitigation: Run gates sequentially with
+  `/tmp` logs, preserve evidence, and do not hide or work around unrelated
+  failures.
 
 ## Repository context
 
@@ -161,20 +151,19 @@ and build spine", step 1.1, "Ratify outstanding decisions recorded in the
 ADRs". Its success text requires one accepted document confirming placement and
 the first machine test compiling and passing.
 
-ADR 003 is
-`docs/adr-003-use-xstate-for-workflow-orchestration.md`. It says XState
-machines orchestrate workflow state, while simulation ticks call pure domain
-services and return events consumed by machines and adapters. Its outstanding
-decisions currently name central placement under `application/machines/`,
-`@xstate/test` with Bun, graph export through the XState inspector, and
-autopilot as a parallel region of `run.machine`.
+ADR 003 is `docs/adr-003-use-xstate-for-workflow-orchestration.md`. It says
+XState machines orchestrate workflow state, while simulation ticks call pure
+domain services and return events consumed by machines and adapters. Its
+outstanding decisions currently name central placement under
+`application/machines/`, `@xstate/test` with Bun, graph export through the
+XState inspector, and autopilot as a parallel region of `run.machine`.
 
 ADR 002 is
-`docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`. It
-records `src/domain/`, `src/application/`, and `src/adapters/` as the accepted
-source boundaries. It also explains that application services and domain rules
-form the core, while React, Dexie, Web Audio, Canvas, workers, assets, and
-tooling interact through ports and adapters.
+`docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`. It records
+`src/domain/`, `src/application/`, and `src/adapters/` as the accepted source
+boundaries. It also explains that application services and domain rules form
+the core, while React, Dexie, Web Audio, Canvas, workers, assets, and tooling
+interact through ports and adapters.
 
 The developer guide already says that XState machines live in
 `application/machines/`, and lists `app.machine`, `run.machine`,
@@ -185,8 +174,7 @@ harness, nor does the source tree contain `src/application/machines/`.
 `package.json` currently contains no XState dependency. The existing quality
 spine includes `bun test`, `bun run test:a11y`, `bun semantic`, `bun ff`, and
 Makefile wrappers for format, lint, typecheck, and test. The `bun ff` script
-runs Tailwind generation and then `bun run test:all`, which includes e2e
-tests.
+runs Tailwind generation and then `bun run test:all`, which includes e2e tests.
 
 Official XState source checks made during planning:
 
@@ -317,8 +305,8 @@ bunx markdownlint-cli \
 ```
 
 Use the exact test filename that implementation creates. If Markdown linting
-surfaces pre-existing failures outside touched files, record them separately and
-do not make unrelated rewrites in this task.
+surfaces pre-existing failures outside touched files, record them separately
+and do not make unrelated rewrites in this task.
 
 Eleventh, run the required commit gates sequentially:
 
@@ -390,8 +378,8 @@ The implementation is accepted when all of the following are true:
 - [x] (2026-05-18T22:25:29Z) Created context pack `pk_udhgv4i2` for agent-team
   planning context.
 - [x] (2026-05-18T22:25:29Z) Used a Wyvern agent team for planning research:
-  one agent reviewed roadmap and ADR scope, one reviewed source, test, i18n, and
-  script patterns, and one reviewed frontend, accessibility, Playwright,
+  one agent reviewed roadmap and ADR scope, one reviewed source, test, i18n,
+  and script patterns, and one reviewed frontend, accessibility, Playwright,
   css-view, and localization constraints.
 - [x] (2026-05-18T22:25:29Z) Reviewed the roadmap, ADR 001, ADR 002, ADR 003,
   ADR 005, existing source layout, existing test harnesses, package scripts,
@@ -425,7 +413,8 @@ The implementation is accepted when all of the following are true:
   coverage.
 - [x] (2026-05-20T00:00:00+02:00) Added `xstate@5.31.1` as the only new
   direct dependency for the first machine and graph harness.
-- [x] (2026-05-20T00:00:00+02:00) Added `src/application/machines/app.machine.ts`
+- [x] (2026-05-20T00:00:00+02:00) Added
+      `src/application/machines/app.machine.ts`
   with the minimal boot workflow states `booting`, `title`, and `failed`.
 - [x] (2026-05-20T00:00:00+02:00) Added `tests/app-machine.test.ts`, using
   `createTestModel` from `xstate/graph` to prove graph-generated reachability
@@ -491,26 +480,25 @@ The implementation is accepted when all of the following are true:
   review-fix milestone, fixed each still-valid type-test concern it reported,
   and reran local gates after each change.
 - [x] (2026-05-22T00:00:00+02:00) Attempted a final CodeRabbit confirmation
-  run after the last fix. CodeRabbit repeatedly returned recoverable
-  rate-limit errors, first with a 3 minute 46 second wait and then with a
-  5 minute 36 second wait, so final confirmation could not complete in this
-  pass.
+  run after the last fix. CodeRabbit repeatedly returned recoverable rate-limit
+  errors, first with a 3 minute 46 second wait and then with a 5 minute 36
+  second wait, so final confirmation could not complete in this pass.
 
 ## Surprises & discoveries
 
 - Observation: The requested reference documents for Tailwind, daisyUI,
-  semantic Tailwind, accessibility-first testing, and `docs/v2a-front-end-stack.md`
-  are not present in this worktree.
-  Evidence: `find docs -maxdepth 1` returned none of the requested filenames.
-  Impact: This plan signposts available in-repo substitutes and treats the
-  missing documents as a risk for later UI-touching implementation.
+  semantic Tailwind, accessibility-first testing, and
+  `docs/v2a-front-end-stack.md` are not present in this worktree. Evidence:
+  `find docs -maxdepth 1` returned none of the requested filenames. Impact:
+  This plan signposts available in-repo substitutes and treats the missing
+  documents as a risk for later UI-touching implementation.
 
 - Observation: ADR 003's current outstanding-decision text says the harness uses
-  `@xstate/test`, but current XState v5 documentation points model-test and graph
-  usage through graph utilities and the `xstate/graph` export.
-  Evidence: Official XState docs reviewed during planning.
-  Impact: The implementation must update ADR 003 deliberately rather than
-  copying stale package wording into new code.
+  `@xstate/test`, but current XState v5 documentation points model-test and
+  graph usage through graph utilities and the `xstate/graph` export. Evidence:
+  Official XState docs reviewed during planning. Impact: The implementation
+  must update ADR 003 deliberately rather than copying stale package wording
+  into new code.
 
 - Observation: `package.json` has no XState dependency yet.
   Evidence: `package.json` dependencies and dev dependencies were reviewed.
@@ -519,76 +507,72 @@ The implementation is accepted when all of the following are true:
 
 - Observation: The source tree already contains placeholder `src/domain/`,
   `src/application/`, and `src/adapters/` directories from roadmap item 1.1.2.
-  Evidence: `leta files` and source inspection show layer index files.
-  Impact: The machine directory should extend `src/application/` rather than
-  inventing another boundary.
+  Evidence: `leta files` and source inspection show layer index files. Impact:
+  The machine directory should extend `src/application/` rather than inventing
+  another boundary.
 
 - Observation: Locale metadata lists many supported locales, while only
-  `public/locales/en-GB/common.ftl` exists.
-  Evidence: `src/app/i18n/supported-locales.ts` and `find public/locales`.
-  Impact: The implementation should avoid UI strings; otherwise locale coverage
-  becomes a blocker.
+  `public/locales/en-GB/common.ftl` exists. Evidence:
+  `src/app/i18n/supported-locales.ts` and `find public/locales`. Impact: The
+  implementation should avoid UI strings; otherwise locale coverage becomes a
+  blocker.
 
 - Observation: The first `make test` attempt failed because dependencies were
   not installed, so Bun could not resolve `happy-dom` from the test preload.
-  Evidence: `/tmp/test-vibe-coder-1-1-3-record-x-state-machine-collocation-strategy.out`.
+  Evidence:
+  `/tmp/test-vibe-coder-1-1-3-record-x-state-machine-collocation-strategy.out`.
   Impact: `bun install` was required before test gates could run.
 
 - Observation: The first `bun ff` attempt failed before tests because generated
-  design tokens were absent.
-  Evidence: `/tmp/ff-vibe-coder-1-1-3-record-x-state-machine-collocation-strategy.out`
-  recorded the missing `../tokens/dist/tokens.css` import.
-  Impact: `bun tokens:build` was required before the full gate could run.
+  design tokens were absent. Evidence:
+  `/tmp/ff-vibe-coder-1-1-3-record-x-state-machine-collocation-strategy.out`
+  recorded the missing `../tokens/dist/tokens.css` import. Impact:
+  `bun tokens:build` was required before the full gate could run.
 
 - Observation: The Playwright MCP browser was not installed in this environment.
   Evidence: the MCP call reported that `chrome-for-testing` was not installed.
-  Impact: Playwright validation evidence came from `bun ff`, whose e2e stage ran
-  the repository Playwright test successfully through the container wrapper.
-  css-view validation ran separately and wrote
+  Impact: Playwright validation evidence came from `bun ff`, whose e2e stage
+  ran the repository Playwright test successfully through the container
+  wrapper. css-view validation ran separately and wrote
   `/tmp/css-view-vibe-coder-1-1-3-record-x-state-machine-collocation-strategy.json`.
 
 - Observation: XState v5's default graph path generation did not cover both
-  sibling boot outcomes in one unconstrained shortest-path call.
-  Evidence: the first focused `bun test tests/app-machine.test.ts` run reached
-  `booting` and `title`, but not `failed`.
-  Impact: The first harness now declares the three accepted events explicitly
-  and asks `getShortestPaths` for each expected target state so reachability is
-  proven without relying on duplicate path output.
+  sibling boot outcomes in one unconstrained shortest-path call. Evidence: the
+  first focused `bun test tests/app-machine.test.ts` run reached `booting` and
+  `title`, but not `failed`. Impact: The first harness now declares the three
+  accepted events explicitly and asks `getShortestPaths` for each expected
+  target state so reachability is proven without relying on duplicate path
+  output.
 
 - Observation: CodeRabbit's final review caught a valid documentation gap in
-  the first machine module.
-  Evidence: `coderabbit review --agent` asked for a JSDoc example showing the
-  actor lifecycle.
-  Impact: `src/application/machines/app.machine.ts` now includes a file-level
+  the first machine module. Evidence: `coderabbit review --agent` asked for a
+  JSDoc example showing the actor lifecycle. Impact:
+  `src/application/machines/app.machine.ts` now includes a file-level
   `@example` that imports `createActor`, starts `appMachine`, sends
   `BOOT_READY`, and observes the `title` state.
 
 - Observation: The final `bun ff` gate required a reachable dev server for
-  `scripts/e2e.sh`.
-  Evidence: the first `bun ff` run printed
-  `ERROR: Dev server not reachable at http://localhost:5173`.
-  Impact: A temporary `bun dev -- --host 127.0.0.1 --port 5173` server was
-  started only for validation and stopped after `bun ff` and css-view
-  completed.
+  `scripts/e2e.sh`. Evidence: the first `bun ff` run printed
+  `ERROR: Dev server not reachable at http://localhost:5173`. Impact: A
+  temporary `bun dev -- --host 127.0.0.1 --port 5173` server was started only
+  for validation and stopped after `bun ff` and css-view completed.
 
 - Observation: The Playwright MCP browser still cannot launch in this
-  environment.
-  Evidence: `mcp__playwright__.browser_navigate` reported that
-  `chrome-for-testing` is not installed.
-  Impact: Playwright evidence for this implementation comes from the repository
-  e2e stage inside `bun ff`, which passed `tests/e2e/a11y.pw.ts`.
+  environment. Evidence: `mcp__playwright__.browser_navigate` reported that
+  `chrome-for-testing` is not installed. Impact: Playwright evidence for this
+  implementation comes from the repository e2e stage inside `bun ff`, which
+  passed `tests/e2e/a11y.pw.ts`.
 
 - Observation: Review feedback correctly identified that runtime machine tests
   did not prove compile-time contracts for the public machine event and state
-  types.
-  Evidence: `tests/app-machine.test.ts` exercised runtime behaviour, but had no
-  `@ts-expect-error` assertions or equivalent type-level fixtures.
+  types. Evidence: `tests/app-machine.test.ts` exercised runtime behaviour, but
+  had no `@ts-expect-error` assertions or equivalent type-level fixtures.
   Impact: `tests/app-machine.types.test.ts` now makes `bun check:types` fail if
   undeclared events, states, or action IDs become accepted accidentally.
 
 - Observation: The observability warning was partly valid, but the requested
-  direct logging implementation would violate the hexagonal boundary.
-  Evidence: `appLogger` lives under `src/app/observability/logger.ts`, while
+  direct logging implementation would violate the hexagonal boundary. Evidence:
+  `appLogger` lives under `src/app/observability/logger.ts`, while
   `src/application/machines/app.machine.ts` belongs to the application layer.
   Impact: The machine now exposes typed action IDs for boot observability. The
   app shell or adapter composition boundary must provide concrete logging or
@@ -596,26 +580,25 @@ The implementation is accepted when all of the following are true:
 
 - Observation: CodeRabbit's follow-up findings against
   `tests/app-machine.types.test.ts` were valid and helped keep the file as a
-  compile-time contract test instead of a mixed runtime/type test.
-  Evidence: The review asked to remove runtime invalid sends, remove redundant
-  runtime fixture assertions, derive actor send types through XState's
-  `ActorRefFrom`, add exact union exhaustiveness checks, and move negative
-  `@ts-expect-error` assertions into the suite.
-  Impact: The type test now uses `expectTypeOf`, exact union checks, and scoped
-  negative assertions without sending invalid events at runtime.
+  compile-time contract test instead of a mixed runtime/type test. Evidence:
+  The review asked to remove runtime invalid sends, remove redundant runtime
+  fixture assertions, derive actor send types through XState's `ActorRefFrom`,
+  add exact union exhaustiveness checks, and move negative `@ts-expect-error`
+  assertions into the suite. Impact: The type test now uses `expectTypeOf`,
+  exact union checks, and scoped negative assertions without sending invalid
+  events at runtime.
 
 - Observation: Final CodeRabbit confirmation is currently blocked by service
-  rate limiting.
-  Evidence: Two final `coderabbit review --agent` attempts returned recoverable
-  rate-limit errors after the requested wait period.
+  rate limiting. Evidence: Two final `coderabbit review --agent` attempts
+  returned recoverable rate-limit errors after the requested wait period.
   Impact: Local validation is clean, but the final CodeRabbit clean-result
   confirmation remains unavailable until the external quota recovers.
 
 ## Decision Log
 
 - Decision: Draft this plan as implementation-gated rather than making ADR,
-  source, dependency, test, or roadmap changes immediately.
-  Rationale: The user explicitly required approval before implementation.
+  source, dependency, test, or roadmap changes immediately. Rationale: The user
+  explicitly required approval before implementation.
 
 - Decision: Treat roadmap item 1.1.3 as more than documentation.
   Rationale: The success criterion includes a first machine test that compiles
@@ -642,21 +625,20 @@ The implementation is accepted when all of the following are true:
   current harness.
 
 - Decision: Add compile-time machine contract tests with TypeScript
-  `@ts-expect-error` assertions instead of adding `tsd`.
-  Rationale: `tsconfig.json` already includes `tests/`, so `make typecheck`
-  enforces these assertions without introducing another dependency or command.
+  `@ts-expect-error` assertions instead of adding `tsd`. Rationale:
+  `tsconfig.json` already includes `tests/`, so `make typecheck` enforces these
+  assertions without introducing another dependency or command.
 
 - Decision: Satisfy the observability concern by exporting typed named action
-  IDs, not by importing `appLogger` into the machine.
-  Rationale: Application machines define orchestration contracts. Concrete
-  logging and metrics are adapter concerns and must be provided at the app shell
-  or composition boundary.
+  IDs, not by importing `appLogger` into the machine. Rationale: Application
+  machines define orchestration contracts. Concrete logging and metrics are
+  adapter concerns and must be provided at the app shell or composition
+  boundary.
 
 - Decision: Keep the compile-time machine contract tests in the Bun test tree
-  rather than adding a separate type-test runner.
-  Rationale: `bun check:types` already enforces `@ts-expect-error` and
-  `expectTypeOf` assertions under `tests/`, and avoiding `tsd` keeps the change
-  smaller.
+  rather than adding a separate type-test runner. Rationale: `bun check:types`
+  already enforces `@ts-expect-error` and `expectTypeOf` assertions under
+  `tests/`, and avoiding `tsd` keeps the change smaller.
 
 ## Outcomes & Retrospective
 
@@ -678,7 +660,7 @@ harness practice, `docs/roadmap.md` marks only item 1.1.3 as done, and
 introduced.
 
 All required gates passed after the final CodeRabbit cleanup: `make check-fmt`,
-`make lint`, `make typecheck`, `make test`, and `bun ff`. Playwright MCP remains
-unavailable because `chrome-for-testing` is not installed, but the repository
-Playwright e2e accessibility test passed inside `bun ff`, and css-view
-completed successfully against the served app.
+`make lint`, `make typecheck`, `make test`, and `bun ff`. Playwright MCP
+remains unavailable because `chrome-for-testing` is not installed, but the
+repository Playwright e2e accessibility test passed inside `bun ff`, and
+css-view completed successfully against the served app.

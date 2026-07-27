@@ -12,8 +12,8 @@ Proposed.
 
 Vibe Coder will render a living dashboard with React controls, charts, Canvas
 animation, audio, and idle catch-up. React rendering is not an appropriate
-authority for simulation timing. The game needs stable tick ordering, responsive
-controls, and optional worker execution as the model grows.
+authority for simulation timing. The game needs stable tick ordering,
+responsive controls, and optional worker execution as the model grows.
 
 ## Decision drivers
 
@@ -117,7 +117,6 @@ execution remains a planned migration seam.
 
 ## Architectural rationale
 
-The player watches a civilization compute itself into glory or catastrophe. That
-computation needs a clock of its own. React can frame the stained-glass; it
-should not decide when the sun rises.
-
+The player watches a civilization compute itself into glory or catastrophe.
+That computation needs a clock of its own. React can frame the stained-glass;
+it should not decide when the sun rises.

@@ -13,8 +13,8 @@ architecture decision pack.
   records how the simulation core is separated from React, storage, rendering,
   audio, and tooling.
 - [ADR 003: Use XState for workflow
-  orchestration](adr-003-use-xstate-for-workflow-orchestration.md) - records the
-  state-machine boundary for lifecycle and interaction workflows.
+  orchestration](adr-003-use-xstate-for-workflow-orchestration.md) - records
+  the state-machine boundary for lifecycle and interaction workflows.
 - [ADR 004: Persist runs with Dexie snapshots and event
   logs](adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md) - defines
   local save structure, replay evidence, and migration direction.
@@ -44,8 +44,7 @@ architecture decision pack.
 ## Guides
 
 - [Player's Guide](users-guide.md) — core gameplay loop, policy mechanics,
-  simulation interpretation, progression, and endings for non-technical
-  players.
+  simulation interpretation, progression, and endings for non-technical players.
 - [Developer's Guide](developers-guide.md) — toolchain setup, directory
   layout, hexagonal boundary rules, port and adapter conventions, and CI
   pipeline.

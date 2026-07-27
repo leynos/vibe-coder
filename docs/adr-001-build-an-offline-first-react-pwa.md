@@ -11,9 +11,9 @@ Proposed.
 ## Context and problem statement
 
 Vibe Coder needs to run as a low-friction idle game that remains usable without
-a server, account, or network connection. The initial product must support local
-play, installability, deterministic saves, and future migration to optional
-synchronization without reshaping the domain model.
+a server, account, or network connection. The initial product must support
+local play, installability, deterministic saves, and future migration to
+optional synchronization without reshaping the domain model.
 
 ## Decision drivers
 
@@ -57,9 +57,9 @@ proven.
 
 ### Option B: Server-backed web application
 
-A server-backed application would simplify cloud features, but it would make the
-initial game depend on infrastructure that does not serve the first vertical
-slice.
+A server-backed application would simplify cloud features, but it would make
+the initial game depend on infrastructure that does not serve the first
+vertical slice.
 
 ### Option C: Offline-first React PWA
 
@@ -139,8 +139,8 @@ infrastructure.
 ## Outstanding decisions
 
 ADR 001 has no remaining package-runner or service-worker strategy question.
-The first import/export save format and compatibility policy are tracked by
-ADR 004 and the persistence roadmap work, not by this PWA build-spine decision.
+The first import/export save format and compatibility policy are tracked by ADR
+004 and the persistence roadmap work, not by this PWA build-spine decision.
 
 ## Architectural rationale
 

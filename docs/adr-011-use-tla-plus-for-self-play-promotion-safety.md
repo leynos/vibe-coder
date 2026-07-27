@@ -10,8 +10,8 @@ Proposed.
 
 ## Context and problem statement
 
-ADR 006 introduces adversarial self-play for parameter tuning. That harness will
-run agent archetypes across seed sets, collect deterministic traces, score
+ADR 006 introduces adversarial self-play for parameter tuning. That harness
+will run agent archetypes across seed sets, collect deterministic traces, score
 runs, detect exploits, compare parameter packs, and promote approved balance
 packs.
 
@@ -85,8 +85,9 @@ promotion contract, not for the full game simulation.
 ### Option A: Do not use formal modelling
 
 The implementation would rely on unit tests, property tests, replay tests, and
-self-play reports. This keeps the toolchain simpler, but it leaves orchestration
-bugs to emerge through test cases that developers happened to imagine.
+self-play reports. This keeps the toolchain simpler, but it leaves
+orchestration bugs to emerge through test cases that developers happened to
+imagine.
 
 ### Option B: Model the full game economy in TLA+
 
@@ -98,8 +99,8 @@ actual correctness envelope that needs formal checking.
 ### Option C: Use XState for the promotion lifecycle only
 
 XState can describe executable workflow states in TypeScript. It is useful for
-optimization-lab user interfaces and orchestration code, but it does not explore
-bad worker behaviour or prove safety invariants across nondeterministic
+optimization-lab user interfaces and orchestration code, but it does not
+explore bad worker behaviour or prove safety invariants across nondeterministic
 interleavings.
 
 ### Option D: Use TLA+ for the promotion contract only
@@ -109,13 +110,13 @@ completion, trace validation, score acceptance, exploit handling, promotion,
 and default-pack authority. The model abstracts game equations into result
 classifications and checks the lifecycle contract directly.
 
-| Topic | Option A: no model | Option B: full economy | Option C: XState only | Option D: TLA+ promotion contract |
-| --- | --- | --- | --- | --- |
-| Scope control | Simple, but weak | Too broad | Good runtime scope | Focused formal scope |
-| Worker failures | Covered only by tests | Hard to include cleanly | Possible, but not exhaustive | Modelled nondeterministically |
-| Promotion safety | Conventional tests | Buried in huge model | Executable workflow checks | Explicit invariants |
-| Fun judgement | Human and self-play | Misleading formal target | Human and self-play | Human and self-play |
-| Maintenance cost | Low | Very high | Moderate | Moderate if kept small |
+| Topic            | Option A: no model    | Option B: full economy   | Option C: XState only        | Option D: TLA+ promotion contract |
+| ---------------- | --------------------- | ------------------------ | ---------------------------- | --------------------------------- |
+| Scope control    | Simple, but weak      | Too broad                | Good runtime scope           | Focused formal scope              |
+| Worker failures  | Covered only by tests | Hard to include cleanly  | Possible, but not exhaustive | Modelled nondeterministically     |
+| Promotion safety | Conventional tests    | Buried in huge model     | Executable workflow checks   | Explicit invariants               |
+| Fun judgement    | Human and self-play   | Misleading formal target | Human and self-play          | Human and self-play               |
+| Maintenance cost | Low                   | Very high                | Moderate                     | Moderate if kept small            |
 
 _Table 1: Comparison of formal-modelling options for self-play._
 
@@ -155,16 +156,16 @@ pack is enjoyable, varied, legible, and resistant to boring strategies.
 
 The model will treat the following concepts as finite sets or records:
 
-| Entity | TLA+ abstraction |
-| --- | --- |
-| `ParameterPack` | Immutable pack identifier, hash, and status. |
-| `SeedSet` | Finite set of seeds required for evaluation. |
-| `AgentArchetype` | Required agent class, such as growth goblin or exploit hunter. |
-| `Trial` | One `(pack, agent, seed)` evaluation unit. |
-| `Trace` | Abstract result: accepted, failed, timeout, nondeterministic, or invariant failed. |
-| `Score` | Abstract classification: acceptable, boring, exploitable, or unstable. |
-| `PromotionCandidate` | Candidate pack with accumulated evidence. |
-| `DefaultPack` | Current runtime-approved default parameter pack. |
+| Entity               | TLA+ abstraction                                                                   |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| `ParameterPack`      | Immutable pack identifier, hash, and status.                                       |
+| `SeedSet`            | Finite set of seeds required for evaluation.                                       |
+| `AgentArchetype`     | Required agent class, such as growth goblin or exploit hunter.                     |
+| `Trial`              | One `(pack, agent, seed)` evaluation unit.                                         |
+| `Trace`              | Abstract result: accepted, failed, timeout, nondeterministic, or invariant failed. |
+| `Score`              | Abstract classification: acceptable, boring, exploitable, or unstable.             |
+| `PromotionCandidate` | Candidate pack with accumulated evidence.                                          |
+| `DefaultPack`        | Current runtime-approved default parameter pack.                                   |
 
 _Table 2: TLA+ abstractions for the self-play promotion model._
 
@@ -209,14 +210,14 @@ _Figure 1: Illustrative TLA+ promotion guard._
 
 The first model must check these safety properties:
 
-| Invariant | Meaning |
-| --- | --- |
-| No untested promotion | Every promoted pack has accepted traces for all required agents and seeds. |
-| No stale promotion | A score for pack hash `H` cannot promote pack hash `H2` when `H != H2`. |
-| No exploit promotion | A pack with an accepted exploitable trace cannot become default. |
-| No failed-run laundering | Failed, timed-out, rejected, or nondeterministic trials cannot improve a candidate score. |
-| No worker authority leak | Workers can produce trial outputs, but cannot approve packs or update the default pack. |
-| No partial default | The default pack always refers to an approved immutable pack. |
+| Invariant                     | Meaning                                                                                                    |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| No untested promotion         | Every promoted pack has accepted traces for all required agents and seeds.                                 |
+| No stale promotion            | A score for pack hash `H` cannot promote pack hash `H2` when `H != H2`.                                    |
+| No exploit promotion          | A pack with an accepted exploitable trace cannot become default.                                           |
+| No failed-run laundering      | Failed, timed-out, rejected, or nondeterministic trials cannot improve a candidate score.                  |
+| No worker authority leak      | Workers can produce trial outputs, but cannot approve packs or update the default pack.                    |
+| No partial default            | The default pack always refers to an approved immutable pack.                                              |
 | Deterministic trace agreement | Accepted duplicate traces for the same pack, agent, seed, and simulation version must agree on trace hash. |
 
 _Table 3: Initial safety invariants for the self-play promotion model._

@@ -11,9 +11,9 @@ Proposed.
 ## Context and problem statement
 
 Vibe Coder needs reactive music and sound that reflect policy, debt, incidents,
-alignment, power, and regime shifts. Static loops would miss the systemic drama,
-while audio logic that reads or mutates game state directly would violate domain
-boundaries and complicate deterministic simulation.
+alignment, power, and regime shifts. Static loops would miss the systemic
+drama, while audio logic that reads or mutates game state directly would
+violate domain boundaries and complicate deterministic simulation.
 
 ## Decision drivers
 
@@ -53,8 +53,8 @@ boundaries and complicate deterministic simulation.
 
 ### Option A: Static loops and hand-triggered sound effects
 
-Static loops are simple, but they cannot express changing simulation pressure or
-the late-game shift from cash to watts.
+Static loops are simple, but they cannot express changing simulation pressure
+or the late-game shift from cash to watts.
 
 ### Option B: UI-driven audio triggers
 
@@ -120,4 +120,3 @@ mutates authoritative game state.
 The audio layer should be the game world humming back at the player, not a
 secret second simulation. A one-way event pipe lets the game sing about debt,
 power, and trust without letting the orchestra grab the steering wheel.
-

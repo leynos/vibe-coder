@@ -1,9 +1,8 @@
 # Record package runner and service-worker strategy
 
-This ExecPlan (execution plan) is a living document. The sections
-`Constraints`, `Tolerances`, `Risks`, `Progress`, `Surprises & Discoveries`,
-`Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work
-proceeds.
+This ExecPlan (execution plan) is a living document. The sections `Constraints`,
+`Tolerances`, `Risks`, `Progress`, `Surprises & Discoveries`, `Decision Log`,
+and `Outcomes & Retrospective` must be kept up to date as work proceeds.
 
 Status: COMPLETE
 
@@ -11,10 +10,10 @@ Status: COMPLETE
 
 Roadmap item 1.1.1 closes two early build-spine questions before the domain
 core and adapter skeleton are implemented. After this change, a developer can
-open `docs/adr-001-build-an-offline-first-react-pwa.md` and see that Bun is
-the accepted package runner, and that the first service-worker strategy is
-settled. `docs/roadmap.md` then marks item 1.1.1 as done because
-Architectural Decision Record (ADR) 001 no longer leaves those choices open.
+open `docs/adr-001-build-an-offline-first-react-pwa.md` and see that Bun is the
+accepted package runner, and that the first service-worker strategy is settled.
+`docs/roadmap.md` then marks item 1.1.1 as done because Architectural Decision
+Record (ADR) 001 no longer leaves those choices open.
 
 This is a documentation and decision-record change. It must not implement the
 service worker, add Vite PWA dependencies, alter runtime behaviour, or start
@@ -83,32 +82,25 @@ feature work before the plan is approved.
 
 - Risk: The roadmap success text says no open question remains in ADR 001, but
   ADR 001 currently has an import/export save-format outstanding decision that
-  is not part of item 1.1.1.
-  Severity: medium.
-  Likelihood: high.
-  Mitigation: Treat package-runner and service-worker closure as mandatory, then
-  either move the import/export question to ADR 004 with a cross-reference or
-  escalate before deciding it.
+  is not part of item 1.1.1. Severity: medium. Likelihood: high. Mitigation:
+  Treat package-runner and service-worker closure as mandatory, then either
+  move the import/export question to ADR 004 with a cross-reference or escalate
+  before deciding it.
 
 - Risk: Choosing the Vite PWA plugin in documentation before adding the plugin
-  could be mistaken for a completed PWA implementation.
-  Severity: medium.
-  Likelihood: medium.
-  Mitigation: Phrase ADR 001 as a strategy decision for the first
-  implementation, not as evidence that installability hardening has landed.
+  could be mistaken for a completed PWA implementation. Severity: medium.
+  Likelihood: medium. Mitigation: Phrase ADR 001 as a strategy decision for the
+  first implementation, not as evidence that installability hardening has
+  landed.
 
 - Risk: The request references several frontend reference documents that are
-  not present in this worktree.
-  Severity: low.
-  Likelihood: high.
-  Mitigation: Record the missing references in `Surprises & Discoveries` and
-  rely on the available HLD, ADRs, developer guide, user guide, and in-game
-  design-system documents.
+  not present in this worktree. Severity: low. Likelihood: high. Mitigation:
+  Record the missing references in `Surprises & Discoveries` and rely on the
+  available HLD, ADRs, developer guide, user guide, and in-game design-system
+  documents.
 
 - Risk: Running the full `bun ff` gate may expose pre-existing failures
-  unrelated to a docs-only change.
-  Severity: medium.
-  Likelihood: medium.
+  unrelated to a docs-only change. Severity: medium. Likelihood: medium.
   Mitigation: Run the required gates sequentially, preserve `/tmp` logs, and
   stop if unrelated failures need product or infrastructure decisions.
 
@@ -118,17 +110,16 @@ The roadmap entry lives in `docs/roadmap.md` under "1. Foundational contracts
 and build spine", step 1.1, task 1.1.1. It requires a short ADR amendment or
 decision log entry for the package runner and service-worker strategy.
 
-ADR 001 is `docs/adr-001-build-an-offline-first-react-pwa.md`. Its
-"Outstanding decisions" section currently asks the project to choose the
-package runner and choose between Workbox, Vite PWA tooling, or a custom worker.
-It also contains the import/export save-format question that must not be
-decided accidentally.
+ADR 001 is `docs/adr-001-build-an-offline-first-react-pwa.md`. Its "Outstanding
+decisions" section currently asks the project to choose the package runner and
+choose between Workbox, Vite PWA tooling, or a custom worker. It also contains
+the import/export save-format question that must not be decided accidentally.
 
-The high-level design in `docs/vibe-coder-high-level-design.md` names
-React 19, TypeScript, Vite/Bun, and an offline-first PWA build path. The
-developer guide already identifies Bun as package runner, bundler, and test
-runner. The user guide describes offline progress and player-facing behaviour,
-but this task should not alter that behaviour.
+The high-level design in `docs/vibe-coder-high-level-design.md` names React 19,
+TypeScript, Vite/Bun, and an offline-first PWA build path. The developer guide
+already identifies Bun as package runner, bundler, and test runner. The user
+guide describes offline progress and player-facing behaviour, but this task
+should not alter that behaviour.
 
 Relevant skills for implementation:
 
@@ -227,8 +218,7 @@ PR exists.
 ## Validation plan
 
 Run validation sequentially and write long outputs to `/tmp` using `tee`. Do
-not run format, lint, tests, typecheck, semantic, or frontend gates in
-parallel.
+not run format, lint, tests, typecheck, semantic, or frontend gates in parallel.
 
 For the docs-only implementation, run:
 
@@ -248,10 +238,11 @@ bun ff 2>&1 | tee /tmp/ff-vibe-coder-1-1-1-record-package-runner-and-service-wor
 
 Because the change is documentation-only, Playwright and css-view should not
 discover a visual or semantic-class change. If a dev server is already running,
-use Playwright to navigate to the app, capture a screenshot, and verify that the
-page still renders. Use css-view if available to inspect that no semantic-class
-regression was introduced. If no server or css-view tool is available, record
-that evidence and do not start or stop a user-managed dev server.
+use Playwright to navigate to the app, capture a screenshot, and verify that
+the page still renders. Use css-view if available to inspect that no
+semantic-class regression was introduced. If no server or css-view tool is
+available, record that evidence and do not start or stop a user-managed dev
+server.
 
 If Markdown-only checks are available locally, also run:
 
@@ -295,9 +286,9 @@ Record package runner and service-worker strategy (1.1.1)
 ```
 
 The pull request description must link this ExecPlan:
-`docs/execplans/1-1-1-record-package-runner-and-service-worker-strategy.md`.
-It must state that the plan is pre-implementation and requires approval before
-ADR 001 is changed.
+`docs/execplans/1-1-1-record-package-runner-and-service-worker-strategy.md`. It
+must state that the plan is pre-implementation and requires approval before ADR
+001 is changed.
 
 ## Progress
 
@@ -367,17 +358,18 @@ ADR 001 is changed.
   `fatal: unable to create temp-file: Read-only file system`; diff inspection
   requires elevated execution in this environment.
 - 2026-05-08: Isolated Markdown lint on the changed files surfaced pre-existing
-  line-length, table-alignment, and list-spacing issues in ADR 001, ADR 004, and
-  the developer guide. These files were already in scope, so the implementation
-  includes mechanical Markdown hygiene for those touched files only.
+  line-length, table-alignment, and list-spacing issues in ADR 001, ADR 004,
+  and the developer guide. These files were already in scope, so the
+  implementation includes mechanical Markdown hygiene for those touched files
+  only.
 - 2026-05-08: The first implementation `bun ff` run reached the e2e phase and
-  failed because no dev server was reachable at `http://localhost:5173`.
-  A temporary `bun dev` server is required to satisfy the non-negotiable
-  frontend gate in this environment.
+  failed because no dev server was reachable at `http://localhost:5173`. A
+  temporary `bun dev` server is required to satisfy the non-negotiable frontend
+  gate in this environment.
 - 2026-05-08: Direct Playwright MCP validation is still unavailable because the
   MCP browser reports that `chrome-for-testing` is not installed. The
-  Playwright e2e accessibility test run by `bun ff` passed against the temporary
-  dev server.
+  Playwright e2e accessibility test run by `bun ff` passed against the
+  temporary dev server.
 - 2026-05-08: Tool discovery exposed Playwright MCP but did not expose a
   css-view tool. No UI, CSS, semantic-class, or localization files changed in
   this implementation.
@@ -397,9 +389,9 @@ ADR 001 is changed.
   or cross-reference the question rather than silently decide it.
 
 - 2026-05-08: Accept direct Playwright MCP screenshot validation as unavailable
-  for this plan-only branch because the MCP browser is not installed. Rationale:
-  the full `bun ff` gate still ran the Playwright e2e accessibility test against
-  a running dev server and passed.
+  for this plan-only branch because the MCP browser is not installed.
+  Rationale: the full `bun ff` gate still ran the Playwright e2e accessibility
+  test against a running dev server and passed.
 - 2026-05-08: Proceed with implementation after explicit user approval.
   Rationale: the approval gate in the `execplans` skill is now satisfied, and
   the requested implementation stays within the documentation-only scope.

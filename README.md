@@ -5,10 +5,10 @@ https://deepwiki.com/leynos/vibe-coder)
 
 *An offline-first idle strategy game where you manage a software civilization.*
 
-You do not grind clicks. You express intent — allocating effort across shipping,
-open source, quality, security, and marketing — then watch a deterministic
-simulation interpret that intent. Intervene when the consequences become
-interesting, alarming, or weirdly beautiful.
+You do not grind clicks. You express intent — allocating effort across
+shipping, open source, quality, security, and marketing — then watch a
+deterministic simulation interpret that intent. Intervene when the consequences
+become interesting, alarming, or weirdly beautiful.
 
 ______________________________________________________________________
 
@@ -21,7 +21,8 @@ Most idle games reward compulsive clicking. Vibe Coder rewards thinking.
 - **Emergent consequences**: deterministic simulation produces technical debt,
   revenue swings, brand crises, and viral open-source moments from your choices.
 - **Ethics as mechanics**: dark patterns, CVE disclosure timelines, fossil fuel
-  caps, and labour policy are first-class gameplay levers — not cosmetic flavour.
+  caps, and labour policy are first-class gameplay levers — not cosmetic
+  flavour.
 - **Multiple endings**: reach a degrowth utopia, UBI paradise, Skynet failure,
   or waste-heat meltdown depending on how you steer the civilization.
 - **Offline-first PWA**: installs to your home screen and plays without a

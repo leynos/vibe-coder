@@ -5,8 +5,8 @@ game where the player does not grind clicks. They express intent, watch an
 increasingly autonomous software civilization interpret that intent, then
 intervene when the system's consequences become interesting, alarming, or
 weirdly beautiful. The core fantasy is not "number go up"; it is "the player's
-policies became a civilization, and now the question is whether it deserves more
-watts."
+policies became a civilization, and now the question is whether it deserves
+more watts."
 
 The biggest design warning: “idle” must not mean “low-interactivity”.
 Crawford's framing provides the north star here: interaction is a conversation
@@ -18,13 +18,18 @@ interactivity often makes a game less fun faster than it makes it easier, so
 Vibe Coder should remove repetitive labour while preserving agency, legibility,
 and consequence.
 
----
+______________________________________________________________________
 
-# WHY: vision and purpose
+## WHY: vision and purpose
 
 ## What problem does Vibe Coder solve, and for whom?
 
-Vibe Coder solves a very specific itch: many idle games offer automation fantasy, but most collapse into either click-farming, spreadsheet worship, or opaque exponential soup. Vibe Coder instead offers a systems-design fantasy for players who enjoy software, organizational dynamics, ethical trade-offs, emergent simulation, and absurd escalation from “one tired goblin at a CRT” to “thermodynamic governance at stellar scale”.
+Vibe Coder solves a very specific itch: many idle games offer automation
+fantasy, but most collapse into either click-farming, spreadsheet worship, or
+opaque exponential soup. Vibe Coder instead offers a systems-design fantasy for
+players who enjoy software, organizational dynamics, ethical trade-offs,
+emergent simulation, and absurd escalation from “one tired goblin at a CRT” to
+“thermodynamic governance at stellar scale”.
 
 Target players include:
 
@@ -38,54 +43,89 @@ Target players include:
 
 ## What does the application do?
 
-It runs a deterministic-ish, local-first idle simulation in a React PWA. The player starts with a short manual typing ritual, then controls allocation and ethics policies. Every tick, the system updates code generation, tech debt, revenue, open source output, karma, brand, power consumption, PMF, customer income, incidents, progression unlocks, autonomy risk, and eventually civilization-scale thermodynamic constraints.
+It runs a deterministic-ish, local-first idle simulation in a React PWA. The
+player starts with a short manual typing ritual, then controls allocation and
+ethics policies. Every tick, the system updates code generation, tech debt,
+revenue, open source output, karma, brand, power consumption, PMF, customer
+income, incidents, progression unlocks, autonomy risk, and eventually
+civilization-scale thermodynamic constraints.
 
 The game’s “conversation” loop is:
 
-**Player says:** “Ship 35%, OSS 15%, quality 20%, never hide CVEs, cap fossil energy.”
-**Simulation thinks:** Calculates throughput, debt, demand, incidents, alignment drift, power draw, macro economy, event triggers.
-**Simulation speaks:** Shows commit streams, debt constellations, incidents, brand aura, music modulation, visual environmental growth, and decision prompts.
+**Player says:** “Ship 35%, OSS 15%, quality 20%, never hide CVEs, cap fossil
+energy.” **Simulation thinks:** Calculates throughput, debt, demand, incidents,
+alignment drift, power draw, macro economy, event triggers. **Simulation
+speaks:** Shows commit streams, debt constellations, incidents, brand aura,
+music modulation, visual environmental growth, and decision prompts.
 
 ## Why will players use it instead of alternatives?
 
-The unique value proposition is a strange little chimera: an idle game with the ethics of a civic sim, the system coupling of an engineering sandbox, and the visual texture of a lost Amiga design bible. Its differentiators:
+The unique value proposition is a strange little chimera: an idle game with the
+ethics of a civic sim, the system coupling of an engineering sandbox, and the
+visual texture of a lost Amiga design bible. Its differentiators:
 
-- **No click farming:** interaction centres on policies and constraints, not repeated low-value actions.
-- **Ethics as mechanics:** karma and alignment affect autonomy risk, brand, OSS contribution, and available strategies.
-- **Tech debt as a vector:** different debt categories create different failure modes, rather than one generic “badness” number.
-- **Power becomes the economy:** the game’s late stage changes regime from money to watts to heat.
-- **Adversarial tuning:** self-play agents hunt for boring optima, lock-on-victory strategies, and exploit paths.
+- **No click farming:** interaction centres on policies and constraints, not
+  repeated low-value actions.
+- **Ethics as mechanics:** karma and alignment affect autonomy risk, brand, OSS
+  contribution, and available strategies.
+- **Tech debt as a vector:** different debt categories create different failure
+  modes, rather than one generic “badness” number.
+- **Power becomes the economy:** the game’s late stage changes regime from
+  money to watts to heat.
+- **Adversarial tuning:** self-play agents hunt for boring optima,
+  lock-on-victory strategies, and exploit paths.
 - **Local-first trust:** the MVP stores progress locally and works offline.
 
-The attached PWA guidance supports this local-first stance: the Wildside design says the UI should render from local state first, treat the network as optional, and make synchronization explicit rather than magical.  For Vibe Coder's MVP, the project can go further: no network dependency at all, with future sync treated as a new adapter rather than a foundational assumption.
+The attached PWA guidance supports this local-first stance: the Wildside design
+says the UI should render from local state first, treat the network as
+optional, and make synchronization explicit rather than magical.  For Vibe
+Coder's MVP, the project can go further: no network dependency at all, with
+future sync treated as a new adapter rather than a foundational assumption.
 
----
+______________________________________________________________________
 
-# WHAT: core requirements
+## WHAT: core requirements
 
 ## Core product requirements
 
 System must run an offline-capable React PWA with local Dexie persistence.
 
-System must model game state as a deterministic simulation state plus event log, not as scattered UI state.
+System must model game state as a deterministic simulation state plus event
+log, not as scattered UI state.
 
-System must expose player agency through policy allocation, ethics constraints, unlock decisions, and event responses.
+System must expose player agency through policy allocation, ethics constraints,
+unlock decisions, and event responses.
 
-System must support at least three simulation speeds: normal, deep chill, and catch-up/offline progress.
+System must support at least three simulation speeds: normal, deep chill, and
+catch-up/offline progress.
 
-System must model resources: LoC, cash, tech debt vector, karma, brand, power, PMF, customer income, alignment, and stage progression.
+System must model resources: LoC, cash, tech debt vector, karma, brand, power,
+PMF, customer income, alignment, and stage progression.
 
-System must model tech debt categories independently: cyclomatic complexity, CQRS violations, config drift, XSS, SQL injection, shell injection, CSRF, and CVEs.
+System must model tech debt categories independently: cyclomatic complexity,
+CQRS violations, config drift, XSS, SQL injection, shell injection, CSRF, and
+CVEs.
 
-System must show consequences clearly: debt constellations, commit stream, incident timeline, brand aura, power draw, macro income, alignment drift, and progression gates.
+System must show consequences clearly: debt constellations, commit stream,
+incident timeline, brand aura, power draw, macro income, alignment drift, and
+progression gates.
 
-System must support XState state graphs for app lifecycle, save/load, run lifecycle, policy editing, event resolution, progression, and audio mood.
+System must support XState state graphs for app lifecycle, save/load, run
+lifecycle, policy editing, event resolution, progression, and audio mood.
 
-System must keep domain logic independent from React, Dexie, browser APIs, Web Audio, image assets, and analytics. That follows ports-and-adapters practice: external actors interact through ports, while adapters translate between technologies and the application core. 
+System must keep domain logic independent from React, Dexie, browser APIs, Web
+Audio, image assets, and analytics. That follows ports-and-adapters practice:
+external actors interact through ports, while adapters translate between
+technologies and the application core.
 
-System must provide a game-parameter optimization harness using adversarial self-play and explicit “fun” metrics.
+System must provide a game-parameter optimization harness using adversarial
+self-play and explicit “fun” metrics.
 
-System must keep generated art and generated music assets out of gameplay-critical truth. The Skyjoust and Agentland documents both repeat this useful principle: generated imagery can establish source references and production inputs, but live gameplay text, counters, state labels, and authoritative values belong to the renderer/runtime. 
+System must keep generated art and generated music assets out of
+gameplay-critical truth. The Skyjoust and Agentland documents both repeat this
+useful principle: generated imagery can establish source references and
+production inputs, but live gameplay text, counters, state labels, and
+authoritative values belong to the renderer/runtime.
 
 ## Key workflows
 
@@ -102,36 +142,54 @@ System must keep generated art and generated music assets out of gameplay-critic
 
 ## Expected outcomes
 
-For players: a compact, surprising, emotionally literate idle strategy toy that rewards long-term thinking over finger-drumming.
+For players: a compact, surprising, emotionally literate idle strategy toy that
+rewards long-term thinking over finger-drumming.
 
-For development: a testable local-first codebase with clean domain seams, deterministic replay capacity, and a creative pipeline that can produce rich assets without letting generated artefacts become brittle runtime authority.
+For development: a testable local-first codebase with clean domain seams,
+deterministic replay capacity, and a creative pipeline that can produce rich
+assets without letting generated artefacts become brittle runtime authority.
 
-For design: measurable fun proxies that detect degenerate strategies before the player finds them and names them something unprintable.
+For design: measurable fun proxies that detect degenerate strategies before the
+player finds them and names them something unprintable.
 
----
+______________________________________________________________________
 
-# HOW: planning and implementation
+## HOW: planning and implementation
 
 ## Target stack
 
-| Layer       | Recommendation                                            | Notes                                                                                                                   |
-| ----------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Runtime     | React 19 + TypeScript + Vite/Bun                          | Mirrors the v2a stack direction, using React, Vite, TypeScript, token generation, Vitest, and modern frontend tooling.  |
-| State graph | XState                                                    | App lifecycle, game run, policy editing, event prompts, progression, audio mood                                         |
-| Storage     | Dexie over IndexedDB                                      | Local saves, event log, parameter packs, run archive, settings, asset manifests                                         |
-| Rendering   | React UI + Canvas/OffscreenCanvas world visualizer        | DOM for accessible controls, Canvas for animated city-aquarium                                                          |
-| Audio       | Web Audio API + worklet-ready scheduler                   | State-driven music layers, procedural motifs, SFX event bus                                                             |
-| Styling     | Design tokens + CSS variables + Tailwind/DaisyUI optional | Tokenize palette, spacing, typography, state colours                                                                    |
-| Testing     | Vitest, fast-check, Playwright, axe                       | Unit, property, simulation, accessibility, browser flows                                                                |
-| Build/PWA   | Vite PWA plugin or custom service worker                  | App shell precache, local asset caching, offline boot                                                                   |
+| Layer       | Recommendation                                            | Notes                                                                                                                  |
+| ----------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Runtime     | React 19 + TypeScript + Vite/Bun                          | Mirrors the v2a stack direction, using React, Vite, TypeScript, token generation, Vitest, and modern frontend tooling. |
+| State graph | XState                                                    | App lifecycle, game run, policy editing, event prompts, progression, audio mood                                        |
+| Storage     | Dexie over IndexedDB                                      | Local saves, event log, parameter packs, run archive, settings, asset manifests                                        |
+| Rendering   | React UI + Canvas/OffscreenCanvas world visualizer        | DOM for accessible controls, Canvas for animated city-aquarium                                                         |
+| Audio       | Web Audio API + worklet-ready scheduler                   | State-driven music layers, procedural motifs, SFX event bus                                                            |
+| Styling     | Design tokens + CSS variables + Tailwind/DaisyUI optional | Tokenize palette, spacing, typography, state colours                                                                   |
+| Testing     | Vitest, fast-check, Playwright, axe                       | Unit, property, simulation, accessibility, browser flows                                                               |
+| Build/PWA   | Vite PWA plugin or custom service worker                  | App shell precache, local asset caching, offline boot                                                                  |
 
-The v2a stack documents describe a broader architecture with Dexie for durable browser-side storage, XState for explicit orchestration, and Zustand/TanStack Query for other state classes. Vibe Coder’s offline-only MVP can skip server-state complexity initially, then add TanStack Query only when a cloud sync or content service arrives. 
+The v2a stack documents describe a broader architecture with Dexie for durable
+browser-side storage, XState for explicit orchestration, and Zustand/TanStack
+Query for other state classes. Vibe Coder’s offline-only MVP can skip
+server-state complexity initially, then add TanStack Query only when a cloud
+sync or content service arrives.
 
 ## Architectural style: hexagonal core with browser adapters
 
-Hexagonal architecture fits this unusually well because the sim wants to survive technology swaps. React, Dexie, Web Audio, Canvas, imagegen outputs, telemetry, and future cloud sync should orbit the game domain rather than invade it wearing muddy boots.
+Hexagonal architecture fits this unusually well because the sim wants to
+survive technology swaps. React, Dexie, Web Audio, Canvas, imagegen outputs,
+telemetry, and future cloud sync should orbit the game domain rather than
+invade it wearing muddy boots.
 
-The domain/application core contains entities, value objects, pure simulation functions, policy services, progression rules, event rules, and balancing metadata. Inbound adapters drive it. Outbound adapters implement storage, clocks, random sources, audio, visualization, and telemetry. Hexagonal guidance from the attached architecture notes distinguishes driving actors, which initiate interaction, from driven actors, which the application calls through ports; it also places port interfaces inside the core while adapter implementations live outside.
+The domain/application core contains entities, value objects, pure simulation
+functions, policy services, progression rules, event rules, and balancing
+metadata. Inbound adapters drive it. Outbound adapters implement storage,
+clocks, random sources, audio, visualization, and telemetry. Hexagonal guidance
+from the attached architecture notes distinguishes driving actors, which
+initiate interaction, from driven actors, which the application calls through
+ports; it also places port interfaces inside the core while adapter
+implementations live outside.
 
 ### Proposed architecture diagram
 
@@ -314,11 +372,14 @@ src/
       descriptor-registry.ts
 ```
 
-This layout borrows Wildside’s feature-first discipline, but keeps a stronger game-domain core so React does not become the place where equations go to die. Wildside’s design recommends narrow shared primitives and feature modules rather than letting “shared” become a drawer full of ghost cables. 
+This layout borrows Wildside’s feature-first discipline, but keeps a stronger
+game-domain core so React does not become the place where equations go to die.
+Wildside’s design recommends narrow shared primitives and feature modules
+rather than letting “shared” become a drawer full of ghost cables.
 
----
+______________________________________________________________________
 
-# Domain model
+## Domain model
 
 ## Core aggregates
 
@@ -382,7 +443,8 @@ type TechDebtVector = {
 
 ### `AllocationPolicy`
 
-Percentages must sum to 100. The UI can display sliders, but the domain accepts a validated value object.
+Percentages must sum to 100. The UI can display sliders, but the domain accepts
+a validated value object.
 
 ```ts
 type AllocationPolicy = {
@@ -414,7 +476,9 @@ type EthicsPolicy = {
 
 ## Simulation tick contract
 
-A tick should remain pure relative to its inputs. The application service can orchestrate ports, but the simulation function should be testable without React, Dexie, audio, or time.
+A tick should remain pure relative to its inputs. The application service can
+orchestrate ports, but the simulation function should be testable without
+React, Dexie, audio, or time.
 
 ```ts
 type SimTickInput = {
@@ -433,13 +497,18 @@ type SimTickOutput = {
 };
 ```
 
-Skyjoust’s technical design provides a useful analogue: simulation ticks should not read wall-clock time, and rendering can interpolate visuals but must not feed back into authoritative simulation state. 
+Skyjoust’s technical design provides a useful analogue: simulation ticks should
+not read wall-clock time, and rendering can interpolate visuals but must not
+feed back into authoritative simulation state.
 
----
+______________________________________________________________________
 
-# XState state graph
+## XState state graph
 
-Use XState for **explicit lifecycle and workflow state**, not for every numerical simulation variable. The simulation is a reducer-ish domain service. XState orchestrates when commands may run, what UI mode the player inhabits, and how events resolve.
+Use XState for **explicit lifecycle and workflow state**, not for every
+numerical simulation variable. The simulation is a reducer-ish domain service.
+XState orchestrates when commands may run, what UI mode the player inhabits,
+and how events resolve.
 
 ## Top-level machines
 
@@ -502,7 +571,11 @@ stateDiagram-v2
   }
 ```
 
-Skyjoust uses explicit state resources for app runtime, lifecycle, events, scoring, rewards, and other regions, and treats the state graph as an authoritative contract that runtime systems can refine but must not violate. Vibe Coder should adopt the same pattern, using XState rather than Stateright for the browser MVP, then adding model tests around the machines. 
+Skyjoust uses explicit state resources for app runtime, lifecycle, events,
+scoring, rewards, and other regions, and treats the state graph as an
+authoritative contract that runtime systems can refine but must not violate.
+Vibe Coder should adopt the same pattern, using XState rather than Stateright
+for the browser MVP, then adding model tests around the machines.
 
 ## Machine responsibilities
 
@@ -516,13 +589,17 @@ Skyjoust uses explicit state resources for app runtime, lifecycle, events, scori
 | `audio.machine`           | mood state, intensity, stems enabled             | game rules               |
 | `asset-authoring.machine` | dev-only prompt request/import states            | runtime image generation |
 
----
+______________________________________________________________________
 
-# Persistence and Dexie
+## Persistence and Dexie
 
 ## Storage principles
 
-The MVP is offline-only. Dexie should own local durability, but not gameplay semantics. The Wildside model explicitly treats Dexie as durable storage for heavier assets and outbox-like records, not as a synchronization worldview; Vibe Coder can use the same philosophy for saves, event logs, content packs, and optimization reports.
+The MVP is offline-only. Dexie should own local durability, but not gameplay
+semantics. The Wildside model explicitly treats Dexie as durable storage for
+heavier assets and outbox-like records, not as a synchronization worldview;
+Vibe Coder can use the same philosophy for saves, event logs, content packs,
+and optimization reports.
 
 ## Dexie schema
 
@@ -542,22 +619,31 @@ db.version(1).stores({
 
 ## Save strategy
 
-Use periodic snapshots plus an append-only event log. That gives three useful properties: fast load, reproducible debugging, and a future path to cloud sync.
+Use periodic snapshots plus an append-only event log. That gives three useful
+properties: fast load, reproducible debugging, and a future path to cloud sync.
 
 - Snapshot every N ticks or every M seconds of active simulation.
-- Log policy commits, unlock decisions, event resolutions, random seeds, parameter pack hash, and major domain events.
+- Log policy commits, unlock decisions, event resolutions, random seeds,
+  parameter pack hash, and major domain events.
 - On load, restore latest snapshot and replay subsequent events.
-- On offline return, apply bounded catch-up and summarize skipped time rather than dumping 10,000 tiny incidents into the player’s lap.
+- On offline return, apply bounded catch-up and summarize skipped time rather
+  than dumping 10,000 tiny incidents into the player’s lap.
 
-Skyjoust’s persistence and replay section stores schema version, seed, active modifiers, currencies, unlocks, penalties, configuration hash, asset manifest hash, and per-tick inputs; Vibe Coder should keep the same spirit with run seed, parameter pack hash, asset manifest hash, policy/event log, and replayable state actions. 
+Skyjoust’s persistence and replay section stores schema version, seed, active
+modifiers, currencies, unlocks, penalties, configuration hash, asset manifest
+hash, and per-tick inputs; Vibe Coder should keep the same spirit with run
+seed, parameter pack hash, asset manifest hash, policy/event log, and
+replayable state actions.
 
----
+______________________________________________________________________
 
-# Rendering and interface
+## Rendering and interface
 
 ## UI architecture
 
-Use React for accessible controls and layout. Use Canvas for the living simulation viewport. Keep the actual gameplay values in domain selectors, not in canvas internals.
+Use React for accessible controls and layout. Use Canvas for the living
+simulation viewport. Keep the actual gameplay values in domain selectors, not
+in canvas internals.
 
 Core screens:
 
@@ -573,22 +659,30 @@ Core screens:
 | Optimization Lab     | Dev-only self-play                  | parameter packs, agent results, exploit reports                             |
 | Archive / Endings    | Run history                         | ending cards, score, replay summary                                         |
 
-The visual design docs emphasize that generated art can guide focal order and layer grammar, but runtime owns layout, text, panels, charts, status semantics, hit areas, lighting, and animation timing.  That maps cleanly to Vibe Coder: the dashboard can look painterly and lush, but the player must never need to read generated micro-text to understand a CVE incident.
+The visual design docs emphasize that generated art can guide focal order and
+layer grammar, but runtime owns layout, text, panels, charts, status semantics,
+hit areas, lighting, and animation timing.  That maps cleanly to Vibe Coder:
+the dashboard can look painterly and lush, but the player must never need to
+read generated micro-text to understand a CVE incident.
 
 ## Visual layer order
 
 Adapt the Agentland layer grammar to Vibe Coder:
 
 1. Background atmosphere: rainy city, dusk, orbital glow, heat haze.
-2. Environment layers: bedsit, café, warehouse, robot office, data centre, orbital compute.
-3. System actors: coder, goblin, bots, agents, BCI figure, Kardashev infrastructure.
+2. Environment layers: bedsit, café, warehouse, robot office, data centre,
+   orbital compute.
+3. System actors: coder, goblin, bots, agents, BCI figure, Kardashev
+   infrastructure.
 4. Flow overlays: commit streams, power flows, trust aura, debt constellations.
 5. UI panels: top resources, policy sliders, ethics toggles, autopilot.
 6. Runtime text: all numbers, labels, warnings, tooltips.
 7. Lighting and audio-reactive flourishes.
 8. Debug overlays: hit boxes, state graph node, tick time, event queue.
 
-The attached art bible says runtime lighting masks should remain deterministic, with generated environment art guiding placement but scripts or code controlling lamp pools, screen glow, vignette, and active pulses.
+The attached art bible says runtime lighting masks should remain deterministic,
+with generated environment art guiding placement but scripts or code
+controlling lamp pools, screen glow, vignette, and active pulses.
 
 The [in-game design system](in-game-design-system.html) documents the component
 palette, colour grammar, and layer composition that give the interface its
@@ -596,13 +690,16 @@ character. The [game HUD mockup](vibe-coder-game-hud-mockup.html) is a worked
 example of the main dashboard and player controls and is the primary visual
 reference for in-game UI implementation.
 
----
+______________________________________________________________________
 
-# Simulation design
+## Simulation design
 
 ## The system heartbeat
 
-A fixed simulation tick of 1 in-game second is enough for the idle feel. Presentation can animate at the browser’s frame rate, but the sim should step in fixed chunks. Offline catch-up can aggregate steps using coarse analytical approximations once the run enters stable regions.
+A fixed simulation tick of 1 in-game second is enough for the idle feel.
+Presentation can animate at the browser’s frame rate, but the sim should step
+in fixed chunks. Offline catch-up can aggregate steps using coarse analytical
+approximations once the run enters stable regions.
 
 Proposed tick order:
 
@@ -642,25 +739,38 @@ type ParameterPack = {
 };
 ```
 
-Parameter packs make self-play, balancing, player-visible difficulty variants, and reproducibility easier. They also prevent “tiny constants smeared across files” syndrome, which is a recognized cousin of config drift goblinry.
+Parameter packs make self-play, balancing, player-visible difficulty variants,
+and reproducibility easier. They also prevent “tiny constants smeared across
+files” syndrome, which is a recognized cousin of config drift goblinry.
 
----
+______________________________________________________________________
 
-# Defining “fun” for adversarial self-play
+## Defining “fun” for adversarial self-play
 
 ## Design interpretation of Crawford
 
 Crawford gives three practical constraints.
 
-First, the point is the challenge, not merely achieving the formal goal. A player who finds a loophole can technically win while evading the intended challenge, so the design must eliminate lock-on-victory strategies and loopholes that bypass the real game. 
+First, the point is the challenge, not merely achieving the formal goal. A
+player who finds a loophole can technically win while evading the intended
+challenge, so the design must eliminate lock-on-victory strategies and
+loopholes that bypass the real game.
 
-Second, conflict gives challenge life. In Vibe Coder, the opponent is not another player; it is a living bundle of active pressures: debt, market drift, misalignment, macro income collapse, power shortage, reputational dynamics, and heat. Conflict can be indirect and systemic rather than violent, which suits a long idle game. 
+Second, conflict gives challenge life. In Vibe Coder, the opponent is not
+another player; it is a living bundle of active pressures: debt, market drift,
+misalignment, macro income collapse, power shortage, reputational dynamics, and
+heat. Conflict can be indirect and systemic rather than violent, which suits a
+long idle game.
 
-Third, process intensity matters. Vibe Coder should not just display huge tables of lore and static content; it should compute surprising consequences from compact rules. Crawford’s “crunch per bit” idea is perfect for a systems idle game: data can add texture, but process must carry the fun. 
+Third, process intensity matters. Vibe Coder should not just display huge
+tables of lore and static content; it should compute surprising consequences
+from compact rules. Crawford’s “crunch per bit” idea is perfect for a systems
+idle game: data can add texture, but process must carry the fun.
 
 ## Fun score
 
-The optimization harness should not optimize for “biggest number” or “longest session”. That would summon the metrics demon and give it a lanyard.
+The optimization harness should not optimize for “biggest number” or “longest
+session”. That would summon the metrics demon and give it a lanyard.
 
 Use a composite score:
 
@@ -711,7 +821,10 @@ FunScore =
 | Exploit hunter      | Search for degenerate loops and lock-on-victory    |
 | Casual player model | Make sparse, plausible policy updates              |
 
-The exploit hunter matters most. It should try to prove that the challenge can be bypassed: for example, a policy that opens OSS just enough to farm brand while hiding CVEs, or a power build that disables quality checks without visible punishment.
+The exploit hunter matters most. It should try to prove that the challenge can
+be bypassed: for example, a policy that opens OSS just enough to farm brand
+while hiding CVEs, or a power build that disables quality checks without
+visible punishment.
 
 ## Optimization process
 
@@ -723,17 +836,25 @@ The exploit hunter matters most. It should try to prove that the challenge can b
 6. Run human playtests on the best candidates.
 7. Promote a parameter pack with a manifest and changelog.
 
-This keeps the computer as a design assistant, not a final arbiter. The machine can find cursed local maxima; the designer still decides whether the curse is entertaining.
+This keeps the computer as a design assistant, not a final arbiter. The machine
+can find cursed local maxima; the designer still decides whether the curse is
+entertaining.
 
----
+______________________________________________________________________
 
-# Creative workflow for art and image generation
+## Creative workflow for art and image generation
 
 ## Principle
 
-Use image generation as an art-direction accelerator and source-art generator, not as an authority for runtime logic.
+Use image generation as an art-direction accelerator and source-art generator,
+not as an authority for runtime logic.
 
-The attached asset specification defines three buckets that transfer cleanly to Vibe Coder: reference-only generated outputs, generated sources converted into deterministic runtime assets, and algorithmic assets owned by scripts or code.  Runtime assets should graduate only after prompt provenance, source files, post-processing settings, palette/alpha/slice checks, runtime text safety, processed paths, atlas metadata, and consumer IDs exist. 
+The attached asset specification defines three buckets that transfer cleanly to
+Vibe Coder: reference-only generated outputs, generated sources converted into
+deterministic runtime assets, and algorithmic assets owned by scripts or code.  
+Runtime assets should graduate only after prompt provenance, source files,
+post-processing settings, palette/alpha/slice checks, runtime text safety,
+processed paths, atlas metadata, and consumer IDs exist.
 
 ## Vibe Coder asset taxonomy
 
@@ -770,17 +891,25 @@ tools/
   check_assets.py
 ```
 
-The Agentland workflow already recommends development-time roles such as art director, prompt designer, asset integrator, runtime implementer, and QA reviewer; Vibe Coder should reuse that division because the work really does split into style judgement, prompt craft, deterministic processing, implementation, and validation. 
+The Agentland workflow already recommends development-time roles such as art
+director, prompt designer, asset integrator, runtime implementer, and QA
+reviewer; Vibe Coder should reuse that division because the work really does
+split into style judgement, prompt craft, deterministic processing,
+implementation, and validation.
 
----
+______________________________________________________________________
 
-# Reactive music and sound design
+## Reactive music and sound design
 
 ## Audio principle
 
-The simulation emits semantic audio events. The audio engine consumes them. Audio never mutates authoritative game state.
+The simulation emits semantic audio events. The audio engine consumes them.
+Audio never mutates authoritative game state.
 
-Skyjoust’s audio design gives a clean precedent: simulation emits audio events, presentation consumes them, the audio layer owns buses, rate limits, spatial panning, and state-driven music layers, and playback never mutates authoritative match state. 
+Skyjoust’s audio design gives a clean precedent: simulation emits audio events,
+presentation consumes them, the audio layer owns buses, rate limits, spatial
+panning, and state-driven music layers, and playback never mutates
+authoritative match state.
 
 ## Browser implementation
 
@@ -811,7 +940,9 @@ Use layered generative music rather than long static loops:
 | Power grid       | watts and infrastructure | sub pulses, turbine rhythms, electrical hum              |
 | Cosmic heat      | Dyson/Matrioshka stage   | slow harmonic expansion, radiator noise, stellar shimmer |
 
-Use deterministic seeds for generated motifs per run, so the player's civilization gets its own musical identity. The same seed should not produce identical sound every second, but it should produce a stable motif family.
+Use deterministic seeds for generated motifs per run, so the player's
+civilization gets its own musical identity. The same seed should not produce
+identical sound every second, but it should produce a stable motif family.
 
 ## SFX design
 
@@ -824,45 +955,61 @@ Use deterministic seeds for generated motifs per run, so the player's civilizati
 - Catastrophe: audio ducking, distinct sting, then altered ambience.
 - Degrowth utopia / UBI ending: quieter, less dense mix, a sonic exhale.
 
----
+______________________________________________________________________
 
-# Business requirements and rules
+## Business requirements and rules
 
 ## Non-negotiable business rules
 
 1. The game must not require network access for MVP play.
-2. The game must not monetize through dark patterns, forced clicking, or ad pressure.
-3. Manual typing must remain an opening ritual only, not a competitive ongoing action.
-4. Policies must sum to 100 and invalid policies must never enter the domain core.
-5. Ethics commitments may be broken only through explicit player choice or event consequence, never silently.
-6. Runtime-critical numbers, labels, warnings, and controls must come from deterministic UI rendering, not generated images.
-7. Saves must include schema version, parameter pack version, seed, and enough event history for debugging.
+2. The game must not monetize through dark patterns, forced clicking, or ad
+   pressure.
+3. Manual typing must remain an opening ritual only, not a competitive ongoing
+   action.
+4. Policies must sum to 100 and invalid policies must never enter the domain
+   core.
+5. Ethics commitments may be broken only through explicit player choice or
+   event consequence, never silently.
+6. Runtime-critical numbers, labels, warnings, and controls must come from
+   deterministic UI rendering, not generated images.
+7. Saves must include schema version, parameter pack version, seed, and enough
+   event history for debugging.
 8. Offline catch-up must cap incident spam and provide a readable summary.
-9. Self-play may recommend balance changes, but human review promotes parameter packs.
-10. Accessibility must cover keyboard operation, reduced motion, readable contrast, and clear status announcements.
+9. Self-play may recommend balance changes, but human review promotes parameter
+   packs.
+10. Accessibility must cover keyboard operation, reduced motion, readable
+    contrast, and clear status announcements.
 
 ## Security and privacy
 
-Since MVP storage stays local, the security focus starts with save integrity and browser safety:
+Since MVP storage stays local, the security focus starts with save integrity
+and browser safety:
 
 - No remote telemetry by default.
 - Import/export saves as JSON with schema validation.
-- Content packs must validate version, IDs, parameter ranges, and asset references.
+- Content packs must validate version, IDs, parameter ranges, and asset
+  references.
 - Dexie migrations must preserve or explicitly archive old saves.
-- Future cloud sync must become a new outbound adapter and must not alter domain rules.
-- Any future runtime image or music generation must use a separate explicit API integration, not development-time Codex tooling. Agentland’s docs make this same distinction: built-in image generation belongs to development workflow, not the app runtime. 
+- Future cloud sync must become a new outbound adapter and must not alter
+  domain rules.
+- Any future runtime image or music generation must use a separate explicit API
+  integration, not development-time Codex tooling. Agentland’s docs make this
+  same distinction: built-in image generation belongs to development workflow,
+  not the app runtime.
 
----
+______________________________________________________________________
 
-# System requirements
+## System requirements
 
 ## Performance
 
-- The main simulation tick should run under 4 ms for ordinary saves on mid-range hardware.
+- The main simulation tick should run under 4 ms for ordinary saves on
+  mid-range hardware.
 - The dashboard should remain responsive at 60 FPS for UI interactions.
 - Canvas rendering should degrade gracefully with reduced particle density.
 - Offline catch-up should complete within a few seconds for ordinary absences.
-- Self-play should run in a Web Worker or Node-based dev harness, not on the UI thread.
+- Self-play should run in a Web Worker or Node-based dev harness, not on the UI
+  thread.
 
 ## Reliability
 
@@ -894,9 +1041,9 @@ Since MVP storage stays local, the security focus starts with save integrity and
 | Audio             | event routing, rate limiting, no state mutation                    |
 | Asset             | manifests, atlas metadata, alpha, palette, runtime text safety     |
 
----
+______________________________________________________________________
 
-# Implementation priorities
+## Implementation priorities
 
 ## High priority
 
@@ -904,7 +1051,8 @@ Since MVP storage stays local, the security focus starts with save integrity and
 - Dexie schema and migrations.
 - Domain core with pure simulation tick.
 - XState app/run/policy/event machines.
-- Main dashboard with resource top bar, policy panel, ethics panel, event timeline.
+- Main dashboard with resource top bar, policy panel, ethics panel, event
+  timeline.
 - Manual typing ritual.
 - Tech debt vector and first incidents.
 - Stage 1 to 4 progression: manual, autocomplete, edit bot, single agent.
@@ -936,13 +1084,14 @@ Since MVP storage stays local, the security focus starts with save integrity and
 - Social sharing.
 - Leaderboards, only if they do not poison the idle vibe.
 
----
+______________________________________________________________________
 
-# Path to customer value through vertical slices
+## Path to customer value through vertical slices
 
 ## Slice 1: “The aquarium breathes”
 
-Goal: a player can start a run, type for 30 seconds, set policies, and watch resources change.
+Goal: a player can start a run, type for 30 seconds, set policies, and watch
+resources change.
 
 Includes:
 
@@ -1032,9 +1181,9 @@ Includes:
 
 Value: proves narrative consequence and replayability.
 
----
+______________________________________________________________________
 
-# Product risks and mitigations
+## Product risks and mitigations
 
 | Risk                      | Why it matters                                                                | Mitigation                                                          |
 | ------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -1047,12 +1196,16 @@ Value: proves narrative consequence and replayability.
 | Audio fatigue             | Generative music becomes sludge                                               | bus controls, sparse motifs, state-driven restraint                 |
 | Ethical scolding          | Game lectures instead of plays                                                | make every ethical stance mechanically interesting, with trade-offs |
 
----
+______________________________________________________________________
 
-# A useful first milestone
+## A useful first milestone
 
-The first genuinely valuable milestone is not “all resources implemented”. It is this:
+The first genuinely valuable milestone is not “all resources implemented”. It
+is this:
 
-A player opens the PWA offline, performs the typing ritual, sets a policy, watches LoC turn into debt and value, sees one incident caused by player choices, changes policy, and sees the system recover or worsen.
+A player opens the PWA offline, performs the typing ritual, sets a policy,
+watches LoC turn into debt and value, sees one incident caused by player
+choices, changes policy, and sees the system recover or worsen.
 
-That proves the game’s heart: **set intent → observe consequence → adjust worldview → watch the little civilization argue back.**
+That proves the game’s heart: **set intent → observe consequence → adjust
+worldview → watch the little civilization argue back.**

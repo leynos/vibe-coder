@@ -10,11 +10,11 @@ Proposed.
 
 ## Context and problem statement
 
-Vibe Coder combines a simulation model, React user interface, Dexie persistence,
-Canvas presentation, Web Audio, asset catalogues, and development tooling.
-Without explicit boundaries, game rules would leak into adapters and adapters
-would leak into game rules. That would make the simulation hard to test, tune,
-replay, and evolve.
+Vibe Coder combines a simulation model, React user interface, Dexie
+persistence, Canvas presentation, Web Audio, asset catalogues, and development
+tooling. Without explicit boundaries, game rules would leak into adapters and
+adapters would leak into game rules. That would make the simulation hard to
+test, tune, replay, and evolve.
 
 ## Decision drivers
 
@@ -85,8 +85,8 @@ and optimization runners interact with the core through inbound and outbound
 ports.
 
 The TypeScript source tree uses `src/domain/`, `src/application/`, and
-`src/adapters/` as the package boundaries for that core and its outer ring.
-The alternative `src/core/` name is rejected because it blurs the distinction
+`src/adapters/` as the package boundaries for that core and its outer ring. The
+alternative `src/core/` name is rejected because it blurs the distinction
 between pure domain policy and application orchestration. Import-boundary
 enforcement uses the repository's custom TypeScript lint guard, exposed as
 `bun run lint:imports` and wired into `bun semantic`.
@@ -153,5 +153,5 @@ type GameApplication = {
 The game is process-heavy. Its value lies in coupled simulation, not in one
 presentation stack. Hexagonal boundaries keep the simulation as the source of
 truth while letting the outer ring change. The approach also matches the
-attached architecture material, which treats adapters as translation layers that
-must not invent domain state.
+attached architecture material, which treats adapters as translation layers
+that must not invent domain state.

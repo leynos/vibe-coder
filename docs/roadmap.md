@@ -7,15 +7,14 @@ that phase work toward validating or falsifying the idea, answering specific
 sequencing questions, and leaving behind usable functionality rather than
 another horizontal layer.
 
-The primary design document is
-`docs/vibe-coder-high-level-design.md` (hereafter "HLD"). Architecture
-decision records live in `docs/adr-001-*.md` through `docs/adr-011-*.md`.
-Tasks cite both sources using the `§` notation from this roadmap's
-conventions.
+The primary design document is `docs/vibe-coder-high-level-design.md`
+(hereafter "HLD"). Architecture decision records live in `docs/adr-001-*.md`
+through `docs/adr-011-*.md`. Tasks cite both sources using the `§` notation
+from this roadmap's conventions.
 
 The GIST hierarchy used here is: phase = idea (testable hypothesis), step =
-workstream (a delivery objective that validates or falsifies some aspect of
-the phase idea), task = execution unit (a concrete, measurable piece of build
+workstream (a delivery objective that validates or falsifies some aspect of the
+phase idea), task = execution unit (a concrete, measurable piece of build
 work). Steps are sequenced so each one either unlocks the next or reduces a
 specific delivery risk.
 
@@ -25,24 +24,24 @@ ______________________________________________________________________
 
 Idea: if Vibe Coder settles its hexagonal source boundaries, driven-port
 contracts, Dexie schema, XState machine skeleton, parameter-pack shape, and
-test scaffolding before feature work starts, later vertical slices can
-converge on one coherent architecture instead of repeatedly reworking
-interfaces and import graphs.
+test scaffolding before feature work starts, later vertical slices can converge
+on one coherent architecture instead of repeatedly reworking interfaces and
+import graphs.
 
 The repository already has a React PWA shell, routing, theme, i18n, and test
-infrastructure. What it lacks is the domain core and adapter skeleton that
-all six vertical slices will depend on. This phase closes that gap without
-writing any simulation equations; equations arrive in phase 2.
+infrastructure. What it lacks is the domain core and adapter skeleton that all
+six vertical slices will depend on. This phase closes that gap without writing
+any simulation equations; equations arrive in phase 2.
 
 ### 1.1. Ratify outstanding decisions recorded in the ADRs
 
 This step answers what contracts must be settled before the first simulation
 line is written. Its outcome unblocks source-tree layout, import-boundary
-rules, and adapter shapes. See
-`adr-001-build-an-offline-first-react-pwa.md` §Outstanding decisions,
-`adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`
-§Outstanding decisions, `adr-003-use-xstate-for-workflow-orchestration.md`
-§Outstanding decisions, `adr-005-use-deterministic-simulation-and-parameter-packs.md`
+rules, and adapter shapes. See `adr-001-build-an-offline-first-react-pwa.md`
+§Outstanding decisions,
+`adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md` §Outstanding
+decisions, `adr-003-use-xstate-for-workflow-orchestration.md` §Outstanding
+decisions, `adr-005-use-deterministic-simulation-and-parameter-packs.md`
 §Outstanding decisions.
 
 - [x] 1.1.1. Record the package runner choice (Bun) and confirm the service
@@ -112,8 +111,8 @@ informs the simulation contract in phase 2. See HLD §"Domain model" and
 `adr-005-use-deterministic-simulation-and-parameter-packs.md`.
 
 - [ ] 1.3.1. Implement `RunState`, `Resources`, `TechDebtVector`,
-  `AllocationPolicy`, `EthicsPolicy`, `AlignmentState`, `ProgressionState`,
-  and `UnlockLedger` as immutable TypeScript types with Valibot schemas.
+  `AllocationPolicy`, `EthicsPolicy`, `AlignmentState`, `ProgressionState`, and
+  `UnlockLedger` as immutable TypeScript types with Valibot schemas.
   - Requires 1.2.1.
   - See HLD §"Core aggregates".
   - Success: Valibot parse accepts valid objects and rejects invalid ones;
@@ -145,8 +144,8 @@ by every slice that saves or loads a run. See HLD §"Dexie schema" and
 `adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md`.
 
 - [ ] 1.4.1. Implement the Dexie schema version 1 with tables for `runs`,
-  `runSnapshots`, `runEvents`, `settings`, `parameterPacks`, `contentPacks`,
-  and `selfPlayReports`.
+  `runSnapshots`, `runEvents`, `settings`, `parameterPacks`, `contentPacks`, and
+  `selfPlayReports`.
   - Requires 1.2.3 and 1.3.1.
   - See HLD §"Dexie schema" and
     `adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md` §Decision
@@ -161,8 +160,8 @@ by every slice that saves or loads a run. See HLD §"Dexie schema" and
     the in-memory stub.
 
 - [ ] 1.4.3. Add migration tests that verify version 1 tables survive a
-  re-open and that a future version 2 migration preserves or archives
-  existing rows.
+  re-open and that a future version 2 migration preserves or archives existing
+  rows.
   - Requires 1.4.2.
   - See `adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md` §Known
     risks.
@@ -171,13 +170,12 @@ by every slice that saves or loads a run. See HLD §"Dexie schema" and
 ### 1.5. Scaffold the XState machine shells and model tests
 
 This step answers whether the six machines can be defined, connected to the
-React tree, and model-tested for unreachable states before simulation
-equations exist. See HLD §"XState state graph" and
+React tree, and model-tested for unreachable states before simulation equations
+exist. See HLD §"XState state graph" and
 `adr-003-use-xstate-for-workflow-orchestration.md`.
 
 - [ ] 1.5.1. Implement shell definitions for `app.machine`, `run.machine`,
-  `policy.machine`, `event.machine`, `progression.machine`, and
-  `audio.machine`.
+  `policy.machine`, `event.machine`, `progression.machine`, and `audio.machine`.
   - Requires 1.1.3 and 1.3.1.
   - See HLD §"Top-level machines" and §"Machine responsibilities".
   - Success: all six machines compile; the app boots and reaches the `Title`
@@ -193,11 +191,10 @@ ______________________________________________________________________
 
 ## 2. Vertical slice 1: the aquarium breathes
 
-Idea: if the first playable slice proves that a player can type a ritual,
-set policies, watch LoC accumulate, and see at least one consequence change
-— all without clicking repeatedly — then Vibe Coder's core no-click loop is
-real, and the subsequent slices can be built with confidence that the
-foundation holds.
+Idea: if the first playable slice proves that a player can type a ritual, set
+policies, watch LoC accumulate, and see at least one consequence change — all
+without clicking repeatedly — then Vibe Coder's core no-click loop is real, and
+the subsequent slices can be built with confidence that the foundation holds.
 
 This slice delivers the minimum viable conversation: player says something,
 simulation thinks, game speaks back. It does not require incidents, ethics,
@@ -205,9 +202,9 @@ audio, or canvas animation; those arrive in later slices.
 
 ### 2.1. Implement the pure simulation tick for stage 1
 
-This step answers whether the tick contract from the HLD can be implemented
-as a pure function that changes `RunState` reproducibly. It is the most
-critical technical proof in the project. See HLD §"Simulation design" and
+This step answers whether the tick contract from the HLD can be implemented as
+a pure function that changes `RunState` reproducibly. It is the most critical
+technical proof in the project. See HLD §"Simulation design" and
 `adr-005-use-deterministic-simulation-and-parameter-packs.md`,
 `adr-010-run-fixed-tick-simulation-outside-react-rendering.md`.
 
@@ -241,8 +238,8 @@ critical technical proof in the project. See HLD §"Simulation design" and
 ### 2.2. Implement the main-thread fixed-tick driving adapter
 
 This step answers whether the fixed-tick loop can advance `RunState` at a
-configured cadence and expose snapshots to the React tree without letting
-React own simulation timing. See
+configured cadence and expose snapshots to the React tree without letting React
+own simulation timing. See
 `adr-010-run-fixed-tick-simulation-outside-react-rendering.md`.
 
 - [ ] 2.2.1. Implement a main-thread `TickService` that calls `simulateTick`
@@ -299,8 +296,8 @@ first policy setting can be built as accessible React screens driven by
 
 This step answers whether the Dexie adapter can persist the run reliably and
 whether the player can resume after a browser restart. See
-`adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md` and HLD
-§"Save strategy".
+`adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md` and HLD §"Save
+strategy".
 
 - [ ] 2.4.1. Implement periodic snapshot persistence triggered by the tick
   service.
@@ -329,9 +326,9 @@ whether the player can resume after a browser restart. See
 
 ### 2.5. Prove slice 1 end-to-end
 
-This step answers whether the assembled slice delivers the first milestone
-from the HLD: a player opens offline, performs the ritual, sets policy,
-watches LoC accumulate, and sees the simulation respond.
+This step answers whether the assembled slice delivers the first milestone from
+the HLD: a player opens offline, performs the ritual, sets policy, watches LoC
+accumulate, and sees the simulation respond.
 
 - [ ] 2.5.1. Write a Playwright end-to-end test covering the full first-run
   happy path: boot offline → ritual → policy set → resource bar updates.
@@ -345,19 +342,20 @@ ______________________________________________________________________
 ## 3. Vertical slice 2: debt has teeth
 
 Idea: if differentiated tech debt categories create mechanically different
-incident types — and those incidents visibly hurt brand, PMF, and cash in
-ways that a careful security allocation can reduce — then the player has
-real strategic choices and the simulation is not just a number-increment toy.
+incident types — and those incidents visibly hurt brand, PMF, and cash in ways
+that a careful security allocation can reduce — then the player has real
+strategic choices and the simulation is not just a number-increment toy.
 
-This slice proves that throughput can cause failures. It introduces the incident
-system, the debt constellation visualizer, and consequence legibility that
-make policy trade-offs meaningful.
+This slice proves that throughput can cause failures. It introduces the
+incident system, the debt constellation visualizer, and consequence legibility
+that make policy trade-offs meaningful.
 
 ### 3.1. Implement the tech debt tick rules and incident rolling
 
 This step answers whether debt categories accumulate, compound, and generate
-incidents according to the simulation design. See HLD §"The system
-heartbeat" (steps 6 and 10) and `adr-005-use-deterministic-simulation-and-parameter-packs.md`.
+incidents according to the simulation design. See HLD §"The system heartbeat"
+(steps 6 and 10) and
+`adr-005-use-deterministic-simulation-and-parameter-packs.md`.
 
 - [ ] 3.1.1. Implement the eight debt-category accumulation and reduction
   rules inside `simulateTick` (tick step 6), driven by quality and security
@@ -414,8 +412,8 @@ See HLD §"Key workflows" (incident response) and
 
 ### 3.3. Deliver the debt constellation visualizer
 
-This step answers whether the player can diagnose their risk surface through
-a visual view that is readable without relying on generated imagery for
+This step answers whether the player can diagnose their risk surface through a
+visual view that is readable without relying on generated imagery for
 authoritative values. See HLD §"Core screens" (Debt Constellation) and
 `adr-007-keep-runtime-interface-authoritative-and-deterministic.md`.
 
@@ -441,10 +439,10 @@ ______________________________________________________________________
 
 ## 4. Vertical slice 3: ethics alters the machine
 
-Idea: if the ethics policy panel makes alignment, karma, and brand
-mechanically coupled to automation capability — so that forbidding dark
-patterns or disclosing CVEs early has a measurable effect on strategic
-outcomes — then ethics is real gameplay, not decorative flavour text.
+Idea: if the ethics policy panel makes alignment, karma, and brand mechanically
+coupled to automation capability — so that forbidding dark patterns or
+disclosing CVEs early has a measurable effect on strategic outcomes — then
+ethics is real gameplay, not decorative flavour text.
 
 This slice proves that intent-setting produces systemic consequences. It
 introduces the ethics controls, open-source allocation mechanics, alignment
@@ -467,8 +465,7 @@ and HLD §"Non-negotiable business rules" (rule 5).
 
 - [ ] 4.1.2. Enforce ethics commitments in `simulateTick`: dark-pattern
   forbiddance reduces certain income strategies; fossil cap throttles power
-  above the threshold; CVE disclosure window forces incident resolution
-  timing.
+  above the threshold; CVE disclosure window forces incident resolution timing.
   - Requires 4.1.1 and 3.1.3.
   - See HLD §"Non-negotiable business rules" (rule 5).
   - Success: property tests confirm that a `fossilEnergyCapPercent` of 0
@@ -479,8 +476,7 @@ and HLD §"Non-negotiable business rules" (rule 5).
 
 This step answers whether the open-source allocation percentage produces a
 visible karma and brand curve and whether an OSS viral moment event is
-reachable. See HLD §"Path to customer value through vertical slices" (slice
-3).
+reachable. See HLD §"Path to customer value through vertical slices" (slice 3).
 
 - [ ] 4.2.1. Implement tick-step 8 OSS output: open-source allocation
   generates community contribution events, karma ticks, and brand ticks
@@ -502,8 +498,7 @@ reachable. See HLD §"Path to customer value through vertical slices" (slice
 
 This step answers whether alignment state produces a legible pressure signal
 and whether a misalignment scare event changes available strategies. See HLD
-§"Domain model" (`AlignmentState`) and HLD §"Path to customer value" (slice
-3).
+§"Domain model" (`AlignmentState`) and HLD §"Path to customer value" (slice 3).
 
 - [ ] 4.3.1. Implement alignment drift in `simulateTick`: dark-pattern use,
   automation growth, and training piracy push alignment away from human-
@@ -515,8 +510,8 @@ and whether a misalignment scare event changes available strategies. See HLD
     negative drift; alignment affects the LoC multiplier in step 3.
 
 - [ ] 4.3.2. Implement the misalignment scare event: when alignment crosses a
-  warning threshold, fire a `RiskSurface.Warning` domain event and surface
-  an incident prompt with autonomy-risk consequences.
+  warning threshold, fire a `RiskSurface.Warning` domain event and surface an
+  incident prompt with autonomy-risk consequences.
   - Requires 4.3.1 and 3.2.1.
   - See HLD §"XState state graph" (`RiskSurface` states) and HLD §"Path to
     customer value" (slice 3).
@@ -527,14 +522,14 @@ ______________________________________________________________________
 
 ## 5. Vertical slice 4: autopilot becomes gameplay
 
-Idea: if unlock-gated automation agents produce both a productivity gain and
-a legible risk of misinterpretation — so that policy adjustments become more
-consequential, not less, as agents arrive — then the intent-steering fantasy
-is real and the idle loop remains interactive through every stage.
+Idea: if unlock-gated automation agents produce both a productivity gain and a
+legible risk of misinterpretation — so that policy adjustments become more
+consequential, not less, as agents arrive — then the intent-steering fantasy is
+real and the idle loop remains interactive through every stage.
 
 This slice delivers the progression tree, the first four stages of
-civilization, autopilot modes, and the first self-play balancing pass over
-the game so far.
+civilization, autopilot modes, and the first self-play balancing pass over the
+game so far.
 
 ### 5.1. Implement the progression system and first four stages
 
@@ -544,8 +539,8 @@ review and accept/defer flow. See HLD §"Core requirements" (stage 1–4
 progression) and `adr-003-use-xstate-for-workflow-orchestration.md`.
 
 - [ ] 5.1.1. Implement stage threshold evaluation (tick step 12): check
-  unlock conditions for manual coder, autocomplete, edit bot, and single-
-  agent stages; emit `ProgressionGateReached` domain events.
+  unlock conditions for manual coder, autocomplete, edit bot, and single- agent
+  stages; emit `ProgressionGateReached` domain events.
   - Requires phase 4.
   - See HLD §"Implementation priorities" (high priority, stage 1–4) and HLD
     §"The system heartbeat" (step 12).
@@ -593,8 +588,8 @@ strategic depth rather than replacing it. See HLD §"XState state graph"
     not suffer a penalty; suggestions are not compulsory.
 
 - [ ] 5.2.3. Implement agent misinterpretation warnings: when an autopilot or
-  agent action diverges significantly from the player's stated intent,
-  surface a `MisinterpretationWarning` incident prompt.
+  agent action diverges significantly from the player's stated intent, surface a
+  `MisinterpretationWarning` incident prompt.
   - Requires 5.2.2 and 3.2.1.
   - See HLD §"Path to customer value" (slice 4, "agent misinterpretation
     warnings").
@@ -603,9 +598,9 @@ strategic depth rather than replacing it. See HLD §"XState state graph"
 
 ### 5.3. First self-play balancing pass
 
-This step answers whether the first four vertical slices produce a
-mechanically balanced game where multiple strategies are viable and no
-trivial dominant policy exists. See HLD §"Self-play agents" and
+This step answers whether the first four vertical slices produce a mechanically
+balanced game where multiple strategies are viable and no trivial dominant
+policy exists. See HLD §"Self-play agents" and
 `adr-006-use-adversarial-self-play-for-parameter-tuning.md`.
 
 - [ ] 5.3.1. Implement the baseline self-play runner: a headless harness that
@@ -640,9 +635,9 @@ ______________________________________________________________________
 ## 6. Vertical slice 5: power replaces money
 
 Idea: if the mid-to-late game's power and heat constraints create a new
-strategic regime — where the question shifts from "how to grow revenue?" to "how
-to allocate watts?" — then the game has a genuine second act and players have a
-reason to reach it.
+strategic regime — where the question shifts from "how to grow revenue?" to
+"how to allocate watts?" — then the game has a genuine second act and players
+have a reason to reach it.
 
 This slice delivers the data centre unlock, power generation mix, fossil
 penalty, heat warning, and the power/heat visualizer.
@@ -651,8 +646,8 @@ penalty, heat warning, and the power/heat visualizer.
 
 This step answers whether power availability becomes the binding constraint at
 higher stages and whether the ethics fossil cap creates a real trade-off. See
-HLD §"The system heartbeat" (step 2) and HLD §"Path to customer value"
-(slice 5).
+HLD §"The system heartbeat" (step 2) and HLD §"Path to customer value" (slice
+5).
 
 - [ ] 6.1.1. Implement power-availability calculation (tick step 2) and power
   throttling: when power is insufficient, LoC throughput decreases
@@ -682,8 +677,8 @@ HLD §"The system heartbeat" (step 2) and HLD §"Path to customer value"
 ### 6.2. Deliver the power and heat visualizer
 
 This step answers whether the power economy is legible through a Canvas
-visualizer that provides textual summaries for accessibility. See HLD
-§"Core screens" (Power & Heat) and
+visualizer that provides textual summaries for accessibility. See HLD §"Core
+screens" (Power & Heat) and
 `adr-007-keep-runtime-interface-authoritative-and-deterministic.md`.
 
 - [ ] 6.2.1. Implement the power and heat Canvas panel: power draw bar,
@@ -700,19 +695,18 @@ ______________________________________________________________________
 ## 7. Vertical slice 6: endings are earned
 
 Idea: if multiple distinct endings are reachable from comprehensible state
-transitions — and each one feels like the logical consequence of a coherent
-run strategy rather than an arbitrary threshold — then the game has
-replayability and narrative consequence, and players will want a second run.
+transitions — and each one feels like the logical consequence of a coherent run
+strategy rather than an arbitrary threshold — then the game has replayability
+and narrative consequence, and players will want a second run.
 
 This slice delivers the four endings, the ending resolution flow, the run
 archive, and the basic audio event bus.
 
 ### 7.1. Implement ending evaluation and the four ending states
 
-This step answers whether each ending can be reached from a plausible
-strategy and whether the ending trigger is legible from prior simulation
-state. See HLD §"Path to customer value" (slice 6) and HLD §"The system
-heartbeat" (step 12).
+This step answers whether each ending can be reached from a plausible strategy
+and whether the ending trigger is legible from prior simulation state. See HLD
+§"Path to customer value" (slice 6) and HLD §"The system heartbeat" (step 12).
 
 - [ ] 7.1.1. Implement ending evaluation in `simulateTick` (tick step 12):
   check thresholds for Degrowth Utopia, Happy OSS Vibe Coder on UBI, Skynet
@@ -739,8 +733,8 @@ heartbeat" (step 12).
 
 ### 7.2. Implement the audio event bus and first music layers
 
-This step answers whether the simulation can express its state through
-semantic audio events without coupling the domain to Web Audio. See
+This step answers whether the simulation can express its state through semantic
+audio events without coupling the domain to Web Audio. See
 `adr-009-use-semantic-audio-events-for-reactive-sound.md` and HLD §"Reactive
 music and sound design".
 
@@ -772,8 +766,8 @@ music and sound design".
 ### 7.3. Complete the self-play TLA+ formal model
 
 This step answers whether the parameter-pack promotion pipeline is formally
-safe against worker failures, stale evidence, and exploit laundering. It
-should be completed once the self-play runner from step 5.3 is stable. See
+safe against worker failures, stale evidence, and exploit laundering. It should
+be completed once the self-play runner from step 5.3 is stable. See
 `adr-011-use-tla-plus-for-self-play-promotion-safety.md`.
 
 - [ ] 7.3.1. Create `formal/tla/self-play-promotion/` with the initial TLA+
@@ -803,8 +797,8 @@ should be completed once the self-play runner from step 5.3 is stable. See
 
 ### 7.4. Add the PWA service worker and installability
 
-This step answers whether the game can be installed to a device home screen
-and booted fully offline without a development server. See
+This step answers whether the game can be installed to a device home screen and
+booted fully offline without a development server. See
 `adr-001-build-an-offline-first-react-pwa.md` §Migration plan.
 
 - [ ] 7.4.1. Wire the Vite PWA plugin (or custom service worker) to
@@ -818,12 +812,12 @@ ______________________________________________________________________
 
 ## 8. Deferred extensions after the core v1 promise
 
-Idea: if the core v1 promise is already trustworthy and boring to operate,
-the project can evaluate broader extensions on their product value instead of
+Idea: if the core v1 promise is already trustworthy and boring to operate, the
+project can evaluate broader extensions on their product value instead of
 letting them destabilize the main release.
 
-These items are mentioned in the HLD and ADRs but explicitly deferred from
-the core release. They are grouped here to keep the v1 boundary disciplined.
+These items are mentioned in the HLD and ADRs but explicitly deferred from the
+core release. They are grouped here to keep the v1 boundary disciplined.
 
 ### 8.1. Space compute and Dyson swarm stages
 
@@ -851,12 +845,14 @@ The asset workflow follows the conventions documented in
 generation" and mirrors the Agentland asset specification and image-generation
 workflow. Assets belong to one of three buckets: `direct-generated-reference`
 (reference only, never loaded at runtime), `generated-source-converted`
-(processed and validated before runtime use), and `algorithmic` (scripts,
-code, or manifests). See `adr-008-use-development-time-image-generation-with-asset-promotion.md`.
+(processed and validated before runtime use), and `algorithmic` (scripts, code,
+or manifests). See
+`adr-008-use-development-time-image-generation-with-asset-promotion.md`.
 
 - [ ] 8.3.1. Create the `prompts/` and `assets/` directory structure as
   described in HLD §"Required art pipeline".
-  - Directories: `prompts/generated/{style-book,characters,environments,endings,props,ui-ornaments}`,
+  - Directories:
+    `prompts/generated/{style-book,characters,environments,endings,props,ui-ornaments}`,
     `assets/{source/gpt-images-2,processed,atlases,manifests,palette,validation,requests}`.
   - Create directories only when a change first needs them.
   - Success: the structure matches HLD §"Required art pipeline"; no

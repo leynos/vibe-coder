@@ -76,8 +76,8 @@ _Table 1: Trade-offs for ADR 006._
 ## Decision outcome / proposed direction
 
 The project will use adversarial self-play to tune game parameter packs. The
-working definition of fun for optimization is: meaningful policy influence under
-legible systemic conflict, with multiple viable strategies, recoverable
+working definition of fun for optimization is: meaningful policy influence
+under legible systemic conflict, with multiple viable strategies, recoverable
 setbacks, and no low-effort route around the challenge.
 
 ## Goals and non-goals
@@ -123,4 +123,3 @@ loopholes, and process intensity. The decision treats fun as an engineered
 conversation: the player expresses policy, the system calculates meaningful
 pressure, and the game answers with legible consequences. Self-play is the
 gremlin auditor that tries to ruin that conversation before players do.
-

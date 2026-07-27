@@ -10,10 +10,10 @@ Proposed.
 
 ## Context and problem statement
 
-The offline-first MVP needs browser-durable saves. A Vibe Coder run can continue
-for long periods, accumulate incidents, change policy, unlock regimes, and
-return after offline catch-up. Persistence therefore needs fast loading, replay
-evidence, migration support, and bounded storage growth.
+The offline-first MVP needs browser-durable saves. A Vibe Coder run can
+continue for long periods, accumulate incidents, change policy, unlock regimes,
+and return after offline catch-up. Persistence therefore needs fast loading,
+replay evidence, migration support, and bounded storage growth.
 
 ## Decision drivers
 
@@ -133,7 +133,7 @@ db.version(1).stores({
 
 ## Architectural rationale
 
-The hybrid storage model fits an idle simulation: the player needs quick resume,
-while maintainers need enough event history to explain why a civilization
-melted, assimilated everyone, or became a happy open-source desk gremlin on
-universal basic income.
+The hybrid storage model fits an idle simulation: the player needs quick
+resume, while maintainers need enough event history to explain why a
+civilization melted, assimilated everyone, or became a happy open-source desk
+gremlin on universal basic income.
