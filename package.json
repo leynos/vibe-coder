@@ -49,7 +49,7 @@
     "i18next-fluent": "^2.0.0",
     "i18next-fluent-backend": "^1.0.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.7",
+    "react-dom": "^19.2.8",
     "react-i18next": "^17.0.10",
     "tailwindcss": "^4.3.3",
     "valibot": "^1.4.2",
