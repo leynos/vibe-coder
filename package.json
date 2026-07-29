@@ -57,7 +57,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
-    "@biomejs/biome": "^2.5.4",
+    "@biomejs/biome": "^2.5.5",
     "@fluent/syntax": "^0.19.0",
     "@getgrit/cli": "^0.1.0-alpha.1743007075",
     "@playwright/test": "^1.61.1",
