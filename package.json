@@ -77,7 +77,7 @@
     "fast-check": "^4.9.0",
     "happy-dom": "^20.11.1",
     "jest-axe": "^11.0.0",
-    "jsdom": "^30.0.0",
+    "jsdom": "^30.0.1",
     "postcss": "^8.5.25",
     "style-dictionary": "^5.5.0",
     "stylelint": "^17.14.1",
