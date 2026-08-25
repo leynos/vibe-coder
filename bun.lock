@@ -20,7 +20,7 @@
         "@tabler/icons-react": "^3.46.0",
         "@tanstack/react-router": "^1.170.29",
         "clsx": "^2.1.1",
-        "daisyui": "^5.7.17",
+        "daisyui": "^5.7.18",
         "i18next": "^26.3.6",
         "i18next-browser-languagedetector": "^8.2.0",
         "i18next-fluent": "^2.0.0",
@@ -614,7 +614,7 @@
 
     "csstype": ["csstype@3.2.3", "", {}, "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ=="],
 
-    "daisyui": ["daisyui@5.7.17", "", {}, "sha512-w5U5FdL9hH4/zh8eLXytWQt3c0DgHS1WDw+1yuQykT8nSIE9Vc5wkJVeDymD1JlRDLANDawvN4iIGVaxgV6Cjw=="],
+    "daisyui": ["daisyui@5.7.18", "", {}, "sha512-ucODxcoGsL5oqMMiO5SzX++cAuNiko4S3XipKtEtq4c1t8tpeetcCBJSVe1t+C/q2oXgRv/wYz5yu1rXE5Cl1A=="],
 
     "data-urls": ["data-urls@7.0.0", "", { "dependencies": { "whatwg-mimetype": "^5.0.0", "whatwg-url": "^16.0.0" } }, "sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA=="],
 
