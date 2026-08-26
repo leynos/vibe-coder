@@ -41,7 +41,7 @@
     "@radix-ui/react-toggle-group": "^1.1.19",
     "@radix-ui/react-tooltip": "^1.2.16",
     "@tabler/icons-react": "^3.46.0",
-    "@tanstack/react-router": "^1.170.29",
+    "@tanstack/react-router": "^1.170.30",
     "clsx": "^2.1.1",
     "daisyui": "^5.7.18",
     "i18next": "^26.3.6",
