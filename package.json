@@ -79,7 +79,7 @@
     "jest-axe": "^11.0.0",
     "jsdom": "^30.0.1",
     "postcss": "^8.5.26",
-    "style-dictionary": "^5.5.1",
+    "style-dictionary": "^5.5.2",
     "stylelint": "^17.14.1",
     "stylelint-declaration-strict-value": "^1.10.11",
     "typescript": "^6.0.3",
