@@ -8,6 +8,8 @@ on:
 jobs:
   lint:
     runs-on: namespace-profile-default
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
