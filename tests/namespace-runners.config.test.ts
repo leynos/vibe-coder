@@ -42,6 +42,12 @@ describe("Namespace runner workflow contracts", () => {
 /**
  * Assert that one repository-owned workflow job uses the shared Linux profile.
  *
+ * @example
+ * ```ts
+ * await expectJobRunner(".github/workflows/deploy.yml", "build");
+ * // Resolves when the job uses namespace-profile-default.
+ * ```
+ *
  * @param workflowPath - Repository-relative YAML workflow path.
  * @param jobName - Name of the job whose runner is part of the contract.
  */
