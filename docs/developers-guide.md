@@ -62,9 +62,59 @@ build caching that benefits from sequential execution.
 make check-fmt   # Format check (Biome formatter)
 make lint        # Biome lint + stylelint
 make typecheck   # tsc --noEmit
+make docs-check  # TypeDoc documentation gate
 make test        # bun test (unit + component tests)
 bun semantic     # Full semantic lint pass
 ```
+
+### The documentation gate
+
+`make docs-check` (equivalently `bun run docs:check`) runs TypeDoc over `src`
+with `emit: "none"`, so it writes no documentation artefacts and exists only to
+pass or fail. `typedoc.json` turns on every validation TypeDoc offers and sets
+`treatValidationWarningsAsErrors`, so the gate has zero tolerance: one warning
+exits non-zero and names the qualified symbol that caused it.
+
+What it checks:
+
+- **Undocumented exports.** Every exported enum, enum member, variable,
+  function, class, interface, property, method, accessor, and type alias needs
+  a JSDoc comment. Unexported local helpers are not counted.
+- **Types referenced but not exported.** A type that appears in an exported
+  signature must itself be exported, so callers can name what they receive.
+- **Broken references.** An `{@link}` that resolves to nothing, points outside
+  the documented surface, or has to be rewritten to resolve, fails the gate.
+
+Generated declarations (`*.d.ts`, `*.gen.*`, `*.generated.*`,
+`__generated__/`), tests, and fixtures are excluded. TypeDoc reads
+`tsconfig.typedoc.json` rather than the root config, because `check:types`
+passes `--skipLibCheck` on the command line where TypeDoc cannot see it.
+
+To document an export, put a JSDoc block immediately above the declaration,
+above any decorators:
+
+```ts
+/** Name of a DaisyUI theme this application ships. */
+export type ThemeName = (typeof AVAILABLE_THEMES)[number];
+
+/**
+ * Theme state and controls published by {@link ThemeProvider}.
+ */
+export interface ThemeContextValue {
+  /** Theme currently applied to the document. */
+  theme: ThemeName;
+}
+```
+
+Interface and object-type members each need their own comment; a comment on the
+interface alone does not cover them. Module headers keep using
+`/** @file … */`, except in barrels re-exported as modules, where TypeDoc
+requires `@module`.
+
+`tests/docs-gate.config.test.ts` asserts that the gate command is actually
+invoked by the `test:all` aggregate, the `docs-check` Make target, and an
+unconditional step in `semantic-lint.yml`, and that TypeDoc's validations stay
+switched on. Deleting any of those invocations fails that test.
 
 ### What `bun semantic` does
 
@@ -442,12 +492,14 @@ ______________________________________________________________________
 The CI workflow runs the same gate sequence as local development:
 
 ```text
-check-fmt → lint → typecheck → test → spelling → bun semantic
+check-fmt → lint → typecheck → test → spelling → docs:check → bun semantic
 ```
 
-The semantic lint job (`semantic-lint.yml`) uses `astral-sh/setup-uv@v8.2.0` to
-install `uv`. It runs `make spelling` before the existing `bun semantic` gate,
-without requiring a separate persistent Python environment.
+The semantic lint job (`semantic-lint.yml`) uses `astral-sh/setup-uv` to install
+`uv`. It runs `make spelling` before the existing `bun semantic` gate, without
+requiring a separate persistent Python environment. The same job runs
+`bun run docs:check` unconditionally, so the documentation gate fails CI in its
+own right rather than only through the `test:all` aggregate.
 
 The semantic-lint job and the Pages build and deployment jobs run on the
 GitHub-hosted `ubuntu-latest` runner. `tests/workflow-runners.config.test.ts`
