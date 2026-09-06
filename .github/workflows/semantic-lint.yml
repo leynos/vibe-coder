@@ -7,7 +7,7 @@ on:
 
 jobs:
   lint:
-    runs-on: namespace-profile-default
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
@@ -19,6 +19,6 @@ jobs:
       - name: Enforce Oxford spelling
         run: make spelling
       - run: bun install --frozen-lockfile
-      - name: Validate Namespace runner contracts
-        run: bun test tests/namespace-runners.config.test.ts
+      - name: Validate runner contracts
+        run: bun test tests/workflow-runners.config.test.ts
       - run: bun semantic

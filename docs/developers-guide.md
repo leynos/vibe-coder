@@ -449,9 +449,11 @@ The semantic lint job (`semantic-lint.yml`) uses `astral-sh/setup-uv@v8.2.0` to
 install `uv`. It runs `make spelling` before the existing `bun semantic` gate,
 without requiring a separate persistent Python environment.
 
-The semantic-lint job and the Pages build and deployment jobs use the uncached
-shared Namespace profile `namespace-profile-default` (Ubuntu 22.04, amd64,
-4 vCPU, 16 GB). The profile has no cache volume.
+The semantic-lint job and the Pages build and deployment jobs run on the
+GitHub-hosted `ubuntu-latest` runner. `tests/workflow-runners.config.test.ts`
+parses every workflow and fails if any job names another runner, so a
+self-hosted label cannot return unnoticed. The repository therefore declares no
+self-hosted labels and carries no `.github/actionlint.yaml`.
 
 ______________________________________________________________________
 
