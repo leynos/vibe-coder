@@ -8,18 +8,27 @@ import { appLogger } from "../observability/logger";
 const STORAGE_KEY = "vibe-coder.theme";
 const LEGACY_STORAGE_KEY = "vibecoder.theme";
 const DEFAULT_THEME = "vibe-coder-night";
-const AVAILABLE_THEMES = ["vibe-coder-night", "vibe-coder-day"] as const;
+/** Every DaisyUI theme this application ships, in selection order. */
+export const AVAILABLE_THEMES = ["vibe-coder-night", "vibe-coder-day"] as const;
 
 const THEME_MIGRATION: Record<string, string> = {
   "vibecoder-night": "vibe-coder-night",
   "vibecoder-day": "vibe-coder-day",
 };
 
-type ThemeName = (typeof AVAILABLE_THEMES)[number];
+/** Name of a DaisyUI theme this application ships. */
+export type ThemeName = (typeof AVAILABLE_THEMES)[number];
 
-interface ThemeContextValue {
+/**
+ * Theme state and controls published by {@link ThemeProvider} and returned by
+ * {@link useTheme}.
+ */
+export interface ThemeContextValue {
+  /** Theme currently applied to the document. */
   theme: ThemeName;
+  /** Every theme that may be selected. */
   themes: readonly ThemeName[];
+  /** Applies a theme and persists the choice. */
   setTheme: (theme: ThemeName) => void;
 }
 

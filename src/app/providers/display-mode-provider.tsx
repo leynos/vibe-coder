@@ -16,14 +16,26 @@ export type DisplayMode = "hosted" | "full-browser";
 const DESKTOP_DEFAULT_MODE: DisplayMode = "hosted";
 const MOBILE_DEFAULT_MODE: DisplayMode = "full-browser";
 
-interface DisplayModeContextValue {
+/**
+ * Display-mode state and controls published by {@link DisplayModeProvider} and
+ * returned by {@link useDisplayMode}.
+ */
+export interface DisplayModeContextValue {
+  /** Layout mode currently in force. */
   mode: DisplayMode;
+  /** `true` while {@link DisplayModeContextValue.mode} is `"hosted"`. */
   isHosted: boolean;
+  /** `true` while {@link DisplayModeContextValue.mode} is `"full-browser"`. */
   isFullBrowser: boolean;
+  /** `true` once a mode has been chosen explicitly rather than inferred. */
   hasUserPreference: boolean;
+  /** Sets the mode explicitly and records the choice as a user preference. */
   setMode: (next: DisplayMode) => void;
+  /** Shorthand for `setMode("hosted")`. */
   setHosted: () => void;
+  /** Shorthand for `setMode("full-browser")`. */
   setFullBrowser: () => void;
+  /** Discards the stored preference and reverts to the viewport default. */
   resetToSystemDefault: () => void;
 }
 
