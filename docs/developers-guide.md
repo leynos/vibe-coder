@@ -462,6 +462,47 @@ the legacy `vibecoder-*` form.
 The active theme is persisted under the key `vibe-coder.theme`. The provider
 performs a one-time migration from the legacy `vibecoder.theme` key on mount.
 
+### Provider APIs
+
+Both shell providers publish their context type, so a caller can name what the
+hook returns rather than inferring it.
+
+`src/app/providers/theme-provider.tsx` exports:
+
+| Export              | Purpose                                                         |
+| :------------------ | :-------------------------------------------------------------- |
+| `ThemeProvider`     | Applies the active theme to the document and persists it.       |
+| `useTheme`          | Returns `ThemeContextValue`; throws outside a `ThemeProvider`.  |
+| `ThemeContextValue` | `theme`, the readonly `themes` list, and `setTheme`.            |
+| `ThemeName`         | Union derived from `AVAILABLE_THEMES`, not written out by hand. |
+| `AVAILABLE_THEMES`  | The shipped themes in selection order.                          |
+
+Read `AVAILABLE_THEMES` rather than hard-coding theme identifiers: it is the
+single source both for the union and for anything that has to offer a choice.
+An unrecognized stored value is discarded and the default reapplied, and the
+legacy key migration described above happens once on mount.
+
+`src/app/providers/display-mode-provider.tsx` exports:
+
+| Export                    | Purpose                                                                                    |
+| :------------------------ | :----------------------------------------------------------------------------------------- |
+| `DisplayModeProvider`     | Resolves the layout mode and publishes it.                                                 |
+| `useDisplayMode`          | Returns `DisplayModeContextValue`; throws outside a provider.                              |
+| `DisplayModeContextValue` | The mode, its two predicates, and the four controls.                                       |
+| `DisplayMode`             | `"hosted"` frames the shell in a fixed mobile viewport; `"full-browser"` fills the window. |
+
+The mode is resolved in order. A value stored under `vibecoder.displayMode`
+wins; otherwise a viewport narrower than 768 pixels defaults to
+`"full-browser"` and anything wider to `"hosted"`. Until a mode is chosen
+explicitly the provider keeps following the viewport, so `hasUserPreference` is
+what distinguishes an inferred mode from a chosen one.
+
+`setMode` records the choice and stops the viewport from overriding it;
+`setHosted` and `setFullBrowser` are shorthands for it. `resetToSystemDefault`
+clears the stored preference and hands control back to the viewport. Every
+storage failure is logged through `appLogger` and swallowed, so a browser with
+storage disabled degrades to viewport-driven behaviour rather than failing.
+
 ### Rebuilding tokens
 
 Token source files live in `tokens/src/themes/`. After editing them, rebuild:
