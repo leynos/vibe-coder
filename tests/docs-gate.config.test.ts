@@ -34,6 +34,17 @@ const EXPECTED_VALIDATION = {
   unusedMergeModuleWith: true,
 } as const;
 
+/** Paths kept out of the documented surface. */
+const EXPECTED_EXCLUDES = [
+  "**/*.d.ts",
+  "**/*.gen.*",
+  "**/*.generated.*",
+  "**/__generated__/**",
+  "**/tests/**",
+  "**/test/**",
+  "**/fixtures/**",
+] as const;
+
 /** Every declaration kind the gate requires a JSDoc comment on. */
 const REQUIRED_TO_BE_DOCUMENTED = [
   "Enum",
@@ -66,6 +77,15 @@ const PackageSchema = v.object({
 
 const TypedocSchema = v.object({
   emit: v.string(),
+  tsconfig: v.string(),
+  entryPoints: v.array(v.string()),
+  entryPointStrategy: v.string(),
+  exclude: v.array(v.string()),
+  excludeExternals: v.boolean(),
+  excludeInternal: v.boolean(),
+  excludePrivate: v.boolean(),
+  excludeProtected: v.boolean(),
+  commentStyle: v.string(),
   validation: v.record(v.string(), v.boolean()),
   treatValidationWarningsAsErrors: v.boolean(),
   requiredToBeDocumented: v.array(v.string()),
@@ -122,6 +142,18 @@ describe("TypeDoc documentation gate wiring", () => {
 
     expect(config.emit).toBe("none");
     expect(config.treatValidationWarningsAsErrors).toBe(true);
+    // The surface the gate covers is as much of the contract as the policy
+    // applied to it: narrowing the entry points would pass every check while
+    // documenting nothing.
+    expect(config.entryPoints).toEqual(["src"]);
+    expect(config.entryPointStrategy).toBe("expand");
+    expect(config.tsconfig).toBe("tsconfig.typedoc.json");
+    expect(config.commentStyle).toBe("jsdoc");
+    expect([...config.exclude].sort()).toEqual([...EXPECTED_EXCLUDES].sort());
+    expect(config.excludeExternals).toBe(true);
+    expect(config.excludeInternal).toBe(true);
+    expect(config.excludePrivate).toBe(true);
+    expect(config.excludeProtected).toBe(true);
     // Compared as whole sets rather than by spot check: dropping a key would
     // silently restore TypeDoc's own default and weaken the gate.
     expect(config.validation).toEqual(EXPECTED_VALIDATION);

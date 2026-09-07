@@ -130,6 +130,12 @@ the validation and `requiredToBeDocumented` policies against whole expected
 sets, so removing a key restores a TypeDoc default unnoticed. Deleting any of
 those invocations fails that test.
 
+`tests/docs-gate.behaviour.test.ts` covers the other half: it runs the real
+TypeDoc binary under this repository's `typedoc.json`, pointed at a throwaway
+project, and asserts that an undocumented export, an unexported referenced
+type, and an unresolvable `{@link}` each fail and name the symbol, that a
+documented surface passes, and that no run leaves a file behind.
+
 ### What `bun semantic` does
 
 `bun semantic` runs a six-stage semantic lint pipeline:
