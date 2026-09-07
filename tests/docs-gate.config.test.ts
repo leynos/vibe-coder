@@ -13,6 +13,40 @@ import * as v from "valibot";
 const DOCS_CHECK_COMMAND = "bun run docs:check";
 const WORKFLOW_PATH = ".github/workflows/semantic-lint.yml";
 const TYPEDOC_CONFIG_PATH = "typedoc.json";
+const LINT_JOB = "lint";
+
+/**
+ * Every validation TypeDoc offers, with the verdict this repository wants.
+ *
+ * `rewrittenLink` is the sole exception, and it is switched off deliberately.
+ * TypeDoc emits that warning from the HTML renderer while resolving page
+ * URLs, so under `emit: "none"` it can never fire; leaving it on would claim
+ * an enforcement the gate does not perform. The case it describes, a link to
+ * a symbol that has no page of its own, is caught in the validation phase by
+ * `notExported`.
+ */
+const EXPECTED_VALIDATION = {
+  notDocumented: true,
+  notExported: true,
+  invalidLink: true,
+  invalidPath: true,
+  rewrittenLink: false,
+  unusedMergeModuleWith: true,
+} as const;
+
+/** Every declaration kind the gate requires a JSDoc comment on. */
+const REQUIRED_TO_BE_DOCUMENTED = [
+  "Enum",
+  "EnumMember",
+  "Variable",
+  "Function",
+  "Class",
+  "Interface",
+  "Property",
+  "Method",
+  "Accessor",
+  "TypeAlias",
+] as const;
 
 const WorkflowSchema = v.object({
   jobs: v.record(
@@ -27,7 +61,7 @@ const WorkflowSchema = v.object({
 
 const PackageSchema = v.object({
   scripts: v.record(v.string(), v.string()),
-  devDependencies: v.record(v.string(), v.string()),
+  devDependencies: v.object({ typedoc: v.string() }),
 });
 
 const TypedocSchema = v.object({
@@ -35,6 +69,7 @@ const TypedocSchema = v.object({
   validation: v.record(v.string(), v.boolean()),
   treatValidationWarningsAsErrors: v.boolean(),
   requiredToBeDocumented: v.array(v.string()),
+  blockTags: v.array(v.string()),
 });
 
 /** Reads and validates the semantic-lint workflow. */
@@ -50,8 +85,13 @@ async function readPackageManifest(): Promise<v.InferOutput<typeof PackageSchema
 describe("TypeDoc documentation gate wiring", () => {
   it("runs the gate command unconditionally in the semantic-lint job", async () => {
     const workflow = await readWorkflow();
-    const steps = Object.values(workflow.jobs).flatMap((job) => job.steps ?? []);
-    const gateSteps = steps.filter((step) => step.run?.trim() === DOCS_CHECK_COMMAND);
+    const lintJob = workflow.jobs[LINT_JOB];
+
+    expect(lintJob).toBeDefined();
+
+    const gateSteps = (lintJob?.steps ?? []).filter(
+      (step) => step.run?.trim() === DOCS_CHECK_COMMAND,
+    );
 
     expect(gateSteps).toHaveLength(1);
     // A conditional step is skipped rather than failed, so a gate that carries
@@ -73,7 +113,7 @@ describe("TypeDoc documentation gate wiring", () => {
     const manifest = await readPackageManifest();
     const lockfile = await Bun.file("bun.lock").text();
 
-    expect(manifest.devDependencies["typedoc"]).toBeDefined();
+    expect(manifest.devDependencies.typedoc).toMatch(/^\^?0\.28\./);
     expect(lockfile).toContain('"typedoc": ["typedoc@0.28.20"');
   });
 
@@ -82,10 +122,15 @@ describe("TypeDoc documentation gate wiring", () => {
 
     expect(config.emit).toBe("none");
     expect(config.treatValidationWarningsAsErrors).toBe(true);
-    // Zero tolerance: every validation TypeDoc offers is switched on, so a
-    // future TypeDoc check cannot be silently opted out of one at a time.
-    expect(Object.entries(config.validation).filter(([, enabled]) => !enabled)).toEqual([]);
-    expect(config.validation["notDocumented"]).toBe(true);
-    expect(config.requiredToBeDocumented).toContain("Interface");
+    // Compared as whole sets rather than by spot check: dropping a key would
+    // silently restore TypeDoc's own default and weaken the gate.
+    expect(config.validation).toEqual(EXPECTED_VALIDATION);
+    expect([...config.requiredToBeDocumented].sort()).toEqual(
+      [...REQUIRED_TO_BE_DOCUMENTED].sort(),
+    );
+    // Module headers carry both tags; TypeDoc knows `@module` but has to be
+    // told about `@file`, or every barrel header warns.
+    expect(config.blockTags).toContain("@file");
+    expect(config.blockTags).toContain("@module");
   });
 });

@@ -5,6 +5,7 @@
  * `src/application/machines/` boundary without exposing future machine
  * internals before their roadmap slices exist.
  *
+ * @file Application machine exports.
  * @module
  */
 
