@@ -62,9 +62,79 @@ build caching that benefits from sequential execution.
 make check-fmt   # Format check (Biome formatter)
 make lint        # Biome lint + stylelint
 make typecheck   # tsc --noEmit
+make docs-check  # TypeDoc documentation gate
 make test        # bun test (unit + component tests)
 bun semantic     # Full semantic lint pass
 ```
+
+### The documentation gate
+
+`make docs-check` (equivalently `bun run docs:check`) runs TypeDoc over `src`
+with `emit: "none"`, so it writes no documentation artefacts and exists only to
+pass or fail. `typedoc.json` turns on every validation TypeDoc performs without
+a renderer and sets `treatValidationWarningsAsErrors`, so the gate has zero
+tolerance: one warning exits non-zero and names the qualified symbol that
+caused it.
+
+What it checks:
+
+- **Undocumented exports.** Every exported enum, enum member, variable,
+  function, class, interface, property, method, accessor, and type alias needs
+  a JSDoc comment. Unexported local helpers are not counted.
+- **Types referenced but not exported.** A type that appears in an exported
+  signature must itself be exported, so callers can name what they receive.
+- **Broken references.** An `{@link}` that resolves to nothing fails the gate,
+  as does a relative media or document path that is not a file. A link to a
+  symbol outside the documented surface is caught by the preceding check.
+- **Unused `@mergeModuleWith`.** A merge target that no longer exists fails
+  the gate rather than being ignored.
+
+`validation.rewrittenLink` is the one validation left off. TypeDoc emits it
+from the HTML renderer while resolving page URLs, so under `emit: "none"` it
+can never fire, and leaving it on would claim an enforcement the gate does not
+perform. Enforcing it would mean rendering documentation on every run.
+
+Generated declarations (`*.d.ts`, `*.gen.*`, `*.generated.*`,
+`__generated__/`), tests, and fixtures are excluded. TypeDoc reads
+`tsconfig.typedoc.json` rather than the root config because `check:types` passes
+`--skipLibCheck` on the command line where TypeDoc cannot see it.
+
+To document an export, put a JSDoc block immediately above the declaration,
+above any decorators:
+
+```ts
+/** Name of a DaisyUI theme this application ships. */
+export type ThemeName = (typeof AVAILABLE_THEMES)[number];
+
+/**
+ * Theme state and controls published by {@link ThemeProvider}.
+ */
+export interface ThemeContextValue {
+  /** Theme currently applied to the document. */
+  theme: ThemeName;
+}
+```
+
+Interface and object-type members each need their own comment. A comment on the
+interface alone does not cover them.
+
+Module headers keep the repository's `@file` tag. TypeDoc does not know that
+tag, so `typedoc.json` registers it in `blockTags`; without that every header
+warns. A barrel that TypeDoc documents as a module carries `@module` as well,
+which is what makes its header the module's own documentation.
+
+`tests/docs-gate.config.test.ts` asserts that the gate command is actually
+invoked by the `test:all` aggregate, the `docs-check` Make target, and an
+unconditional step in the `lint` job of `semantic-lint.yml`. It also compares
+the validation and `requiredToBeDocumented` policies against whole expected
+sets, so removing a key restores a TypeDoc default unnoticed. Deleting any of
+those invocations fails that test.
+
+`tests/docs-gate.behaviour.test.ts` covers the other half: it runs the real
+TypeDoc binary under this repository's `typedoc.json`, pointed at a throwaway
+project, and asserts that an undocumented export, an unexported referenced
+type, and an unresolvable `{@link}` each fail and name the symbol, that a
+documented surface passes, and that no run leaves a file behind.
 
 ### What `bun semantic` does
 
@@ -442,12 +512,14 @@ ______________________________________________________________________
 The CI workflow runs the same gate sequence as local development:
 
 ```text
-check-fmt → lint → typecheck → test → spelling → bun semantic
+check-fmt → lint → typecheck → test → spelling → docs:check → bun semantic
 ```
 
-The semantic lint job (`semantic-lint.yml`) uses `astral-sh/setup-uv@v8.2.0` to
-install `uv`. It runs `make spelling` before the existing `bun semantic` gate,
-without requiring a separate persistent Python environment.
+The semantic lint job (`semantic-lint.yml`) uses `astral-sh/setup-uv` to install
+`uv`. It runs `make spelling` before the existing `bun semantic` gate, without
+requiring a separate persistent Python environment. The same job runs
+`bun run docs:check` unconditionally, so the documentation gate fails CI in its
+own right rather than only through the `test:all` aggregate.
 
 The semantic-lint job and the Pages build and deployment jobs run on the
 GitHub-hosted `ubuntu-latest` runner. `tests/workflow-runners.config.test.ts`

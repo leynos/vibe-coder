@@ -1,0 +1,95 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+
+  "tsconfig": "tsconfig.typedoc.json",
+  "entryPoints": ["src"],
+  "entryPointStrategy": "expand",
+
+  "exclude": [
+    "**/*.d.ts",
+    "**/*.gen.*",
+    "**/*.generated.*",
+    "**/__generated__/**",
+    "**/tests/**",
+    "**/test/**",
+    "**/fixtures/**"
+  ],
+
+  "emit": "none",
+  "commentStyle": "jsdoc",
+
+  "blockTags": [
+    "@defaultValue",
+    "@deprecated",
+    "@example",
+    "@jsx",
+    "@param",
+    "@privateRemarks",
+    "@remarks",
+    "@returns",
+    "@see",
+    "@throws",
+    "@typeParam",
+    "@author",
+    "@callback",
+    "@category",
+    "@categoryDescription",
+    "@default",
+    "@document",
+    "@extends",
+    "@augments",
+    "@yields",
+    "@group",
+    "@groupDescription",
+    "@import",
+    "@inheritDoc",
+    "@license",
+    "@module",
+    "@mergeModuleWith",
+    "@prop",
+    "@property",
+    "@return",
+    "@satisfies",
+    "@since",
+    "@sortStrategy",
+    "@template",
+    "@this",
+    "@type",
+    "@typedef",
+    "@summary",
+    "@preventInline",
+    "@inlineType",
+    "@preventExpand",
+    "@expandType",
+    "@file"
+  ],
+
+  "excludeExternals": true,
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+
+  "validation": {
+    "notDocumented": true,
+    "notExported": true,
+    "invalidLink": true,
+    "invalidPath": true,
+    "rewrittenLink": false,
+    "unusedMergeModuleWith": true
+  },
+
+  "requiredToBeDocumented": [
+    "Enum",
+    "EnumMember",
+    "Variable",
+    "Function",
+    "Class",
+    "Interface",
+    "Property",
+    "Method",
+    "Accessor",
+    "TypeAlias"
+  ],
+
+  "treatValidationWarningsAsErrors": true
+}
