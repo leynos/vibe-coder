@@ -72,9 +72,15 @@ bun semantic     # Full semantic lint pass
 `make docs-check` (equivalently `bun run docs:check`) runs TypeDoc over `src`
 with `emit: "none"`, so it writes no documentation artefacts and exists only to
 pass or fail. `typedoc.json` turns on every validation TypeDoc performs without
-a renderer and sets `treatValidationWarningsAsErrors`, so the gate has zero
-tolerance: one warning exits non-zero and names the qualified symbol that
-caused it.
+a renderer, and sets both `treatWarningsAsErrors` and
+`treatValidationWarningsAsErrors`, so the gate has zero tolerance: one warning
+of any kind exits non-zero and names the symbol that caused it.
+
+The two switches are layered rather than duplicated.
+`treatValidationWarningsAsErrors` covers the validation family alone;
+`treatWarningsAsErrors` covers everything else TypeDoc warns about, including a
+block tag it does not recognize. Relaxing the broader one would leave the
+validation guarantee standing, which is why both are asserted.
 
 What it checks:
 
@@ -88,6 +94,9 @@ What it checks:
   symbol outside the documented surface is caught by the preceding check.
 - **Unused `@mergeModuleWith`.** A merge target that no longer exists fails
   the gate rather than being ignored.
+- **Unknown block tags.** A tag TypeDoc does not recognize fails the gate.
+  This is not a validation warning, so `treatWarningsAsErrors` is what catches
+  it. It is also why `@file` has to be registered rather than tolerated.
 
 `validation.rewrittenLink` is the one validation left off. TypeDoc emits it
 from the HTML renderer while resolving page URLs, so under `emit: "none"` it
@@ -133,8 +142,11 @@ those invocations fails that test.
 `tests/docs-gate.behaviour.test.ts` covers the other half: it runs the real
 TypeDoc binary under this repository's `typedoc.json`, pointed at a throwaway
 project, and asserts that an undocumented export, an unexported referenced
-type, and an unresolvable `{@link}` each fail and name the symbol, that a
-documented surface passes, and that no run leaves a file behind.
+type, an unresolvable `{@link}` and an unknown block tag each fail and name the
+symbol, that a documented surface passes, and that no run leaves a file behind.
+Because the fixture reads its policy from `typedoc.json` rather than restating
+it, switching off `notDocumented`, `notExported`, `invalidLink` or
+`treatWarningsAsErrors` there makes exactly one of those cases fail.
 
 ### What `bun semantic` does
 

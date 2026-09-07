@@ -87,6 +87,7 @@ const TypedocSchema = v.object({
   excludeProtected: v.boolean(),
   commentStyle: v.string(),
   validation: v.record(v.string(), v.boolean()),
+  treatWarningsAsErrors: v.boolean(),
   treatValidationWarningsAsErrors: v.boolean(),
   requiredToBeDocumented: v.array(v.string()),
   blockTags: v.array(v.string()),
@@ -126,7 +127,14 @@ describe("TypeDoc documentation gate wiring", () => {
 
     expect(manifest.scripts["docs:check"]).toBe("typedoc --options typedoc.json");
     expect(manifest.scripts["test:all"]).toContain(DOCS_CHECK_COMMAND);
-    expect(docsCheckRecipe?.split("\n").map((line) => line.trim())).toContain(DOCS_CHECK_COMMAND);
+    const recipeLines = (docsCheckRecipe ?? "").split("\n").filter(Boolean);
+
+    // `@` only silences the echo and is used elsewhere in this Makefile, so it
+    // is stripped before comparing. `-` is the one that matters: it tells Make
+    // to ignore the command's exit status, turning the target into a no-op
+    // that still reports success.
+    expect(recipeLines.map((line) => line.replace(/^\t@?/, ""))).toEqual([DOCS_CHECK_COMMAND]);
+    expect(recipeLines.filter((line) => /^\t-/.test(line))).toEqual([]);
   });
 
   it("pins typedoc so the gate's verdict is reproducible", async () => {
@@ -142,6 +150,9 @@ describe("TypeDoc documentation gate wiring", () => {
 
     expect(config.emit).toBe("none");
     expect(config.treatValidationWarningsAsErrors).toBe(true);
+    // Validation warnings are only one family. Without this, an unknown block
+    // tag or an unreadable entry point warns and the gate still exits zero.
+    expect(config.treatWarningsAsErrors).toBe(true);
     // The surface the gate covers is as much of the contract as the policy
     // applied to it: narrowing the entry points would pass every check while
     // documenting nothing.

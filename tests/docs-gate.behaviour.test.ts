@@ -172,6 +172,29 @@ describe("TypeDoc documentation gate behaviour", () => {
   );
 
   it(
+    "fails a block tag that neither TypeDoc nor this repository knows",
+    async () => {
+      const result = await runGate(
+        [
+          "/**",
+          " * @nonsense Not a tag TypeDoc or this repository knows.",
+          " */",
+          "export const answer = 42;",
+          "",
+        ].join("\n"),
+      );
+
+      // Not a validation warning, so this case is caught by
+      // `treatWarningsAsErrors` rather than by the validation switches.
+      expect(result.exitCode).not.toBe(0);
+      expect(result.output).toContain("unknown block tag");
+      expect(result.output).toContain("@nonsense");
+      expect(result.emitted).toEqual([]);
+    },
+    GATE_TIMEOUT_MS,
+  );
+
+  it(
     "fails an unresolvable link in a documentation comment",
     async () => {
       const result = await runGate(
@@ -180,6 +203,7 @@ describe("TypeDoc documentation gate behaviour", () => {
 
       expect(result.exitCode).not.toBe(0);
       expect(result.output).toContain("NoSuchSymbol");
+      expect(result.output).toContain("Failed to resolve link");
       expect(result.emitted).toEqual([]);
     },
     GATE_TIMEOUT_MS,
