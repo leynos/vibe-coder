@@ -88,9 +88,13 @@ function log(level: LogLevel, message: string, context?: Record<string, unknown>
  * the `TelemetrySink` port).
  */
 export const appLogger = {
+  /** Logs a debug-level entry; use for verbose diagnostic detail. */
   debug: (message: string, context?: Record<string, unknown>) => log("debug", message, context),
+  /** Logs an info-level entry; use for routine operational events. */
   info: (message: string, context?: Record<string, unknown>) => log("info", message, context),
+  /** Logs a warn-level entry; use for recoverable, unexpected conditions. */
   warn: (message: string, context?: Record<string, unknown>) => log("warn", message, context),
+  /** Logs an error-level entry, optionally attaching the causing error. */
   error: (message: string, context?: Record<string, unknown>, error?: unknown) =>
     log("error", message, context, error),
 };

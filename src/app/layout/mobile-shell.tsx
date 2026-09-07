@@ -4,6 +4,7 @@ import type { JSX, ReactNode } from "react";
 
 import { useDisplayMode } from "../providers/display-mode-provider";
 
+/** Props accepted by {@link MobileShell}. */
 export interface MobileShellProps {
   /** Main content rendered inside the framed device shell. */
   children: ReactNode;

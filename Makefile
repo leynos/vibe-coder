@@ -15,7 +15,7 @@ SPELLING_HELPER_PYTEST = PYTHONPATH=scripts $(UV_ENV) $(UV) run --no-project \
 	--python 3.14 --with pathspec==$(PATHSPEC_VERSION) --with pytest==9.0.2 \
 	--with pytest-cov==7.0.0 python -m pytest
 
-.PHONY: fmt check-fmt typecheck lint test spelling spelling-config \
+.PHONY: fmt check-fmt typecheck docs-check lint test spelling spelling-config \
 	spelling-config-write spelling-phrase-check spelling-helper-test
 
 fmt:
@@ -27,6 +27,11 @@ check-fmt:
 
 typecheck:
 	bun check:types
+
+# Zero-tolerance documentation gate: TypeDoc's notDocumented validation over
+# src (typedoc.json); also runs inside `bun test:all`. Emits no artefacts.
+docs-check:
+	bun run docs:check
 
 lint:
 	bun lint

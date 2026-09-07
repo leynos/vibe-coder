@@ -7,19 +7,35 @@ import { appLogger } from "../observability/logger";
 
 const STORAGE_KEY = "vibecoder.displayMode";
 
+/**
+ * Layout mode for the shell: `"hosted"` frames content in a fixed mobile
+ * viewport, `"full-browser"` fills the available browser window.
+ */
 export type DisplayMode = "hosted" | "full-browser";
 
 const DESKTOP_DEFAULT_MODE: DisplayMode = "hosted";
 const MOBILE_DEFAULT_MODE: DisplayMode = "full-browser";
 
-interface DisplayModeContextValue {
+/**
+ * Display-mode state and controls published by {@link DisplayModeProvider} and
+ * returned by {@link useDisplayMode}.
+ */
+export interface DisplayModeContextValue {
+  /** Layout mode currently in force. */
   mode: DisplayMode;
+  /** `true` while {@link DisplayModeContextValue.mode} is `"hosted"`. */
   isHosted: boolean;
+  /** `true` while {@link DisplayModeContextValue.mode} is `"full-browser"`. */
   isFullBrowser: boolean;
+  /** `true` once a mode has been chosen explicitly rather than inferred. */
   hasUserPreference: boolean;
+  /** Sets the mode explicitly and records the choice as a user preference. */
   setMode: (next: DisplayMode) => void;
+  /** Shorthand for `setMode("hosted")`. */
   setHosted: () => void;
+  /** Shorthand for `setMode("full-browser")`. */
   setFullBrowser: () => void;
+  /** Discards the stored preference and reverts to the viewport default. */
   resetToSystemDefault: () => void;
 }
 
@@ -80,10 +96,17 @@ function detectPreferredDisplayMode(): DisplayMode {
   return DESKTOP_DEFAULT_MODE;
 }
 
+/** Props accepted by {@link DisplayModeProvider}. */
 export interface DisplayModeProviderProps {
+  /** Subtree that gains access to the display mode context. */
   children: ReactNode;
 }
 
+/**
+ * Supplies the current {@link DisplayMode} to descendants, seeding it from
+ * `localStorage` or a media-query-based default, and persisting subsequent
+ * user choices back to `localStorage`.
+ */
 export function DisplayModeProvider({ children }: DisplayModeProviderProps): JSX.Element {
   const storedMode = readStoredMode();
   const [mode, setModeState] = useState<DisplayMode>(() => {
@@ -176,6 +199,10 @@ export function DisplayModeProvider({ children }: DisplayModeProviderProps): JSX
   return <DisplayModeContext.Provider value={value}>{children}</DisplayModeContext.Provider>;
 }
 
+/**
+ * Reads the {@link DisplayModeContextValue} from the nearest
+ * {@link DisplayModeProvider}. Throws if called outside one.
+ */
 export function useDisplayMode(): DisplayModeContextValue {
   const context = useContext(DisplayModeContext);
   if (!context) {

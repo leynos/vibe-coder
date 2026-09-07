@@ -36,7 +36,9 @@ export function LoadingBackdrop(): JSX.Element {
 
 /** Props accepted by the {@link AppRoot} bootstrap wrapper. */
 export interface AppRootProps {
+  /** Component to render inside the Suspense boundary; defaults to {@link App}. */
   readonly AppComponent?: ComponentType;
+  /** Suspense fallback; defaults to {@link LoadingBackdrop} when omitted. */
   readonly fallback?: ReactNode;
 }
 

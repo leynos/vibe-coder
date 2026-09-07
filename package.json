@@ -12,6 +12,7 @@
     "fmt": "bunx biome format --write src tests tools scripts package.json biome.jsonc bunfig.toml",
     "lint": "bunx biome ci src tests tools",
     "check:types": "tsc --noEmit --skipLibCheck",
+    "docs:check": "typedoc --options typedoc.json",
     "test": "bun test --preload ./tests/setup-happy-dom.ts --preload ./tests/setup-snapshot-guard.ts",
     "test:a11y": "vitest --run --config vitest.a11y.config.ts",
     "test:a11y:watch": "vitest --watch --config vitest.a11y.config.ts",
@@ -24,7 +25,7 @@
     "lint:class-duplicates": "bun run scripts/find-near-duplicate-classes.ts",
     "lint:hardcoded-strings": "bun run scripts/check-hardcoded-strings.ts",
     "lint:imports": "bun run scripts/lint-import-boundaries.ts",
-    "test:all": "bun lint && bun check:types && bun test && bun run test:a11y && bun run lint:ftl-vars && bun run semantic && bun test:e2e",
+    "test:all": "bun lint && bun check:types && bun run docs:check && bun test && bun run test:a11y && bun run lint:ftl-vars && bun run semantic && bun test:e2e",
     "ff": "bunx --bun @tailwindcss/cli --input src/index.css --output tmp/tailwind.css --verbose && rm -f tmp/tailwind.css && bun run test:all"
   },
   "dependencies": {
@@ -82,6 +83,7 @@
     "style-dictionary": "^5.5.2",
     "stylelint": "^17.14.1",
     "stylelint-declaration-strict-value": "^1.12.1",
+    "typedoc": "^0.28.20",
     "typescript": "^6.0.3",
     "vite": "^8.2.2",
     "vitest": "^4.1.11"

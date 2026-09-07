@@ -1,5 +1,5 @@
 /**
- * @file Application layer barrel.
+ * Application layer barrel.
  *
  * The application layer wires domain services together into use-case
  * implementations, hosts XState machines for workflow orchestration, and
@@ -8,6 +8,9 @@
  *
  * See `docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`
  * and `docs/adr-003-use-xstate-for-workflow-orchestration.md` for rationale.
+ *
+ * @file Application layer barrel.
+ * @module
  */
 
 export type { AppMachineAction, AppMachineEvent, AppMachineStateValue } from "./machines";

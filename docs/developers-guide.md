@@ -62,9 +62,91 @@ build caching that benefits from sequential execution.
 make check-fmt   # Format check (Biome formatter)
 make lint        # Biome lint + stylelint
 make typecheck   # tsc --noEmit
+make docs-check  # TypeDoc documentation gate
 make test        # bun test (unit + component tests)
 bun semantic     # Full semantic lint pass
 ```
+
+### The documentation gate
+
+`make docs-check` (equivalently `bun run docs:check`) runs TypeDoc over `src`
+with `emit: "none"`, so it writes no documentation artefacts and exists only to
+pass or fail. `typedoc.json` turns on every validation TypeDoc performs without
+a renderer, and sets both `treatWarningsAsErrors` and
+`treatValidationWarningsAsErrors`, so the gate has zero tolerance: one warning
+of any kind exits non-zero and names the symbol that caused it.
+
+The two switches are layered rather than duplicated.
+`treatValidationWarningsAsErrors` covers the validation family alone;
+`treatWarningsAsErrors` covers everything else TypeDoc warns about, including a
+block tag it does not recognize. Relaxing the broader one would leave the
+validation guarantee standing, which is why both are asserted.
+
+What it checks:
+
+- **Undocumented exports.** Every exported enum, enum member, variable,
+  function, class, interface, property, method, accessor, and type alias needs
+  a JSDoc comment. Unexported local helpers are not counted.
+- **Types referenced but not exported.** A type that appears in an exported
+  signature must itself be exported, so callers can name what they receive.
+- **Broken references.** An `{@link}` that resolves to nothing fails the gate,
+  as does a relative media or document path that is not a file. A link to a
+  symbol outside the documented surface is caught by the preceding check.
+- **Unused `@mergeModuleWith`.** A merge target that no longer exists fails
+  the gate rather than being ignored.
+- **Unknown block tags.** A tag TypeDoc does not recognize fails the gate.
+  This is not a validation warning, so `treatWarningsAsErrors` is what catches
+  it. It is also why `@file` has to be registered rather than tolerated.
+
+`validation.rewrittenLink` is the one validation left off. TypeDoc emits it
+from the HTML renderer while resolving page URLs, so under `emit: "none"` it
+can never fire, and leaving it on would claim an enforcement the gate does not
+perform. Enforcing it would mean rendering documentation on every run.
+
+Generated declarations (`*.d.ts`, `*.gen.*`, `*.generated.*`,
+`__generated__/`), tests, and fixtures are excluded. TypeDoc reads
+`tsconfig.typedoc.json` rather than the root config because `check:types` passes
+`--skipLibCheck` on the command line where TypeDoc cannot see it.
+
+To document an export, put a JSDoc block immediately above the declaration,
+above any decorators:
+
+```ts
+/** Name of a DaisyUI theme this application ships. */
+export type ThemeName = (typeof AVAILABLE_THEMES)[number];
+
+/**
+ * Theme state and controls published by {@link ThemeProvider}.
+ */
+export interface ThemeContextValue {
+  /** Theme currently applied to the document. */
+  theme: ThemeName;
+}
+```
+
+Interface and object-type members each need their own comment. A comment on the
+interface alone does not cover them.
+
+Module headers keep the repository's `@file` tag. TypeDoc does not know that
+tag, so `typedoc.json` registers it in `blockTags`; without that every header
+warns. A barrel that TypeDoc documents as a module carries `@module` as well,
+which is what makes its header the module's own documentation.
+
+`tests/docs-gate.config.test.ts` asserts that the gate command is actually
+invoked by the `test:all` aggregate, the `docs-check` Make target, and an
+unconditional step in the `lint` job of `semantic-lint.yml`. It also compares
+the validation and `requiredToBeDocumented` policies against whole expected
+sets, so removing a key restores a TypeDoc default unnoticed. Deleting any of
+those invocations fails that test.
+
+`tests/docs-gate.behaviour.test.ts` covers the other half: it runs the real
+TypeDoc binary under this repository's `typedoc.json`, pointed at a throwaway
+project, and asserts that an undocumented export, an unexported referenced
+type, an unresolvable `{@link}` and an unknown block tag each fail and name the
+symbol, that a documented surface passes, and that no run leaves a file behind.
+Because the fixture reads its policy from `typedoc.json` rather than restating
+it, switching off `notDocumented`, `notExported`, `invalidLink` or
+`treatWarningsAsErrors` there makes exactly one of those cases fail.
 
 ### What `bun semantic` does
 
@@ -380,6 +462,47 @@ the legacy `vibecoder-*` form.
 The active theme is persisted under the key `vibe-coder.theme`. The provider
 performs a one-time migration from the legacy `vibecoder.theme` key on mount.
 
+### Provider APIs
+
+Both shell providers publish their context type, so a caller can name what the
+hook returns rather than inferring it.
+
+`src/app/providers/theme-provider.tsx` exports:
+
+| Export              | Purpose                                                         |
+| :------------------ | :-------------------------------------------------------------- |
+| `ThemeProvider`     | Applies the active theme to the document and persists it.       |
+| `useTheme`          | Returns `ThemeContextValue`; throws outside a `ThemeProvider`.  |
+| `ThemeContextValue` | `theme`, the readonly `themes` list, and `setTheme`.            |
+| `ThemeName`         | Union derived from `AVAILABLE_THEMES`, not written out by hand. |
+| `AVAILABLE_THEMES`  | The shipped themes in selection order.                          |
+
+Read `AVAILABLE_THEMES` rather than hard-coding theme identifiers: it is the
+single source both for the union and for anything that has to offer a choice.
+An unrecognized stored value is discarded and the default reapplied, and the
+legacy key migration described above happens once on mount.
+
+`src/app/providers/display-mode-provider.tsx` exports:
+
+| Export                    | Purpose                                                                                    |
+| :------------------------ | :----------------------------------------------------------------------------------------- |
+| `DisplayModeProvider`     | Resolves the layout mode and publishes it.                                                 |
+| `useDisplayMode`          | Returns `DisplayModeContextValue`; throws outside a provider.                              |
+| `DisplayModeContextValue` | The mode, its two predicates, and the four controls.                                       |
+| `DisplayMode`             | `"hosted"` frames the shell in a fixed mobile viewport; `"full-browser"` fills the window. |
+
+The mode is resolved in order. A value stored under `vibecoder.displayMode`
+wins; otherwise a viewport narrower than 768 pixels defaults to
+`"full-browser"` and anything wider to `"hosted"`. Until a mode is chosen
+explicitly the provider keeps following the viewport, so `hasUserPreference` is
+what distinguishes an inferred mode from a chosen one.
+
+`setMode` records the choice and stops the viewport from overriding it;
+`setHosted` and `setFullBrowser` are shorthands for it. `resetToSystemDefault`
+clears the stored preference and hands control back to the viewport. Every
+storage failure is logged through `appLogger` and swallowed, so a browser with
+storage disabled degrades to viewport-driven behaviour rather than failing.
+
 ### Rebuilding tokens
 
 Token source files live in `tokens/src/themes/`. After editing them, rebuild:
@@ -442,12 +565,14 @@ ______________________________________________________________________
 The CI workflow runs the same gate sequence as local development:
 
 ```text
-check-fmt → lint → typecheck → test → spelling → bun semantic
+check-fmt → lint → typecheck → test → spelling → docs:check → bun semantic
 ```
 
-The semantic lint job (`semantic-lint.yml`) uses `astral-sh/setup-uv@v8.2.0` to
-install `uv`. It runs `make spelling` before the existing `bun semantic` gate,
-without requiring a separate persistent Python environment.
+The semantic lint job (`semantic-lint.yml`) uses `astral-sh/setup-uv` to install
+`uv`. It runs `make spelling` before the existing `bun semantic` gate, without
+requiring a separate persistent Python environment. The same job runs
+`bun run docs:check` unconditionally, so the documentation gate fails CI in its
+own right rather than only through the `test:all` aggregate.
 
 The semantic-lint job and the Pages build and deployment jobs run on the
 GitHub-hosted `ubuntu-latest` runner. `tests/workflow-runners.config.test.ts`
