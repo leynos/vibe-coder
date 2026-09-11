@@ -79,7 +79,7 @@
     "happy-dom": "^20.13.2",
     "jest-axe": "^11.0.0",
     "jsdom": "^30.0.1",
-    "postcss": "^8.5.26",
+    "postcss": "^8.5.28",
     "style-dictionary": "^5.5.2",
     "stylelint": "^17.14.1",
     "stylelint-declaration-strict-value": "^1.12.1",
