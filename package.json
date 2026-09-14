@@ -80,7 +80,7 @@
     "jest-axe": "^11.0.0",
     "jsdom": "^30.0.1",
     "postcss": "^8.5.28",
-    "style-dictionary": "^5.5.2",
+    "style-dictionary": "^5.5.3",
     "stylelint": "^17.14.1",
     "stylelint-declaration-strict-value": "^1.12.1",
     "typedoc": "^0.28.20",
