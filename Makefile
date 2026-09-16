@@ -18,12 +18,26 @@ SPELLING_HELPER_PYTEST = PYTHONPATH=scripts $(UV_ENV) $(UV) run --no-project \
 .PHONY: fmt check-fmt typecheck docs-check lint test spelling spelling-config \
 	spelling-config-write spelling-phrase-check spelling-helper-test
 
+# The installed linter, falling back to Bun's bin directory so `make fmt` needs
+# no registry resolution mid-recipe.
+MDLINT ?= $(shell command -v markdownlint-cli2 2>/dev/null || printf '%s' "$$HOME/.bun/bin/markdownlint-cli2")
+# `make fmt` and `make check-fmt` call mdtablefix directly. `--git` selects the
+# Markdown files Git tracks and `--include-untracked` adds the untracked files
+# Git does not ignore, so a new document is formatted before it is staged.
+# Both modes need mdtablefix 0.6.0 or later; CI pins the version at the
+# install-mdtablefix step.
+MDTABLEFIX ?= mdtablefix
+MDTABLEFIX_SELECT = --git --include-untracked
+MDTABLEFIX_RULES = --wrap --renumber --breaks --ellipsis --fences
+
 fmt:
 	bun run fmt
-	mdformat-all
+	$(MDTABLEFIX) --in-place $(MDTABLEFIX_SELECT) $(MDTABLEFIX_RULES)
+	@unset FORCE_COLOR; $(MDLINT) --fix "**/*.md"
 
 check-fmt:
 	bun fmt
+	$(MDTABLEFIX) --check $(MDTABLEFIX_SELECT) $(MDTABLEFIX_RULES)
 
 typecheck:
 	bun check:types
