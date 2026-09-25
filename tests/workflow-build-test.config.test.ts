@@ -22,8 +22,13 @@ const COMMANDS = [
 
 const StepSchema = v.object({
   run: v.optional(v.string()),
+  uses: v.optional(v.string()),
+  with: v.optional(v.record(v.string(), v.unknown())),
   if: v.optional(v.unknown()),
+  "continue-on-error": v.optional(v.unknown()),
 });
+// Filters that would stop `build-test` running on an ordinary pull request.
+const PULL_REQUEST_FILTERS = ["branches", "branches-ignore", "paths", "paths-ignore", "types"];
 
 const WorkflowSchema = v.object({
   on: v.optional(v.unknown()),
@@ -32,6 +37,7 @@ const WorkflowSchema = v.object({
     v.string(),
     v.object({
       if: v.optional(v.unknown()),
+      "continue-on-error": v.optional(v.unknown()),
       strategy: v.optional(v.unknown()),
       steps: v.optional(v.array(StepSchema)),
     }),
@@ -45,6 +51,10 @@ describe("build-test job contract", () => {
     const triggers = readTriggers(await readWorkflow());
 
     expect(Object.keys(triggers)).toContain("pull_request");
+    // `pull_request: { types: [closed] }` would still name the trigger while
+    // never running the job on an opened or updated pull request.
+    const pullRequest = (triggers["pull_request"] ?? {}) as Record<string, unknown>;
+    expect(PULL_REQUEST_FILTERS.filter((filter) => filter in pullRequest)).toEqual([]);
     const push = triggers["push"] as { branches?: string[] } | null | undefined;
     expect(push?.branches ?? []).toContain("main");
   });
@@ -57,13 +67,23 @@ describe("build-test job contract", () => {
     // context matches, and an `if:` could skip the job and still pass.
     expect(job?.strategy).toBeUndefined();
     expect(job?.if).toBeUndefined();
+    // `continue-on-error` would let a failing command leave the job green.
+    expect(job?.["continue-on-error"]).toBeUndefined();
 
     const steps = job?.steps ?? [];
     const runs = steps.flatMap((step) => (step.run === undefined ? [] : [step.run.trim()]));
     expect(runs).toEqual(COMMANDS);
     for (const step of steps.filter((candidate) => candidate.run !== undefined)) {
       expect(step.if).toBeUndefined();
+      expect(step["continue-on-error"]).toBeUndefined();
     }
+  });
+
+  it("checks out without persisting credentials for the build's dependency code", async () => {
+    const steps = (await readWorkflow()).jobs[JOB]?.steps ?? [];
+    const checkout = steps.find((step) => step.uses?.startsWith("actions/checkout@"));
+
+    expect(checkout?.with?.["persist-credentials"]).toBe(false);
   });
 });
 
