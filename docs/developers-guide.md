@@ -574,7 +574,17 @@ requiring a separate persistent Python environment. The same job runs
 `bun run docs:check` unconditionally, so the documentation gate fails CI in its
 own right rather than only through the `test:all` aggregate.
 
-The semantic-lint job and the Pages build and deployment jobs run on the
+The same workflow's `build-test` job builds the site and runs the test suite on
+every pull request and on pushes to `main`: `bun install --frozen-lockfile`,
+`bun run tokens:build`, `bun run build` and `bun run test`. It is not a matrix,
+so it reports under the single context `build-test`, which is a required check
+beside `lint`. Without it, no pull-request job built the site or ran the suite,
+so automerge could land a Dependabot bump that broke either.
+`tests/workflow-build-test.config.test.ts` holds the job's triggers, its four
+commands and the absence of any `if:` or matrix. The `lint` job runs that file
+as well, so deleting `build-test` still fails a check that runs.
+
+The semantic-lint, build-test, and Pages build and deployment jobs run on the
 GitHub-hosted `ubuntu-latest` runner. `tests/workflow-runners.config.test.ts`
 parses every workflow and fails if any job names another runner, so a
 self-hosted label cannot return unnoticed. The repository therefore declares no

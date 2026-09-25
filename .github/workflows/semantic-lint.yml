@@ -36,8 +36,25 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff  # v24.2.0
         with:
           globs: '**/*.md'
-      - name: Validate runner contracts
-        run: bun test tests/workflow-runners.config.test.ts
+      - name: Validate workflow contracts
+        run: bun test tests/workflow-runners.config.test.ts tests/workflow-build-test.config.test.ts
       - name: Validate the TypeDoc documentation gate
         run: bun run docs:check
       - run: bun semantic
+
+  # Builds the site and runs the test suite on every pull request, so a
+  # change that breaks either (including a Dependabot bump that automerge
+  # would otherwise land) turns the required `build-test` check red.
+  build-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+      - run: bun install --frozen-lockfile
+      - run: bun run tokens:build
+      - run: bun run build
+      - run: bun run test
