@@ -619,11 +619,12 @@ The project uses Oxford -ize throughout:
 - quantization
 - optimization
 
-Run `make spelling` to verify the generated `typos.toml` and scan tracked
-Markdown. Use `make spelling-config-write` to regenerate the file from the
-shared estate dictionary and `typos.local.toml` overlay. The shared
-`typos-config-builder` CLI refreshes its untracked cache only when the remote
-authority is newer. Never edit generated `typos.toml` by hand.
+Run `make spelling` to regenerate `typos.toml` from the shared estate
+dictionary and `typos.local.toml` overlay and scan tracked Markdown. It runs
+the pinned `typos-config-builder gate`, which also checks the shared phrase
+corrections and refreshes its untracked cache only when the remote authority is
+newer. Commit the regenerated file and never edit it by hand. Bump the pin by
+changing `TYPOS_CONFIG_BUILDER_VERSION` in the `Makefile`.
 
 Design documents must use neutral phrasing — avoid first-person pronouns (`we`,
 `our`, `I`, `us`).

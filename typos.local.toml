@@ -11,7 +11,11 @@ accepted = []
 [words.corrections]
 
 [patterns]
-ignore = []
+ignore = [
+  # Inline code spans, which this repository's spelling check has always
+  # masked; preserved through the migration to the shared gate.
+  '`[^`\n]+`',
+]
 
 [files]
 exclude = []
