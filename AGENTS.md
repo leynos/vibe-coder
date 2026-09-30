@@ -485,14 +485,21 @@ The following tooling is available in this environment:
   with `curl -Ls https://astral.sh/uv/install.sh | sh` or via a system package
   manager.
 
-## Spelling gate
+<!-- typos-config-builder:agents-md:start -->
 
-Run `make spelling` after changing Markdown. The shared `typos-config-builder`
-CLI refreshes the untracked shared en-GB-oxendict dictionary when its remote
-authority is newer and verifies the generated, tracked `typos.toml`. Use
-`make spelling-config-write` to regenerate the file. Add only narrow repository
-terminology to `typos.local.toml`; never edit `typos.toml` by hand. The focused
-consumer helper runs with Python 3.14.
+## Spelling
+
+- `make spelling` runs the pinned `typos-config-builder gate`, which
+  regenerates `typos.toml` from the shared en-GB-oxendict dictionary and
+  `typos.local.toml`, then checks spelling and the shared phrase corrections.
+- `typos.toml` is generated: never edit it by hand. Put narrow
+  repository-specific exceptions in `typos.local.toml`, as exact or full-line
+  patterns rather than bare accepted words.
+- When `make spelling` changes `typos.toml`, commit the regenerated file. If
+  the change is unrelated to your work, commit it in a separate base pull
+  request and stack your branch on it, so each review diff stays focused.
+
+<!-- typos-config-builder:agents-md:end -->
 
 ## Key Takeaway
 
