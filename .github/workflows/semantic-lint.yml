@@ -15,7 +15,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "latest"
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.3.2
       - name: Enforce Oxford spelling
         run: make spelling
       - run: bun install --frozen-lockfile
