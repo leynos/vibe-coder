@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import "./i18n";
 
 import App from "./app/app";
+import { getDocumentBody } from "./app/dom/document-body";
 import "./index.css";
 
 /**
@@ -87,10 +88,20 @@ export function renderApp(target: HTMLElement, props?: AppRootProps): Root {
   return root;
 }
 
+// `process` is undefined in the browser bundle, so the guard is required even
+// though the test runner always defines it. Bundlers that shim `process` also
+// provide its `env` object.
 const isTestEnvironment = typeof process !== "undefined" && process.env.NODE_ENV === "test";
 
 if (!isTestEnvironment) {
-  const mount = document.body.children.namedItem("root");
+  // A module loaded before `<body>` exists would otherwise fail with an
+  // opaque TypeError from the property access below.
+  const body = getDocumentBody();
+  if (!body) {
+    throw new Error("A document body is required to render the SPA.");
+  }
+
+  const mount = body.children.namedItem("root");
 
   if (!(mount instanceof HTMLElement)) {
     throw new Error("Mount point '#root' is required to render the SPA.");

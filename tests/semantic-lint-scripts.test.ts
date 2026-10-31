@@ -87,6 +87,36 @@ describe("check-classlist-length", () => {
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("max 2");
   });
+
+  it("accepts a class list exactly at the limit", () => {
+    const utilities = Array.from({ length: 16 }, (_, index) => `u${index}`);
+    writeFixture("src/app/sample.tsx", classListModule(utilities));
+
+    const result = runScript(CLASS_LIST_SCRIPT);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+  });
+
+  it("floors a fractional configured limit before comparing", () => {
+    writeFixture(CONFIG_PATH, JSON.stringify({ maxClasslistLength: 2.9 }));
+    writeFixture("src/app/sample.tsx", classListModule(["flex", "items-center", "gap-2"]));
+
+    const result = runScript(CLASS_LIST_SCRIPT);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("max 2");
+  });
+
+  it("rejects a configuration value of the wrong type", () => {
+    writeFixture(CONFIG_PATH, JSON.stringify({ maxClasslistLength: "two" }));
+    writeFixture("src/app/sample.tsx", classListModule(["flex"]));
+
+    const result = runScript(CLASS_LIST_SCRIPT);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain('Invalid type: Expected number but received "two"');
+  });
 });
 
 describe("check-hardcoded-strings", () => {
@@ -145,5 +175,41 @@ describe("find-near-duplicate-classes", () => {
     const result = runScript(NEAR_DUPLICATE_SCRIPT);
 
     expect(result.exitCode).toBe(0);
+  });
+
+  it("reports only groups that meet the minimum occurrence count", () => {
+    writeFixture(
+      CONFIG_PATH,
+      JSON.stringify({
+        nearDuplicateClasses: { failOnViolation: true, minOccurrences: 3 },
+      }),
+    );
+    const stack = classListModule(["flex", "items-center", "gap-2", "p-4"]);
+    writeFixture("src/app/one.tsx", stack);
+    writeFixture("src/app/two.tsx", stack);
+    writeFixture("src/app/three.tsx", stack);
+
+    const result = runScript(NEAR_DUPLICATE_SCRIPT);
+
+    expect(result.exitCode).toBe(1);
+    const occurrences = result.stderr.match(/src\/app\//gu) ?? [];
+    expect(occurrences).toHaveLength(3);
+  });
+
+  it("suppresses stacks whose tokens all match a configured prefix", () => {
+    writeFixture(
+      CONFIG_PATH,
+      JSON.stringify({
+        nearDuplicateClasses: { failOnViolation: true, suppressPrefixes: ["sr-"] },
+      }),
+    );
+    const stack = classListModule(["sr-only", "sr-field", "sr-label", "sr-help"]);
+    writeFixture("src/app/one.tsx", stack);
+    writeFixture("src/app/two.tsx", stack);
+
+    const result = runScript(NEAR_DUPLICATE_SCRIPT);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).not.toContain("Repeated class stack found");
   });
 });

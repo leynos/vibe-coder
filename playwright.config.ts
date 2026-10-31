@@ -11,8 +11,19 @@ process.env.PLAYWRIGHT_BROWSERS_PATH ??= "0";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173";
 
-/** Return the effective port for a URL, defaulting by protocol. */
-function resolvePort(url: URL): number {
+/**
+ * Return the effective port for a URL, defaulting by protocol.
+ *
+ * @param url - Parsed base URL, with or without an explicit port.
+ * @returns The explicit port, or 443 for HTTPS and 80 otherwise.
+ *
+ * @example
+ * ```ts
+ * resolvePort(new URL("https://example.test")); // 443
+ * resolvePort(new URL("http://localhost:4321")); // 4321
+ * ```
+ */
+export function resolvePort(url: URL): number {
   if (url.port !== "") {
     return Math.trunc(Number(url.port));
   }

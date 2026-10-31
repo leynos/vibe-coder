@@ -5,6 +5,7 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import Fluent from "i18next-fluent";
 import FluentBackend from "i18next-fluent-backend";
 import { initReactI18next } from "react-i18next";
+import { getDocumentBody } from "./app/dom/document-body";
 import {
   DEFAULT_LOCALE,
   DETECTION_ORDER,
@@ -192,9 +193,14 @@ export const applyDocumentLocale = (language?: string): void => {
   htmlElement.dir = direction;
   htmlElement.setAttribute("data-direction", direction);
 
-  document.body.lang = resolvedLanguage;
-  document.body.dir = direction;
-  document.body.setAttribute("data-direction", direction);
+  // A module evaluated before `<body>` exists still gets the document-level
+  // locale; only the mirrored body attributes are skipped.
+  const body = getDocumentBody();
+  if (!body) return;
+
+  body.lang = resolvedLanguage;
+  body.dir = direction;
+  body.setAttribute("data-direction", direction);
 };
 
 // Register the listeners before `i18nReady` is created so an `initialized`

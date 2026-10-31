@@ -65,14 +65,44 @@ function describeError(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause);
 }
 
+/**
+ * Describe the syntax errors a Fluent resource recorded.
+ *
+ * `@fluent/syntax` recovers from malformed input instead of throwing: the
+ * unusable entries appear in the AST as `Junk` nodes carrying annotations.
+ * They must be reported explicitly, otherwise a locale file with a syntax
+ * error would be skipped silently and the check would report success.
+ *
+ * @param entries - Parsed resource body containing at least one `Junk` node.
+ * @returns One human-readable reason per annotation, or a fallback message.
+ */
+function describeJunk(entries: readonly AST.Junk[]): string {
+  const reasons = entries.flatMap((entry) =>
+    entry.annotations.map(
+      (annotation) => `${annotation.message} (line ${annotation.span.start.line})`,
+    ),
+  );
+  return reasons.length > 0 ? reasons.join("; ") : "unknown syntax error";
+}
+
 function parseResource(contents: string, filePath: string): Resource | undefined {
+  let resource: Resource;
   try {
-    return parse(contents, {});
+    resource = parse(contents, {});
   } catch (error) {
     console.error(`[ftl-vars] Unable to parse ${filePath}:`, describeError(error));
     process.exitCode = 1;
     return undefined;
   }
+
+  const junk = resource.body.filter((entry): entry is AST.Junk => entry.type === "Junk");
+  if (junk.length > 0) {
+    console.error(`[ftl-vars] Unable to parse ${filePath}: ${describeJunk(junk)}`);
+    process.exitCode = 1;
+    return undefined;
+  }
+
+  return resource;
 }
 
 function shouldIgnoreEntry(entry: { comment?: { content?: string } | null }): boolean {

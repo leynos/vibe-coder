@@ -3,6 +3,7 @@
 import type { JSX, ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
+import { getDocumentBody } from "../dom/document-body";
 import { appLogger, toError } from "../observability/logger";
 
 const STORAGE_KEY = "vibe-coder.theme";
@@ -74,7 +75,14 @@ function isSupportedTheme(value: unknown): value is ThemeName {
 function applyTheme(theme: ThemeName): void {
   if (!canUseDOM()) return;
   document.documentElement.setAttribute("data-theme", theme);
-  document.body.setAttribute("data-theme", theme);
+
+  // The provider can mount before `<body>` exists when a module is evaluated
+  // early or in a partial document. The document-level attribute is enough
+  // until the body is available.
+  const body = getDocumentBody();
+  if (!body) return;
+
+  body.setAttribute("data-theme", theme);
 }
 
 // localStorage is accessed synchronously on the single JavaScript thread.

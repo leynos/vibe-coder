@@ -5,6 +5,15 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import StyleDictionary from "style-dictionary";
 import { readJson } from "../build-utils/read-json.js";
+import {
+  deriveThemeArtefacts,
+  flattenLookup,
+  formatCssBlock,
+  resolveReferences,
+  toFontArray,
+  toTitleCase,
+  unwrap,
+} from "./token-resolve.js";
 
 const ROOT_PATH = fileURLToPath(new URL("..", import.meta.url));
 const DIST_PATH = path.join(ROOT_PATH, "dist");
@@ -32,212 +41,10 @@ const styleDictionary = new StyleDictionary({
 
 await styleDictionary.buildPlatform("css");
 
-/** Return true when the value is a non-array object (the shape used by tokens). */
-const isPlainObject = (value) => value instanceof Object && !Array.isArray(value);
-
-/** Return true for string primitives, without narrowing on `typeof`. */
-const isString = (value) => Object.prototype.toString.call(value) === "[object String]";
-
-function unwrap(input) {
-  if (Array.isArray(input)) {
-    return input.map((entry) => unwrap(entry));
-  }
-  if (!isPlainObject(input)) {
-    return input;
-  }
-  if (Object.hasOwn(input, "value")) {
-    return input.value;
-  }
-  return Object.fromEntries(
-    Object.entries(input)
-      .toSorted(([a], [b]) => collator.compare(a, b))
-      .map(([key, value]) => [key, unwrap(value)]),
-  );
-}
-
-function flattenLookup(node, pathParts, target) {
-  if (!isPlainObject(node)) {
-    if (pathParts.length > 0) {
-      target.set(pathParts.join("."), node);
-    }
-    return;
-  }
-  for (const [key, value] of Object.entries(node)) {
-    flattenLookup(value, [...pathParts, key], target);
-  }
-}
-
-function resolveReferences(input, lookup, stack = new Set()) {
-  if (Array.isArray(input)) {
-    return input.map((value) => resolveReferences(value, lookup, new Set(stack)));
-  }
-  if (isPlainObject(input)) {
-    return Object.fromEntries(
-      Object.entries(input).map(([key, value]) => [
-        key,
-        resolveReferences(value, lookup, new Set(stack)),
-      ]),
-    );
-  }
-  if (!isString(input)) {
-    return input;
-  }
-  const match = input.match(/^\{([^}]+)\}$/);
-  if (!match) {
-    return input;
-  }
-  const pathKey = match[1];
-  if (stack.has(pathKey)) {
-    throw new Error(`Circular token reference detected: ${[...stack, pathKey].join(" -> ")}`);
-  }
-  if (!lookup.has(pathKey)) {
-    throw new Error(`Unknown token reference "${pathKey}"`);
-  }
-  return resolveReferences(lookup.get(pathKey), lookup, new Set([...stack, pathKey]));
-}
-
-function toFontArray(fontList) {
-  if (!fontList) return [];
-  return fontList
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter(Boolean)
-    .map((entry) => entry.replace(/^"(.*)"$/, "$1"));
-}
-
-function toTitleCase(name) {
-  return name
-    .replaceAll(/[_-]+/g, " ")
-    .split(" ")
-    .filter(Boolean)
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(" ");
-}
-
 function writeDistFile(relativePath, content) {
   const target = path.join(DIST_PATH, relativePath);
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, content, "utf8");
-}
-
-function formatCssBlock(selector, declarations) {
-  const lines = Object.entries(declarations)
-    .toSorted(([a], [b]) => collator.compare(a, b))
-    .map(([key, value]) => `  ${key}: ${value};`)
-    .join("\n");
-  return `${selector} {\n${lines}\n}\n`;
-}
-
-function deriveThemeArtefacts(meta, semantic, resolvedTokens) {
-  const neutral = resolvedTokens.color?.neutral ?? {};
-  const radius = resolvedTokens.radius ?? {};
-
-  const base100 = semantic.bg?.default ?? neutral["50"] ?? "#ffffff";
-  const base200 = semantic.bg?.subtle ?? neutral["0"] ?? base100;
-  const base300 = semantic.bg?.muted ?? neutral["100"] ?? base200;
-  const baseOverlay = semantic.bg?.overlay ?? neutral["200"] ?? base300;
-  const baseContent = semantic.fg?.default ?? neutral["900"] ?? "#111111";
-  const baseContentMuted = semantic.fg?.muted ?? neutral["600"] ?? baseContent;
-
-  const brandDefault =
-    semantic.brand?.default ?? resolvedTokens.color?.primary?.["500"] ?? "#3b82f6";
-  const brandHover =
-    semantic.brand?.hover ?? resolvedTokens.color?.primary?.["600"] ?? brandDefault;
-  const brandContrast = semantic.brand?.contrast ?? neutral["0"] ?? "#ffffff";
-
-  const accentDefault =
-    semantic.accent?.default ?? resolvedTokens.color?.secondary?.["500"] ?? brandDefault;
-  const accentHover =
-    semantic.accent?.hover ?? resolvedTokens.color?.secondary?.["600"] ?? accentDefault;
-  const accentContrast = semantic.accent?.contrast ?? baseContent;
-
-  const status = semantic.status ?? {};
-  const infoDefault = status.info?.default ?? resolvedTokens.color?.info?.["500"] ?? accentDefault;
-  const infoContrast = status.info?.contrast ?? baseContent;
-  const successDefault =
-    status.success?.default ?? resolvedTokens.color?.success?.["500"] ?? "#22c55e";
-  const successContrast = status.success?.contrast ?? baseContent;
-  const warningDefault =
-    status.warning?.default ?? resolvedTokens.color?.warning?.["500"] ?? "#eab308";
-  const warningContrast = status.warning?.contrast ?? baseContent;
-  const errorDefault = status.error?.default ?? resolvedTokens.color?.error?.["500"] ?? "#ef4444";
-  const errorContrast = status.error?.contrast ?? baseContent;
-
-  const coreVariables = {
-    "--border": "1px",
-    "--depth": "0",
-    "--noise": "0",
-    "--radius-badge": radius.full ?? "9999px",
-    "--radius-box": radius.lg ?? "1rem",
-    "--radius-btn": radius.md ?? "0.5rem",
-    "--color-base-100": base100,
-    "--color-base-200": base200,
-    "--color-base-300": base300,
-    "--color-base-overlay": baseOverlay,
-    "--color-base-content": baseContent,
-    "--color-base-content-muted": baseContentMuted,
-    "--color-primary": brandDefault,
-    "--color-primary-content": brandContrast,
-    "--color-primary-hover": brandHover,
-    "--color-secondary": accentDefault,
-    "--color-secondary-content": accentContrast,
-    "--color-accent": accentHover,
-    "--color-accent-content": accentContrast,
-    "--color-neutral": baseOverlay,
-    "--color-neutral-content": baseContent,
-    "--color-info": infoDefault,
-    "--color-info-content": infoContrast,
-    "--color-success": successDefault,
-    "--color-success-content": successContrast,
-    "--color-warning": warningDefault,
-    "--color-warning-content": warningContrast,
-    "--color-error": errorDefault,
-    "--color-error-content": errorContrast,
-  };
-
-  const aliasVariables = {
-    "--a": "var(--color-accent)",
-    "--ac": "var(--color-accent-content)",
-    "--b1": "var(--color-base-100)",
-    "--b2": "var(--color-base-200)",
-    "--b3": "var(--color-base-300)",
-    "--bc": "var(--color-base-content)",
-    "--bcm": "var(--color-base-content-muted)",
-    "--in": "var(--color-info)",
-    "--inc": "var(--color-info-content)",
-    "--n": "var(--color-neutral)",
-    "--nc": "var(--color-neutral-content)",
-    "--p": "var(--color-primary)",
-    "--pc": "var(--color-primary-content)",
-    "--pf": "var(--color-primary-hover)",
-    "--s": "var(--color-secondary)",
-    "--sc": "var(--color-secondary-content)",
-    "--su": "var(--color-success)",
-    "--suc": "var(--color-success-content)",
-    "--wa": "var(--color-warning)",
-    "--wac": "var(--color-warning-content)",
-    "--er": "var(--color-error)",
-    "--erc": "var(--color-error-content)",
-  };
-
-  const cssVariables = { ...coreVariables, ...aliasVariables };
-
-  return {
-    meta,
-    semantic,
-    coreVariables,
-    aliasVariables,
-    cssVariables,
-    daisyTheme: {
-      name: meta.name,
-      displayName: meta.displayName,
-      default: Boolean(meta.default),
-      prefersDark: Boolean(meta.prefersDark),
-      prefersLight: Boolean(meta.prefersLight),
-      colorScheme: meta.colorScheme ?? null,
-      variables: coreVariables,
-    },
-  };
 }
 
 // Load token catalogue and prepare lookup tables

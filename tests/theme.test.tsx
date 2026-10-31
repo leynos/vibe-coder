@@ -5,7 +5,7 @@
  * state, persistence, and context contracts can be verified through the public
  * React API.
  */
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import { cleanup, render, renderHook, screen } from "@testing-library/react";
 import type { JSX } from "react";
 import { act } from "react";
@@ -37,6 +37,41 @@ function findStorageKeysForValue(value: string): string[] {
   }
 
   return matches;
+}
+
+/** Build an in-memory Storage stub, overriding only the methods under test. */
+function createStorage(overrides: Partial<Storage> = {}): Storage {
+  const base: Storage = {
+    length: 0,
+    clear: () => {},
+    getItem: () => null,
+    key: () => null,
+    removeItem: () => {},
+    setItem: () => {},
+  };
+  return { ...base, ...overrides };
+}
+
+/**
+ * Run `test` with `storage` installed as `globalThis.localStorage`.
+ *
+ * Happy DOM exposes its storage through accessors that a spy cannot replace,
+ * so the tests swap the global for a plain stub and restore it afterwards.
+ */
+function withStorage(storage: Storage, test: () => void): void {
+  const original = globalThis.localStorage;
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    value: storage,
+  });
+  try {
+    test();
+  } finally {
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: original,
+    });
+  }
 }
 
 describe("ThemeProvider", () => {
@@ -152,6 +187,83 @@ describe("ThemeProvider", () => {
     expect(() => renderHook(() => useTheme())).toThrowError(
       "useTheme must be used within a ThemeProvider",
     );
+  });
+
+  it("falls back to the default theme when storage reads fail", () => {
+    const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+    const storage = createStorage({
+      getItem: () => {
+        throw new Error("storage denied");
+      },
+    });
+
+    try {
+      withStorage(storage, () => {
+        render(
+          <ThemeProvider>
+            <ThemeProbe />
+          </ThemeProvider>,
+        );
+
+        expect(screen.getByRole("status", { name: /current theme/i }).textContent).toBe(
+          "vibe-coder-night",
+        );
+        expect(document.documentElement.getAttribute("data-theme")).toBe("vibe-coder-night");
+        expect(warnSpy.mock.calls.flat().join(" ")).toContain("Failed to read stored theme");
+      });
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it("keeps the in-memory theme when persistence fails", () => {
+    const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+    const storage = createStorage({
+      setItem: () => {
+        throw new Error("quota exceeded");
+      },
+    });
+
+    try {
+      withStorage(storage, () => {
+        render(
+          <ThemeProvider>
+            <ThemeProbe />
+          </ThemeProvider>,
+        );
+
+        expect(document.documentElement.getAttribute("data-theme")).toBe("vibe-coder-night");
+        expect(warnSpy.mock.calls.flat().join(" ")).toContain("Failed to persist theme preference");
+      });
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it("applies the document theme while the body is unavailable", () => {
+    render(
+      <ThemeProvider>
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    const originalBody = Object.getOwnPropertyDescriptor(document, "body");
+    Object.defineProperty(document, "body", { configurable: true, value: null });
+
+    try {
+      act(() => {
+        screen.getByRole("button", { name: /switch theme/i }).click();
+      });
+    } finally {
+      if (originalBody) {
+        Object.defineProperty(document, "body", originalBody);
+      } else {
+        Reflect.deleteProperty(document, "body");
+      }
+    }
+
+    const updatedTheme = screen.getByRole("status", { name: /current theme/i }).textContent;
+    expect(document.documentElement.getAttribute("data-theme")).toBe(updatedTheme);
   });
 
   it("persists and reapplies a new theme", () => {

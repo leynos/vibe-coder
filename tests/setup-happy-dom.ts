@@ -9,6 +9,7 @@
 import { Window } from "happy-dom";
 
 import { setupI18nTestHarness } from "./support/i18n-test-runtime";
+import { installMatchMediaStub } from "./support/match-media-stub";
 
 /**
  * Teach Bun to treat imported image assets as JavaScript modules during tests.
@@ -47,6 +48,11 @@ Object.assign(globalThis, {
   HTMLInputElement: happyWindow.HTMLInputElement,
   CustomEvent: happyWindow.CustomEvent,
   Event: happyWindow.Event,
+  // `Event` and `EventTarget` must come from the same realm: installing Happy
+  // DOM's `Event` beside Node's `EventTarget` makes every `dispatchEvent` of a
+  // Happy DOM event fail its instance check. Chai hits that path while
+  // registering its assertion plugins.
+  EventTarget: happyWindow.EventTarget,
   Node: happyWindow.Node,
   Text: happyWindow.Text,
   MutationObserver: happyWindow.MutationObserver,
@@ -73,4 +79,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 await setupI18nTestHarness(globalThis);
 
-await import("./setup-vitest-a11y");
+// Only the DOM shim is shared with the Vitest accessibility setup. Importing
+// that setup here would load Vitest's runner (through `afterEach`) outside a
+// Vitest context, which Bun's test runner cannot satisfy.
+installMatchMediaStub();
