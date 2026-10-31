@@ -211,7 +211,10 @@ export const applyDocumentLocale = (language?: string): void => {
 // i18next emits `initialized` even when the backend fails, with the error
 // already reported through `fetchAjax`.
 i18n.on("initialized", () => {
-  applyDocumentLocale(i18n.resolvedLanguage);
+  // A failed bundle load leaves `resolvedLanguage` unset even though i18next
+  // has already reported the attempted language, so fall back to it rather
+  // than resetting the document to the default locale metadata.
+  applyDocumentLocale(i18n.resolvedLanguage ?? i18n.language);
 });
 
 i18n.on("languageChanged", (nextLanguage) => {

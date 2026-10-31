@@ -83,6 +83,30 @@ describe("i18n runtime configuration", () => {
     expect(readBodyDirection()).toBe("ltr");
   });
 
+  it("keeps the detected language metadata when nothing has resolved", () => {
+    const previousLanguage = i18n.language;
+    const previousResolved = i18n.resolvedLanguage;
+
+    try {
+      // A failed bundle load leaves `resolvedLanguage` unset while i18next
+      // still reports the language it attempted.
+      i18n.language = "ar";
+      delete i18n.resolvedLanguage;
+
+      i18n.emit("initialized", i18n.options);
+
+      expect(document.documentElement.lang).toBe("ar");
+      expect(document.documentElement.dir).toBe("rtl");
+    } finally {
+      i18n.language = previousLanguage;
+      if (previousResolved === undefined) {
+        delete i18n.resolvedLanguage;
+      } else {
+        i18n.resolvedLanguage = previousResolved;
+      }
+    }
+  });
+
   it("updates direction metadata when applying an RTL locale", () => {
     applyDocumentLocale("ar");
 
@@ -93,8 +117,8 @@ describe("i18n runtime configuration", () => {
 
   it("maps an aborted locale fetch to a timeout response", async () => {
     const originalFetch = globalThis.fetch;
-    // Browsers reject an aborted fetch with a `DOMException`, which does not
-    // inherit from `Error`; the backend must still see `name: "AbortError"`.
+    // A thrown value can expose error-like `name` and `message` without being
+    // an `Error`; the backend must still see `name: "AbortError"`.
     const abortCause = { name: "AbortError", message: "The operation was aborted." };
     globalThis.fetch = Object.assign(() => Promise.reject(abortCause), {
       preconnect: originalFetch.preconnect,
