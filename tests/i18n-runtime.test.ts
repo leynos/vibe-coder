@@ -6,12 +6,50 @@
  */
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "bun:test";
+import * as v from "valibot";
 
 import { DEFAULT_LOCALE } from "../src/app/i18n/supported-locales";
 import i18n, { applyDocumentLocale, i18nReady } from "../src/i18n";
 
 const readBodyDirection = (): string | undefined =>
   document.body.getAttribute("data-direction") ?? undefined;
+
+/** Response object the Fluent backend hands to the ajax callback. */
+type AjaxResponse = { readonly status: number; readonly statusText?: string };
+
+/** Callback the Fluent backend expects after a locale request settles. */
+type AjaxCallback = (data: string | Error, response: AjaxResponse) => void;
+
+/** Request options the Fluent backend passes to the locale loader. */
+type AjaxOptions = {
+  readonly body?: BodyInit | null;
+  readonly headers?: Readonly<Record<string, string>>;
+  readonly method?: string;
+  readonly withCredentials?: boolean;
+};
+
+/** Locale loader configured on the i18next backend. */
+type LocaleAjax = (url: string, options: AjaxOptions, callback: AjaxCallback) => void;
+
+/** Schema for a value that can be invoked as the locale loader. */
+const localeAjaxSchema = v.function();
+
+/** Return true when `value` can be invoked as the locale loader. */
+function isLocaleAjax(value: unknown): value is LocaleAjax {
+  return v.is(localeAjaxSchema, value);
+}
+
+/** Read the ajax loader this module installed on the i18next backend. */
+function readLocaleAjax(): LocaleAjax {
+  const backend: object = i18n.options.backend ?? {};
+  const ajax: unknown = "ajax" in backend ? backend.ajax : undefined;
+
+  if (!isLocaleAjax(ajax)) {
+    throw new Error("i18n backend does not expose an ajax loader");
+  }
+
+  return ajax;
+}
 
 describe("i18n runtime configuration", () => {
   beforeAll(async () => {
@@ -51,6 +89,33 @@ describe("i18n runtime configuration", () => {
     expect(document.documentElement.lang).toBe("ar");
     expect(document.documentElement.dir).toBe("rtl");
     expect(readBodyDirection()).toBe("rtl");
+  });
+
+  it("maps an aborted locale fetch to a timeout response", async () => {
+    const originalFetch = globalThis.fetch;
+    // Browsers reject an aborted fetch with a `DOMException`, which does not
+    // inherit from `Error`; the backend must still see `name: "AbortError"`.
+    const abortCause = { name: "AbortError", message: "The operation was aborted." };
+    globalThis.fetch = Object.assign(() => Promise.reject(abortCause), {
+      preconnect: originalFetch.preconnect,
+    });
+
+    try {
+      const ajax = readLocaleAjax();
+      const outcome = await new Promise<{ data: string | Error; status: number }>((resolve) => {
+        ajax("/locales/en-GB/common.ftl", {}, (data, response) => {
+          resolve({ data, status: response.status });
+        });
+      });
+
+      expect(outcome.status).toBe(408);
+      if (!(outcome.data instanceof Error)) {
+        throw new Error("expected the ajax callback to receive an Error");
+      }
+      expect(outcome.data.name).toBe("AbortError");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 
   it("falls back to the default locale metadata when a locale is missing", () => {

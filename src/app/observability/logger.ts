@@ -1,6 +1,16 @@
 /** @file Structured logging and error reporting utilities. */
 
+import { object, safeParse, string } from "valibot";
+
 type LogLevel = "debug" | "info" | "warn" | "error";
+
+/**
+ * Shape of a thrown value that exposes the `Error` diagnostic fields.
+ *
+ * Browser `DOMException` values carry `name` and `message` without inheriting
+ * from `Error`, so a structural check is the only way to recover them.
+ */
+const errorLikeSchema = object({ name: string(), message: string() });
 
 /**
  * A value that may be attached to a structured log context.
@@ -34,7 +44,9 @@ interface LogEntry {
  *
  * JavaScript permits throwing any value, so `catch` bindings are typed
  * `unknown`. Logging and reporting need an `Error`; non-`Error` throws are
- * wrapped with the thrown value preserved as the cause.
+ * wrapped with the thrown value preserved as the cause. Values that expose
+ * `name` and `message` (such as a browser `DOMException`) keep those
+ * diagnostics on the wrapper.
  *
  * @param cause - The value caught from a `try`/`catch` block.
  * @returns The original `Error`, or a wrapper that retains the thrown value.
@@ -50,6 +62,17 @@ interface LogEntry {
  */
 export function toError(cause: unknown): Error {
   if (cause instanceof Error) return cause;
+
+  // Browsers expose `DOMException` without an `Error` prototype, so an
+  // aborted `fetch` rejects with a value that still carries `name` and
+  // `message`. Preserve them; callers branch on `name === "AbortError"`.
+  const parsed = safeParse(errorLikeSchema, cause);
+  if (parsed.success) {
+    const error = new Error(parsed.output.message, { cause });
+    error.name = parsed.output.name;
+    return error;
+  }
+
   return new Error("Non-Error value thrown", { cause });
 }
 

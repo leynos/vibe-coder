@@ -46,6 +46,19 @@ describe("toError", () => {
     expect(wrapped.message).toBe("Non-Error value thrown");
     expect(wrapped.cause).toBe(thrown);
   });
+
+  it("preserves the diagnostic fields of a non-Error DOMException", () => {
+    // Browsers reject an aborted fetch with a `DOMException`, which does not
+    // inherit from `Error`; callers still branch on its `name`.
+    const thrown = { name: "AbortError", message: "The operation was aborted." };
+
+    const wrapped = toError(thrown);
+
+    expect(wrapped).toBeInstanceOf(Error);
+    expect(wrapped.name).toBe("AbortError");
+    expect(wrapped.message).toBe("The operation was aborted.");
+    expect(wrapped.cause).toBe(thrown);
+  });
 });
 
 describe("appLogger", () => {
