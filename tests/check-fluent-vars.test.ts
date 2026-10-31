@@ -90,13 +90,14 @@ describe("check-fluent-vars", () => {
 
   it("fails when a locale file contains a syntax error", () => {
     writeLocale("en-GB", NESTED_MESSAGES);
-    writeLocale("cy-GB", "hello = Helo { $name\n");
+    writeLocale("cy-GB", "hello = Helo\nbroken = }\nstill = fine\n");
 
     const result = runCheck();
 
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("Unable to parse");
     expect(result.stderr).toContain("cy-GB/common.ftl");
+    expect(result.stderr).toContain("(line 2)");
     expect(result.stderr).not.toContain("All Fluent placeholders align");
   });
 
@@ -109,6 +110,7 @@ describe("check-fluent-vars", () => {
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("Unable to parse");
     expect(result.stderr).toContain("en-GB/common.ftl");
+    expect(result.stderr).toContain("(line 1)");
   });
 
   it("skips messages opted out with vars: ignore-mismatch", () => {

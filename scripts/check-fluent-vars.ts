@@ -6,7 +6,7 @@ import path from "node:path";
 import process from "node:process";
 
 import * as AST from "@fluent/syntax";
-import { parse, type Resource, Visitor } from "@fluent/syntax";
+import { lineOffset, parse, type Resource, Visitor } from "@fluent/syntax";
 
 type PlaceholderReport = {
   vars: Set<string>;
@@ -74,13 +74,18 @@ function describeError(cause: unknown): string {
  * error would be skipped silently and the check would report success.
  *
  * @param entries - Parsed resource body containing at least one `Junk` node.
+ * @param source - The original resource text, used to resolve line numbers.
  * @returns One human-readable reason per annotation, or a fallback message.
  */
-function describeJunk(entries: readonly AST.Junk[]): string {
+function describeJunk(entries: readonly AST.Junk[], source: string): string {
   const reasons = entries.flatMap((entry) =>
-    entry.annotations.map(
-      (annotation) => `${annotation.message} (line ${annotation.span.start.line})`,
-    ),
+    entry.annotations.map((annotation) => {
+      // Annotations do not always carry a span, and `Span.start` is a
+      // character offset; `lineOffset` counts the preceding newlines, so add
+      // one to report the human-readable line number.
+      const line = annotation.span ? lineOffset(source, annotation.span.start) + 1 : undefined;
+      return line === undefined ? annotation.message : `${annotation.message} (line ${line})`;
+    }),
   );
   return reasons.length > 0 ? reasons.join("; ") : "unknown syntax error";
 }
@@ -97,7 +102,7 @@ function parseResource(contents: string, filePath: string): Resource | undefined
 
   const junk = resource.body.filter((entry): entry is AST.Junk => entry.type === "Junk");
   if (junk.length > 0) {
-    console.error(`[ftl-vars] Unable to parse ${filePath}: ${describeJunk(junk)}`);
+    console.error(`[ftl-vars] Unable to parse ${filePath}: ${describeJunk(junk, contents)}`);
     process.exitCode = 1;
     return undefined;
   }
