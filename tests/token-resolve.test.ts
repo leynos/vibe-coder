@@ -223,6 +223,47 @@ describe("token helper properties", () => {
     );
   });
 
+  it("resolves generated multi-hop reference chains", () => {
+    fc.assert(
+      fc.property(tokenLeafArbitrary, fc.integer({ min: 1, max: 8 }), (leaf, depth) => {
+        const lookup = new Map<string, TokenValue>([["t0", leaf]]);
+
+        for (let index = 1; index <= depth; index += 1) {
+          lookup.set(`t${index}`, `{t${index - 1}}`);
+        }
+
+        expect(resolveReferences(`{t${depth}}`, lookup)).toBe(leaf);
+      }),
+    );
+  });
+
+  it("rejects generated reference cycles", () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 1, max: 6 }), (depth) => {
+        const lookup = new Map<string, TokenValue>();
+
+        for (let index = 0; index < depth; index += 1) {
+          lookup.set(`t${index}`, `{t${index + 1}}`);
+        }
+        lookup.set(`t${depth}`, "{t0}");
+
+        expect(() => resolveReferences("{t0}", lookup)).toThrow(
+          /Circular token reference detected/u,
+        );
+      }),
+    );
+  });
+
+  it("rejects generated references to unknown tokens", () => {
+    fc.assert(
+      fc.property(fc.stringMatching(/^[a-z][a-z0-9]{0,7}$/u), (referencePath) => {
+        expect(() => resolveReferences(`{${referencePath}}`, new Map())).toThrow(
+          `Unknown token reference "${referencePath}"`,
+        );
+      }),
+    );
+  });
+
   it("title-cases idempotently and removes separators", () => {
     fc.assert(
       fc.property(fc.string(), (name) => {

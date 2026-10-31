@@ -9,8 +9,9 @@
 
 import { expect } from "bun:test";
 import type { AxeResults } from "axe-core";
+import type { ReadCallback, Services } from "i18next";
 import FluentBackend from "i18next-fluent-backend";
-import { axe } from "jest-axe";
+import { type AxeMatcherResult, axe, toHaveNoViolations } from "jest-axe";
 
 import {
   deriveThemeArtefacts,
@@ -54,10 +55,49 @@ export function rejectInvalidBackendArgument(): FluentBackend {
   return new FluentBackend(42);
 }
 
+/** The backend declaration accepts services, options, and read callbacks. */
+export function backendLifecycleContracts(services: Services, callback: ReadCallback): void {
+  const backend = new FluentBackend();
+  backend.init(services, { loadPath: "/locales/{{lng}}/{{ns}}.ftl" });
+  backend.read("en-GB", "common", callback);
+}
+
+/** Invalid backend lifecycle calls must not typecheck. */
+export function rejectInvalidBackendLifecycle(services: Services, callback: ReadCallback): void {
+  const backend = new FluentBackend();
+  // @ts-expect-error `init` requires the i18next services argument.
+  backend.init();
+  // @ts-expect-error `read` requires a read callback.
+  backend.read("en-GB", "common");
+  // @ts-expect-error `loadPath` must be a string.
+  backend.init(services, { loadPath: 42 });
+  void callback;
+}
+
 /** The `bun:test` augmentation exposes the project's custom matchers. */
 export function expectAccessibilityMatchers(element: HTMLElement, results: AxeResults): void {
   expect(element).toBeInTheDocument();
   expect(results).toHaveNoViolations();
+}
+
+/** The augmented matchers return the asserted value. */
+export function matcherReturnTypes(element: HTMLElement, results: AxeResults): void {
+  const returnedElement: HTMLElement = expect(element).toBeInTheDocument();
+  const returnedResults: AxeResults = expect(results).toHaveNoViolations();
+  void returnedElement;
+  void returnedResults;
+}
+
+/** The jest-axe matcher object returns a matcher result. */
+export function axeMatcherReturnType(results: AxeResults): AxeMatcherResult {
+  return toHaveNoViolations.toHaveNoViolations(results);
+}
+
+/** Matcher calls do not return `undefined`. */
+export function rejectUndefinedMatcherReturn(element: HTMLElement): void {
+  // @ts-expect-error the matcher returns the asserted element.
+  const ignored: undefined = expect(element).toBeInTheDocument();
+  void ignored;
 }
 
 /** The augmented matchers take no arguments. */
@@ -86,6 +126,19 @@ export function tokenHelperContracts(): readonly TokenValue[] {
     toFontArray("Inter, system-ui"),
     toTitleCase("vibe_coder-night"),
   ];
+}
+
+/** Optional token-helper arguments may be omitted. */
+export function omittedOptionalTokenArguments(): readonly string[] {
+  return [toFontArray().join(","), String(resolveReferences("{a}", new Map([["a", "b"]])))];
+}
+
+/** Optional arguments still reject values outside their declared types. */
+export function rejectInvalidOptionalTokenArguments(): void {
+  // @ts-expect-error the font list is an optional string, not null.
+  toFontArray(null);
+  // @ts-expect-error the reference stack is a set, not an array.
+  resolveReferences("{a}", new Map(), []);
 }
 
 /** Invalid token-helper usage must not typecheck. */
