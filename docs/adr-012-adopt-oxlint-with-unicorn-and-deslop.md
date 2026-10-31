@@ -111,6 +111,14 @@ One Deslop rule is configured rather than disabled for particular files:
   façade, and `src/global.d.ts`, whose ambient `declare module` block
   re-exports the test runner's types by design.
 
+One rule constrains how Oxlint itself is invoked rather than what it reports:
+
+- `deslop/no-duplicate-consts` keeps its cross-file state per JavaScript-plugin
+  worker, so the default worker count can miss a duplicate split across
+  workers. The `lint` and `oxlint` scripts therefore pass `--threads 1`, which
+  makes the result deterministic. The repository is small enough that the
+  single-worker run stays fast.
+
 No rule is disabled to accommodate TypeDoc or the `df12-lints` guidance.
 TypeDoc concerns documentation comments, and its requirements are satisfied by
 the existing documentation gate. Rules that a specific platform API makes
