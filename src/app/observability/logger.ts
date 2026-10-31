@@ -2,9 +2,6 @@
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
-/** Primitive values accepted in a structured log context. */
-type LogPrimitive = string | number | boolean | null;
-
 /**
  * A value that may be attached to a structured log context.
  *
@@ -13,7 +10,10 @@ type LogPrimitive = string | number | boolean | null;
  * caught values with {@link toError} before logging them.
  */
 export type LogValue =
-  | LogPrimitive
+  | string
+  | number
+  | boolean
+  | null
   | Error
   | readonly LogValue[]
   | { readonly [key: string]: LogValue };
@@ -30,7 +30,7 @@ interface LogEntry {
 }
 
 /**
- * Normalize a caught value to an {@link Error}.
+ * Normalize a caught value to an `Error`.
  *
  * JavaScript permits throwing any value, so `catch` bindings are typed
  * `unknown`. Logging and reporting need an `Error`; non-`Error` throws are
