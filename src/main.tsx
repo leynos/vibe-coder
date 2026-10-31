@@ -8,6 +8,7 @@ import "./i18n";
 
 import App from "./app/app";
 import { getDocumentBody } from "./app/dom/document-body";
+import { appLogger } from "./app/observability/logger";
 import "./index.css";
 
 /**
@@ -98,6 +99,10 @@ if (!isTestEnvironment) {
   // opaque TypeError from the property access below.
   const body = getDocumentBody();
   if (!body) {
+    appLogger.error("A document body is required to render the SPA.", {
+      operation: "bootstrap.mount",
+      reason: "missing-document-body",
+    });
     throw new Error("A document body is required to render the SPA.");
   }
 

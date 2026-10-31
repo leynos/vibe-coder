@@ -154,6 +154,29 @@ describe("check-hardcoded-strings", () => {
 
     expect(result.exitCode).toBe(0);
   });
+
+  it("rejects a configuration value of the wrong type", () => {
+    writeFixture(CONFIG_PATH, JSON.stringify({ hardcodedStrings: { minWordLength: "two" } }));
+    writeFixture("src/app/sample.tsx", classListModule(["flex"]));
+
+    const result = runScript(HARDCODED_STRINGS_SCRIPT);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain('Invalid type: Expected number but received "two"');
+  });
+
+  it("rejects a user-facing attribute list that is not an array", () => {
+    writeFixture(
+      CONFIG_PATH,
+      JSON.stringify({ hardcodedStrings: { userFacingAttributes: "aria-label" } }),
+    );
+    writeFixture("src/app/sample.tsx", classListModule(["flex"]));
+
+    const result = runScript(HARDCODED_STRINGS_SCRIPT);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("Invalid type: Expected Array but received");
+  });
 });
 
 describe("find-near-duplicate-classes", () => {
@@ -228,5 +251,38 @@ describe("find-near-duplicate-classes", () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).not.toContain("Repeated class stack found");
+  });
+
+  it("reports near-duplicate stacks independently of the occurrence count", () => {
+    writeFixture(
+      CONFIG_PATH,
+      JSON.stringify({
+        nearDuplicateClasses: {
+          failOnViolation: true,
+          maxJaccardDistance: 1,
+          minOccurrences: 3,
+        },
+      }),
+    );
+    writeFixture("src/app/one.tsx", classListModule(["flex", "items-center", "gap-2", "p-4"]));
+    writeFixture("src/app/two.tsx", classListModule(["flex", "items-center", "gap-2", "p-8"]));
+
+    const result = runScript(NEAR_DUPLICATE_SCRIPT);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Near-duplicate class stacks found");
+  });
+
+  it("rejects a configuration value of the wrong type", () => {
+    writeFixture(
+      CONFIG_PATH,
+      JSON.stringify({ nearDuplicateClasses: { minOccurrences: "three" } }),
+    );
+    writeFixture("src/app/one.tsx", classListModule(["flex"]));
+
+    const result = runScript(NEAR_DUPLICATE_SCRIPT);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain('Invalid type: Expected number but received "three"');
   });
 });

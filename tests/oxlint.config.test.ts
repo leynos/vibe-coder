@@ -7,11 +7,15 @@
  */
 
 import { describe, expect, it } from "bun:test";
+import { rmSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
 import { recommendedRules } from "ai-deslop";
 import * as v from "valibot";
 
 const CONFIG_PATH = ".oxlintrc.json";
 const PACKAGE_PATH = "package.json";
+const REPO_ROOT = path.resolve(import.meta.dir, "..");
 
 // Opt-in rules adopted alongside the plugin's recommended profile. The list
 // mirrors `docs/` in `ai-deslop` 0.4.9; `canonical-class-names` is deliberately
@@ -94,6 +98,33 @@ describe("Deslop rule coverage", () => {
     expect(severityOf(config.rules["unicorn/prefer-reflect-apply"] ?? "")).toBe("error");
     expect(severityOf(config.rules["deslop/no-reflect-apply"] ?? "")).toBe("off");
   });
+});
+
+describe("committed lint command", () => {
+  it("fails and names the rule when a source file violates it", () => {
+    const fixtureName = `lint-fixture-${process.pid}.ts`;
+    const fixturePath = path.join(REPO_ROOT, fixtureName);
+    // The fixture sits outside the paths Biome checks, so the committed
+    // `lint` command reaches Oxlint and reports the Unicorn violation.
+    writeFileSync(fixturePath, "export function lintFixture(): never {\n  throw new Error();\n}\n");
+
+    try {
+      const result = Bun.spawnSync([process.execPath, "run", "lint"], {
+        cwd: REPO_ROOT,
+        env: { ...process.env },
+        timeout: 120_000,
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+      const output = `${result.stdout.toString()}${result.stderr.toString()}`;
+
+      expect(result.exitCode).not.toBe(0);
+      expect(output).toContain("unicorn(error-message)");
+      expect(output).toContain(fixtureName);
+    } finally {
+      rmSync(fixturePath, { force: true });
+    }
+  }, 180_000);
 });
 
 describe("pinned tooling versions", () => {

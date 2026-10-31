@@ -11,6 +11,8 @@ import { describe, expect, it } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
+import fc from "fast-check";
+
 import {
   deriveThemeArtefacts,
   flattenLookup,
@@ -123,6 +125,112 @@ describe("token formatting helpers", () => {
   it("emits declarations in collated order", () => {
     expect(formatCssBlock(":root", { "--b": "2", "--a": "1" })).toBe(
       ":root {\n  --a: 1;\n  --b: 2;\n}\n",
+    );
+  });
+});
+
+/** A nested token twig whose leaves are strings. */
+type TokenTwig = string | { readonly [key: string]: TokenTwig };
+
+const tokenIdentifierArbitrary = fc.stringMatching(/^[a-z][a-z0-9]{0,5}$/u);
+const tokenLeafArbitrary = fc.string().map((value) => `leaf-${value}`);
+const cssDeclarationArbitrary = fc.dictionary(
+  fc.stringMatching(/^--[a-z][a-z0-9-]{0,7}$/u),
+  fc.string(),
+);
+
+/** Build nested token objects with a bounded depth. */
+function tokenTwigArbitrary(depth: number): fc.Arbitrary<TokenTwig> {
+  if (depth === 0) {
+    return tokenLeafArbitrary;
+  }
+
+  // Token sources come from `JSON.parse`, whose objects have the default
+  // prototype; fast-check's dictionaries use a null prototype, which the
+  // helpers intentionally do not treat as a token object.
+  const nestedTokens = fc
+    .dictionary(tokenIdentifierArbitrary, tokenTwigArbitrary(depth - 1), { maxKeys: 3 })
+    .map((value) => ({ ...value }));
+
+  return fc.oneof({ depthSize: "small" }, tokenLeafArbitrary, nestedTokens);
+}
+
+/** True for string primitives, matching the helper's own leaf predicate. */
+function isStringLeaf(value: TokenTwig): value is string {
+  return Object.prototype.toString.call(value) === "[object String]";
+}
+
+/** Collect the dotted leaf paths of a twig, mirroring `flattenLookup`. */
+function expectedLeaves(
+  twig: TokenTwig,
+  pathParts: readonly string[] = [],
+  target = new Map<string, string>(),
+): Map<string, string> {
+  if (isStringLeaf(twig)) {
+    if (pathParts.length > 0) {
+      target.set(pathParts.join("."), twig);
+    }
+    return target;
+  }
+
+  for (const [key, value] of Object.entries(twig)) {
+    expectedLeaves(value, [...pathParts, key], target);
+  }
+  return target;
+}
+
+describe("token helper properties", () => {
+  it("formats declarations independently of insertion order", () => {
+    fc.assert(
+      fc.property(cssDeclarationArbitrary, (decls) => {
+        const output = formatCssBlock(":root", decls);
+        const reversed = Object.fromEntries(Object.entries(decls).toReversed());
+
+        expect(output).toBe(formatCssBlock(":root", reversed));
+        for (const [key, value] of Object.entries(decls)) {
+          expect(output).toContain(`  ${key}: ${value};`);
+        }
+      }),
+    );
+  });
+
+  it("indexes every leaf of an arbitrary token tree", () => {
+    fc.assert(
+      fc.property(tokenTwigArbitrary(3), (twig) => {
+        const lookup = new Map<string, TokenValue>();
+        flattenLookup(twig, [], lookup);
+
+        expect(Object.fromEntries(lookup)).toEqual(Object.fromEntries(expectedLeaves(twig)));
+      }),
+    );
+  });
+
+  it("leaves reference-free values unchanged", () => {
+    fc.assert(
+      fc.property(tokenTwigArbitrary(3), (twig) => {
+        expect(resolveReferences(twig, new Map())).toEqual(twig);
+      }),
+    );
+  });
+
+  it("resolves a direct reference to the referenced leaf", () => {
+    fc.assert(
+      fc.property(tokenLeafArbitrary, (leaf) => {
+        const lookup = new Map<string, TokenValue>([["target", leaf]]);
+
+        expect(resolveReferences("{target}", lookup)).toBe(leaf);
+      }),
+    );
+  });
+
+  it("title-cases idempotently and removes separators", () => {
+    fc.assert(
+      fc.property(fc.string(), (name) => {
+        const titleCased = toTitleCase(name);
+
+        expect(toTitleCase(titleCased)).toBe(titleCased);
+        expect(titleCased).not.toMatch(/[_-]/u);
+      }),
     );
   });
 });

@@ -115,6 +115,28 @@ describe("i18n runtime configuration", () => {
     expect(readBodyDirection()).toBe("rtl");
   });
 
+  it("updates metadata when i18next reports a language change", () => {
+    i18n.emit("languageChanged", "ar");
+
+    expect(document.documentElement.lang).toBe("ar");
+    expect(document.documentElement.dir).toBe("rtl");
+    expect(readBodyDirection()).toBe("rtl");
+  });
+
+  it("leaves metadata untouched when the document has no root element", () => {
+    Object.defineProperty(document, "documentElement", {
+      configurable: true,
+      value: null,
+    });
+
+    try {
+      expect(() => applyDocumentLocale("ar")).not.toThrow();
+      expect(document.documentElement).toBeNull();
+    } finally {
+      Reflect.deleteProperty(document, "documentElement");
+    }
+  });
+
   it("maps an aborted locale fetch to a timeout response", async () => {
     const originalFetch = globalThis.fetch;
     // A thrown value can expose error-like `name` and `message` without being

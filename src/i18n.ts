@@ -5,7 +5,7 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import Fluent from "i18next-fluent";
 import FluentBackend from "i18next-fluent-backend";
 import { initReactI18next } from "react-i18next";
-import { getDocumentBody } from "./app/dom/document-body";
+import { getDocumentBody, getDocumentElement } from "./app/dom/document-body";
 import {
   DEFAULT_LOCALE,
   DETECTION_ORDER,
@@ -188,7 +188,11 @@ export const applyDocumentLocale = (language?: string): void => {
   const resolvedLanguage = language ?? metadata.code;
   const direction = getLocaleDirection(resolvedLanguage);
 
-  const htmlElement = document.documentElement;
+  // `lib.dom` declares `documentElement` as non-null, but a document being
+  // parsed can still lack one. Leave the metadata untouched in that case.
+  const htmlElement = getDocumentElement();
+  if (!htmlElement) return;
+
   htmlElement.lang = resolvedLanguage;
   htmlElement.dir = direction;
   htmlElement.setAttribute("data-direction", direction);

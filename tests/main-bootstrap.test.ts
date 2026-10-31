@@ -47,6 +47,8 @@ describe("SPA bootstrap", () => {
     const output = runBootstrap("globalThis.document = { body: null };");
 
     expect(output).toContain("error:A document body is required to render the SPA.");
+    expect(output).toContain('"operation":"bootstrap.mount"');
+    expect(output).toContain('"reason":"missing-document-body"');
   });
 
   it("reports a missing mount point with an actionable message", () => {
