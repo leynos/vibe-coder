@@ -30,8 +30,8 @@ describe("restricted package parity", () => {
       const override = getNoRestrictedImportsOverride(config, glob);
 
       expect(override.options.paths).toBeDefined();
-      expect(Object.keys(override.options.paths ?? {}).sort()).toEqual(
-        [...disallowed.keys()].sort(),
+      expect(Object.keys(override.options.paths ?? {}).toSorted()).toEqual(
+        [...disallowed.keys()].toSorted(),
       );
     });
   }

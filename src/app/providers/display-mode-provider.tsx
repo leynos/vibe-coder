@@ -3,7 +3,7 @@
 import type { JSX, ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { appLogger } from "../observability/logger";
+import { appLogger, toError } from "../observability/logger";
 
 const STORAGE_KEY = "vibecoder.displayMode";
 
@@ -41,53 +41,142 @@ export interface DisplayModeContextValue {
 
 const DisplayModeContext = createContext<DisplayModeContextValue | undefined>(undefined);
 
+/**
+ * Return whether the runtime exposes a DOM.
+ *
+ * The provider is safe to import during server-side rendering and in unit
+ * tests that do not install a DOM; in both cases storage and media-query
+ * access must be skipped rather than attempted.
+ */
 function canUseDOM(): boolean {
-  return typeof window !== "undefined" && typeof document !== "undefined";
+  return "window" in globalThis && "document" in globalThis;
 }
 
-// localStorage is accessed synchronously on the single JavaScript thread.
-// No explicit cross-provider locking is required.
+/**
+ * Read the persisted mode, or `null` when absent, invalid, or unreadable.
+ *
+ * localStorage is accessed synchronously on the single JavaScript thread, so
+ * no explicit cross-provider locking is required. A storage failure is logged
+ * and treated as "no stored preference" rather than propagated, because the
+ * provider must still render.
+ */
 function readStoredMode(): DisplayMode | null {
   if (!canUseDOM()) return null;
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
+    const stored = globalThis.localStorage.getItem(STORAGE_KEY);
     if (stored === "hosted" || stored === "full-browser") {
       return stored;
     }
     return null;
   } catch (error) {
-    appLogger.warn("Failed to read stored display mode", { key: STORAGE_KEY, error });
+    appLogger.warn("Failed to read stored display mode", {
+      key: STORAGE_KEY,
+      error: toError(error),
+    });
     return null;
   }
 }
 
+/**
+ * Persist an explicit user choice.
+ *
+ * Storage failures (quota exceeded, private mode) are logged and swallowed:
+ * the in-memory choice remains in force for the session.
+ */
 function persistMode(mode: DisplayMode) {
   if (!canUseDOM()) return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, mode);
+    globalThis.localStorage.setItem(STORAGE_KEY, mode);
   } catch (error) {
-    appLogger.warn("Failed to persist display mode preference", { key: STORAGE_KEY, mode, error });
+    appLogger.warn("Failed to persist display mode preference", {
+      key: STORAGE_KEY,
+      mode,
+      error: toError(error),
+    });
   }
 }
 
+/**
+ * Remove the persisted preference when the user resets to the viewport default.
+ *
+ * As with {@link persistMode}, a storage failure is logged rather than thrown
+ * so the reset still takes effect in memory.
+ */
 function clearPersistedMode() {
   if (!canUseDOM()) return;
   try {
-    window.localStorage.removeItem(STORAGE_KEY);
+    globalThis.localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
     // Removal failures leave the stored preference in place; log for diagnostics.
-    appLogger.warn("Failed to clear stored display mode", { key: STORAGE_KEY, error });
+    appLogger.warn("Failed to clear stored display mode", {
+      key: STORAGE_KEY,
+      error: toError(error),
+    });
   }
 }
 
-function matchMediaQuery(query: string): boolean {
-  if (!canUseDOM() || typeof window.matchMedia !== "function") {
+// The missing-API warning is emitted once per page load; a provider that
+// re-renders must not turn an unsupported runtime into a log flood.
+let hasWarnedMissingMatchMedia = false;
+
+/**
+ * Return the runtime's media-query API, or `undefined` when it is absent.
+ *
+ * The DOM library declares `matchMedia` as always present, so the union
+ * return type records the runtime reality that a few non-browser
+ * environments provide a DOM without it.
+ */
+function getMediaQueryMatcher(): typeof globalThis.matchMedia | undefined {
+  return globalThis.matchMedia;
+}
+
+/**
+ * Return whether the runtime exposes the media-query API.
+ *
+ * `matchMedia` is absent in a few non-browser runtimes. Without it the
+ * provider falls back to the desktop default instead of throwing during
+ * render, and reports the degraded mode once.
+ */
+function canUseMediaQuery(): boolean {
+  if (!canUseDOM()) {
     return false;
   }
-  const result = window.matchMedia(query);
-  return Boolean(result?.matches);
+  if (getMediaQueryMatcher() === undefined) {
+    if (!hasWarnedMissingMatchMedia) {
+      hasWarnedMissingMatchMedia = true;
+      appLogger.warn("Media query support is unavailable; using the default display mode", {
+        operation: "display-mode.detect",
+        fallback: DESKTOP_DEFAULT_MODE,
+      });
+    }
+    return false;
+  }
+  return true;
 }
 
+/**
+ * Evaluate a media query, treating an unsupported runtime as "no match".
+ *
+ * Reporting `false` keeps the caller on the desktop default instead of
+ * throwing during render.
+ */
+function matchMediaQuery(query: string): boolean {
+  if (!canUseMediaQuery()) {
+    return false;
+  }
+  const matcher = getMediaQueryMatcher();
+  if (matcher === undefined) {
+    return false;
+  }
+  return matcher(query).matches;
+}
+
+/**
+ * Infer the layout mode from the viewport width.
+ *
+ * Narrow viewports get the full-browser layout; everything else, including a
+ * runtime without `matchMedia`, gets the hosted default.
+ */
 function detectPreferredDisplayMode(): DisplayMode {
   const prefersMobileViewport = matchMediaQuery("(max-width: 768px)");
   if (prefersMobileViewport) {
@@ -136,7 +225,7 @@ export function DisplayModeProvider({ children }: DisplayModeProviderProps): JSX
   }, []);
 
   useEffect(() => {
-    if (!canUseDOM() || typeof window.matchMedia !== "function") {
+    if (!canUseMediaQuery()) {
       return;
     }
     if (hasUserPreference) {
@@ -145,38 +234,18 @@ export function DisplayModeProvider({ children }: DisplayModeProviderProps): JSX
 
     const evaluate = () => {
       setModeState((current) => {
-        if (hasUserPreference) {
-          return current;
-        }
         const detected = detectPreferredDisplayMode();
         return detected === current ? current : detected;
       });
     };
 
-    const widthQuery = window.matchMedia("(max-width: 768px)");
+    const widthQuery = globalThis.matchMedia("(max-width: 768px)");
 
     evaluate();
-
-    const listeners: Array<
-      [MediaQueryList, (event: MediaQueryList | MediaQueryListEvent) => void]
-    > = [[widthQuery, evaluate]];
-
-    listeners.forEach(([mediaQuery, listener]) => {
-      if (typeof mediaQuery.addEventListener === "function") {
-        mediaQuery.addEventListener("change", listener);
-      } else if (typeof mediaQuery.addListener === "function") {
-        mediaQuery.addListener(listener);
-      }
-    });
+    widthQuery.addEventListener("change", evaluate);
 
     return () => {
-      listeners.forEach(([mediaQuery, listener]) => {
-        if (typeof mediaQuery.removeEventListener === "function") {
-          mediaQuery.removeEventListener("change", listener);
-        } else if (typeof mediaQuery.removeListener === "function") {
-          mediaQuery.removeListener(listener);
-        }
-      });
+      widthQuery.removeEventListener("change", evaluate);
     };
   }, [hasUserPreference]);
 

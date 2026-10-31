@@ -87,10 +87,10 @@ export function renderApp(target: HTMLElement, props?: AppRootProps): Root {
   return root;
 }
 
-const isTestEnvironment = typeof process !== "undefined" && process.env?.NODE_ENV === "test";
+const isTestEnvironment = typeof process !== "undefined" && process.env.NODE_ENV === "test";
 
 if (!isTestEnvironment) {
-  const mount = document.body?.children.namedItem("root");
+  const mount = document.body.children.namedItem("root");
 
   if (!(mount instanceof HTMLElement)) {
     throw new Error("Mount point '#root' is required to render the SPA.");

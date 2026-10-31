@@ -8,7 +8,7 @@
 import { describe, expect, it, spyOn } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import path from "node:path";
 
 import type { BoundaryViolation, SourceFileInput } from "../scripts/import-boundaries";
 import { formatViolation, getSourceFiles, main } from "../scripts/lint-import-boundaries";
@@ -64,20 +64,26 @@ function buildViolation(overrides: Partial<BoundaryViolation> = {}): BoundaryVio
 
 describe("getSourceFiles", () => {
   it("scans every supported source extension from the project root", () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "vibe-coder-imports-"));
+    const projectRoot = mkdtempSync(path.join(tmpdir(), "vibe-coder-imports-"));
 
     try {
-      mkdirSync(join(projectRoot, "src/domain"), { recursive: true });
-      writeFileSync(join(projectRoot, "src/domain/model.ts"), "export const model = {};");
-      writeFileSync(join(projectRoot, "src/domain/view.tsx"), "export const View = () => null;");
-      writeFileSync(join(projectRoot, "src/domain/script.js"), "export const script = {};");
-      writeFileSync(join(projectRoot, "src/domain/view.jsx"), "export const View = () => null;");
-      writeFileSync(join(projectRoot, "src/domain/module.mts"), "export const module = {};");
-      writeFileSync(join(projectRoot, "src/domain/common.cts"), "export const common = {};");
+      mkdirSync(path.join(projectRoot, "src/domain"), { recursive: true });
+      writeFileSync(path.join(projectRoot, "src/domain/model.ts"), "export const model = {};");
+      writeFileSync(
+        path.join(projectRoot, "src/domain/view.tsx"),
+        "export const View = () => null;",
+      );
+      writeFileSync(path.join(projectRoot, "src/domain/script.js"), "export const script = {};");
+      writeFileSync(
+        path.join(projectRoot, "src/domain/view.jsx"),
+        "export const View = () => null;",
+      );
+      writeFileSync(path.join(projectRoot, "src/domain/module.mts"), "export const module = {};");
+      writeFileSync(path.join(projectRoot, "src/domain/common.cts"), "export const common = {};");
 
       const files = getSourceFiles(projectRoot);
 
-      expect(files.map((file) => file.path).sort()).toEqual([
+      expect(files.map((file) => file.path).toSorted()).toEqual([
         "src/domain/common.cts",
         "src/domain/model.ts",
         "src/domain/module.mts",
@@ -91,12 +97,12 @@ describe("getSourceFiles", () => {
   });
 
   it("throws and logs when a source file cannot be read", () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "vibe-coder-imports-err-"));
+    const projectRoot = mkdtempSync(path.join(tmpdir(), "vibe-coder-imports-err-"));
     const errorSpy = spyOn(console, "error").mockImplementation(() => {});
 
     try {
-      mkdirSync(join(projectRoot, "src/domain"), { recursive: true });
-      writeFileSync(join(projectRoot, "src/domain/model.ts"), "export const model = {};");
+      mkdirSync(path.join(projectRoot, "src/domain"), { recursive: true });
+      writeFileSync(path.join(projectRoot, "src/domain/model.ts"), "export const model = {};");
 
       expect(() =>
         getSourceFiles(projectRoot, () => {

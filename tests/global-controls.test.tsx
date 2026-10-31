@@ -1,3 +1,10 @@
+/**
+ * @file Behavioural tests for the global controls bar.
+ *
+ * Exercises language selection, theme switching, and display-mode controls
+ * through their user-visible labels rather than implementation details.
+ */
+
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { cleanup, screen, within } from "@testing-library/react";
 import { act } from "react";
@@ -8,12 +15,12 @@ import { renderWithProviders } from "./utils/render-with-providers";
 describe("GlobalControls", () => {
   beforeEach(() => {
     cleanup();
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
   });
 
   afterEach(() => {
     cleanup();
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
   });
 
   it("surfaces the hosted-mode controls stack by default", () => {

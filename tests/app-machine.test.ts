@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { createActor } from "xstate";
+import { createActor, type StateValue } from "xstate";
 import { createTestModel } from "xstate/graph";
 
 import { type AppMachineEvent, appMachine } from "../src/application";
@@ -23,12 +23,12 @@ type TransitionStep = {
   readonly state: string;
 };
 
-const snapshotValue = (value: unknown): string => {
-  if (typeof value === "string") {
-    return value;
+const snapshotValue = (value: StateValue): string => {
+  if (value instanceof Object) {
+    return JSON.stringify(value);
   }
 
-  return JSON.stringify(value);
+  return value;
 };
 
 const runTransitionPath = (events: readonly AppMachineEvent[]): TransitionStep[] => {

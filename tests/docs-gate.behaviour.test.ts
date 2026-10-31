@@ -11,12 +11,12 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import path from "node:path";
 
 /** Generous because TypeDoc loads the TypeScript compiler on every run. */
 const GATE_TIMEOUT_MS = 120_000;
 
-const TYPEDOC_BINARY = resolve("node_modules/typedoc/bin/typedoc");
+const TYPEDOC_BINARY = path.resolve("node_modules/typedoc/bin/typedoc");
 
 interface GateResult {
   exitCode: number;
@@ -27,8 +27,8 @@ interface GateResult {
 let projectRoot: string;
 
 beforeEach(() => {
-  projectRoot = mkdtempSync(join(tmpdir(), "vibe-coder-docs-gate-"));
-  mkdirSync(join(projectRoot, "src"));
+  projectRoot = mkdtempSync(path.join(tmpdir(), "vibe-coder-docs-gate-"));
+  mkdirSync(path.join(projectRoot, "src"));
 });
 
 afterEach(() => {
@@ -54,16 +54,16 @@ afterEach(() => {
  * ```
  */
 async function runGate(source: string): Promise<GateResult> {
-  const repositoryConfig = (await Bun.file("typedoc.json").json()) as Record<string, unknown>;
+  const repositoryConfig = await Bun.file("typedoc.json").json();
   const fixtureConfig = {
     ...repositoryConfig,
     tsconfig: "./tsconfig.json",
     entryPoints: ["src"],
   };
 
-  await Bun.write(join(projectRoot, "src/fixture.ts"), source);
+  await Bun.write(path.join(projectRoot, "src/fixture.ts"), source);
   await Bun.write(
-    join(projectRoot, "tsconfig.json"),
+    path.join(projectRoot, "tsconfig.json"),
     JSON.stringify({
       compilerOptions: {
         target: "es2022",
@@ -76,12 +76,12 @@ async function runGate(source: string): Promise<GateResult> {
       include: ["src"],
     }),
   );
-  await Bun.write(join(projectRoot, "typedoc.json"), JSON.stringify(fixtureConfig));
+  await Bun.write(path.join(projectRoot, "typedoc.json"), JSON.stringify(fixtureConfig));
   // TypeDoc resolves a symbol's owning package from the nearest package.json.
   // Without one it cannot tell whether a referenced type belongs to the
   // documented package, and the `notExported` validation never fires.
   await Bun.write(
-    join(projectRoot, "package.json"),
+    path.join(projectRoot, "package.json"),
     JSON.stringify({ name: "docs-gate-fixture", version: "0.0.0", private: true, type: "module" }),
   );
 

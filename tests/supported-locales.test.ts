@@ -1,3 +1,10 @@
+/**
+ * @file Tests for the supported-locale registry.
+ *
+ * Verifies locale metadata, the default locale, and right-to-left detection
+ * for the languages the application ships.
+ */
+
 import { describe, expect, it } from "bun:test";
 
 import {
@@ -14,7 +21,7 @@ describe("supported locale metadata", () => {
   });
 
   it("returns the default locale metadata when no code is provided", () => {
-    const metadata = getLocaleMetadata(undefined);
+    const metadata = getLocaleMetadata();
 
     expect(metadata.code).toBe(DEFAULT_LOCALE);
     expect(metadata.label).toBe(SUPPORTED_LOCALES[0].label);
@@ -45,7 +52,7 @@ describe("locale direction helpers", () => {
   });
 
   it("defaults to ltr when a locale is undefined or unsupported", () => {
-    expect(getLocaleDirection(undefined)).toBe("ltr");
+    expect(getLocaleDirection()).toBe("ltr");
     expect(isRtlLocale("xx")).toBe(false);
   });
 });

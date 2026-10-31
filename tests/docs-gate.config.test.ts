@@ -59,16 +59,13 @@ const REQUIRED_TO_BE_DOCUMENTED = [
   "TypeAlias",
 ] as const;
 
-const WorkflowSchema = v.object({
-  jobs: v.record(
-    v.string(),
-    v.object({
-      steps: v.optional(
-        v.array(v.object({ run: v.optional(v.string()), if: v.optional(v.string()) })),
-      ),
-    }),
-  ),
+const WorkflowStepSchema = v.object({
+  run: v.optional(v.string()),
+  if: v.optional(v.string()),
 });
+
+const WorkflowJobSchema = v.object({ steps: v.optional(v.array(WorkflowStepSchema)) });
+const WorkflowSchema = v.object({ jobs: v.record(v.string(), WorkflowJobSchema) });
 
 const PackageSchema = v.object({
   scripts: v.record(v.string(), v.string()),
@@ -134,7 +131,7 @@ describe("TypeDoc documentation gate wiring", () => {
     // to ignore the command's exit status, turning the target into a no-op
     // that still reports success.
     expect(recipeLines.map((line) => line.replace(/^\t@?/, ""))).toEqual([DOCS_CHECK_COMMAND]);
-    expect(recipeLines.filter((line) => /^\t-/.test(line))).toEqual([]);
+    expect(recipeLines.filter((line) => line.startsWith("\t-"))).toEqual([]);
   });
 
   it("pins typedoc so the gate's verdict is reproducible", async () => {
@@ -160,7 +157,7 @@ describe("TypeDoc documentation gate wiring", () => {
     expect(config.entryPointStrategy).toBe("expand");
     expect(config.tsconfig).toBe("tsconfig.typedoc.json");
     expect(config.commentStyle).toBe("jsdoc");
-    expect([...config.exclude].sort()).toEqual([...EXPECTED_EXCLUDES].sort());
+    expect([...config.exclude].toSorted()).toEqual([...EXPECTED_EXCLUDES].toSorted());
     expect(config.excludeExternals).toBe(true);
     expect(config.excludeInternal).toBe(true);
     expect(config.excludePrivate).toBe(true);
@@ -168,8 +165,8 @@ describe("TypeDoc documentation gate wiring", () => {
     // Compared as whole sets rather than by spot check: dropping a key would
     // silently restore TypeDoc's own default and weaken the gate.
     expect(config.validation).toEqual(EXPECTED_VALIDATION);
-    expect([...config.requiredToBeDocumented].sort()).toEqual(
-      [...REQUIRED_TO_BE_DOCUMENTED].sort(),
+    expect([...config.requiredToBeDocumented].toSorted()).toEqual(
+      [...REQUIRED_TO_BE_DOCUMENTED].toSorted(),
     );
     // Module headers carry both tags; TypeDoc knows `@module` but has to be
     // told about `@file`, or every barrel header warns.

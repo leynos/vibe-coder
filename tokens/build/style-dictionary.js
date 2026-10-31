@@ -30,27 +30,33 @@ const styleDictionary = new StyleDictionary({
   },
 });
 
-styleDictionary.buildPlatform("css");
+await styleDictionary.buildPlatform("css");
+
+/** Return true when the value is a non-array object (the shape used by tokens). */
+const isPlainObject = (value) => value instanceof Object && !Array.isArray(value);
+
+/** Return true for string primitives, without narrowing on `typeof`. */
+const isString = (value) => Object.prototype.toString.call(value) === "[object String]";
 
 function unwrap(input) {
-  if (input === null || typeof input !== "object") {
-    return input;
-  }
   if (Array.isArray(input)) {
-    return input.map(unwrap);
+    return input.map((entry) => unwrap(entry));
+  }
+  if (!isPlainObject(input)) {
+    return input;
   }
   if (Object.hasOwn(input, "value")) {
     return input.value;
   }
   return Object.fromEntries(
     Object.entries(input)
-      .sort(([a], [b]) => collator.compare(a, b))
+      .toSorted(([a], [b]) => collator.compare(a, b))
       .map(([key, value]) => [key, unwrap(value)]),
   );
 }
 
 function flattenLookup(node, pathParts, target) {
-  if (node === null || typeof node !== "object" || Array.isArray(node)) {
+  if (!isPlainObject(node)) {
     if (pathParts.length > 0) {
       target.set(pathParts.join("."), node);
     }
@@ -62,24 +68,10 @@ function flattenLookup(node, pathParts, target) {
 }
 
 function resolveReferences(input, lookup, stack = new Set()) {
-  if (typeof input === "string") {
-    const match = input.match(/^\{([^}]+)\}$/);
-    if (!match) {
-      return input;
-    }
-    const pathKey = match[1];
-    if (stack.has(pathKey)) {
-      throw new Error(`Circular token reference detected: ${[...stack, pathKey].join(" -> ")}`);
-    }
-    if (!lookup.has(pathKey)) {
-      throw new Error(`Unknown token reference "${pathKey}"`);
-    }
-    return resolveReferences(lookup.get(pathKey), lookup, new Set([...stack, pathKey]));
-  }
   if (Array.isArray(input)) {
     return input.map((value) => resolveReferences(value, lookup, new Set(stack)));
   }
-  if (input && typeof input === "object") {
+  if (isPlainObject(input)) {
     return Object.fromEntries(
       Object.entries(input).map(([key, value]) => [
         key,
@@ -87,7 +79,21 @@ function resolveReferences(input, lookup, stack = new Set()) {
       ]),
     );
   }
-  return input;
+  if (!isString(input)) {
+    return input;
+  }
+  const match = input.match(/^\{([^}]+)\}$/);
+  if (!match) {
+    return input;
+  }
+  const pathKey = match[1];
+  if (stack.has(pathKey)) {
+    throw new Error(`Circular token reference detected: ${[...stack, pathKey].join(" -> ")}`);
+  }
+  if (!lookup.has(pathKey)) {
+    throw new Error(`Unknown token reference "${pathKey}"`);
+  }
+  return resolveReferences(lookup.get(pathKey), lookup, new Set([...stack, pathKey]));
 }
 
 function toFontArray(fontList) {
@@ -101,7 +107,7 @@ function toFontArray(fontList) {
 
 function toTitleCase(name) {
   return name
-    .replace(/[_-]+/g, " ")
+    .replaceAll(/[_-]+/g, " ")
     .split(" ")
     .filter(Boolean)
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
@@ -116,7 +122,7 @@ function writeDistFile(relativePath, content) {
 
 function formatCssBlock(selector, declarations) {
   const lines = Object.entries(declarations)
-    .sort(([a], [b]) => collator.compare(a, b))
+    .toSorted(([a], [b]) => collator.compare(a, b))
     .map(([key, value]) => `  ${key}: ${value};`)
     .join("\n");
   return `${selector} {\n${lines}\n}\n`;
@@ -252,11 +258,12 @@ const fontFamilies = Object.fromEntries(
 const themeFiles = fs
   .readdirSync(fileURLToPath(THEMES_DIR_URL))
   .filter((fileName) => fileName.endsWith(".json"))
-  .sort((a, b) => collator.compare(a, b));
+  .toSorted((a, b) => collator.compare(a, b));
 
 const themes = themeFiles.map((fileName) => {
   const rawTheme = readJson(new URL(fileName, THEMES_DIR_URL));
-  const name = rawTheme.name ?? path.basename(fileName, ".json").toLowerCase().replace(/\s+/g, "-");
+  const name =
+    rawTheme.name ?? path.basename(fileName, ".json").toLowerCase().replaceAll(/\s+/g, "-");
   const meta = {
     name,
     displayName: rawTheme.displayName ?? toTitleCase(name),
@@ -291,7 +298,7 @@ const daisyPluginThemes = themes.map((theme) => {
   if (theme.meta.default) flags.push("--default");
   if (theme.meta.prefersDark) flags.push("--prefersdark");
   if (theme.meta.prefersLight) flags.push("--preferslight");
-  return `${theme.meta.name}${flags.length ? ` ${flags.join(" ")}` : ""}`;
+  return `${theme.meta.name}${flags.length > 0 ? ` ${flags.join(" ")}` : ""}`;
 });
 
 if (daisyPluginThemes.length > 0) {
@@ -311,18 +318,24 @@ for (const theme of themes) {
   tokensCss += `${formatCssBlock(selector, theme.cssVariables)}\n`;
   tokensCss += `@theme ${theme.meta.name} {\n`;
   tokensCss += Object.entries(theme.cssVariables)
-    .sort(([a], [b]) => collator.compare(a, b))
+    .toSorted(([a], [b]) => collator.compare(a, b))
     .map(([key, value]) => `  ${key}: ${value};`)
     .join("\n");
   tokensCss += "\n}\n\n";
 
-  const pluginDeclarations = {
-    name: `"${theme.meta.name}"`,
-    ...(theme.meta.default ? { default: "true" } : {}),
-    ...(theme.meta.prefersDark ? { prefersdark: "true" } : {}),
-    ...(theme.meta.prefersLight ? { preferslight: "true" } : {}),
-    ...(theme.meta.colorScheme ? { "color-scheme": theme.meta.colorScheme } : {}),
-  };
+  const pluginDeclarations = { name: `"${theme.meta.name}"` };
+  if (theme.meta.default) {
+    pluginDeclarations.default = "true";
+  }
+  if (theme.meta.prefersDark) {
+    pluginDeclarations.prefersdark = "true";
+  }
+  if (theme.meta.prefersLight) {
+    pluginDeclarations.preferslight = "true";
+  }
+  if (theme.meta.colorScheme) {
+    pluginDeclarations["color-scheme"] = theme.meta.colorScheme;
+  }
 
   tokensCss += '@plugin "daisyui/theme" {\n';
   tokensCss += Object.entries(pluginDeclarations)
@@ -332,7 +345,7 @@ for (const theme of themes) {
     tokensCss += "\n";
   }
   tokensCss += Object.entries(theme.coreVariables)
-    .sort(([a], [b]) => collator.compare(a, b))
+    .toSorted(([a], [b]) => collator.compare(a, b))
     .map(([key, value]) => `  ${key}: ${value};`)
     .join("\n");
   tokensCss += "\n}\n\n";

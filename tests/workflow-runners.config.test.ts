@@ -15,12 +15,12 @@ const HOSTED_RUNNER = "ubuntu-latest";
 const WORKFLOW_DIRECTORY = ".github/workflows";
 const ACTIONLINT_CONFIG = ".github/actionlint.yaml";
 
-const WorkflowSchema = v.object({
-  jobs: v.record(
-    v.string(),
-    v.object({ "runs-on": v.optional(v.string()), uses: v.optional(v.string()) }),
-  ),
+const JobSchema = v.object({
+  "runs-on": v.optional(v.string()),
+  uses: v.optional(v.string()),
 });
+
+const WorkflowSchema = v.object({ jobs: v.record(v.string(), JobSchema) });
 
 describe("Workflow runner contracts", () => {
   it("runs the Pages build, Pages deployment, and semantic lint jobs on the hosted runner", async () => {
@@ -30,9 +30,8 @@ describe("Workflow runner contracts", () => {
   });
 
   it("assigns every job in every workflow to the hosted runner", async () => {
-    const workflowFiles = (await readdir(WORKFLOW_DIRECTORY)).filter((name) =>
-      /\.ya?ml$/.test(name),
-    );
+    const entries = await readdir(WORKFLOW_DIRECTORY);
+    const workflowFiles = entries.filter((name) => /\.ya?ml$/.test(name));
 
     expect(workflowFiles.length).toBeGreaterThan(0);
 

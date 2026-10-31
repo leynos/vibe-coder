@@ -4,12 +4,13 @@
 
 import { afterEach, describe, expect, it } from "bun:test";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import path from "node:path";
+import * as v from "valibot";
 
-import { type BiomeConfig, parseJsonc } from "./biome-config-helpers";
+import { parseJsonc } from "./biome-config-helpers";
 
 const FIXTURE_ROOT = "tmp/biome-boundary-check";
-const BOUNDARY_LAYER_PATTERNS = ["src/domain/**", "src/application/**"] as const;
+const BOUNDARY_LAYER_PATTERNS = new Set<string>(["src/domain/**", "src/application/**"]);
 const RESTRICTED_PACKAGE_FIXTURES = [
   {
     file: "src/domain/forbidden-react.ts",
@@ -71,32 +72,32 @@ describe("Biome noRestrictedImports boundary enforcement", () => {
   });
 
   it("rejects forbidden layer imports without matching unrelated packages", async () => {
-    mkdirSync(join(FIXTURE_ROOT, "src/domain"), { recursive: true });
-    mkdirSync(join(FIXTURE_ROOT, "src/application"), { recursive: true });
-    writeFileSync(join(FIXTURE_ROOT, "biome.jsonc"), buildFixtureBiomeConfig());
+    mkdirSync(path.join(FIXTURE_ROOT, "src/domain"), { recursive: true });
+    mkdirSync(path.join(FIXTURE_ROOT, "src/application"), { recursive: true });
+    writeFileSync(path.join(FIXTURE_ROOT, "biome.jsonc"), buildFixtureBiomeConfig());
     for (const fixture of FORBIDDEN_LAYER_FIXTURES) {
-      writeFileSync(join(FIXTURE_ROOT, fixture.file), `import "${fixture.importPath}";\n`);
+      writeFileSync(path.join(FIXTURE_ROOT, fixture.file), `import "${fixture.importPath}";\n`);
     }
     writeFileSync(
-      join(FIXTURE_ROOT, "src/application/forbidden-by-src-path.ts"),
+      path.join(FIXTURE_ROOT, "src/application/forbidden-by-src-path.ts"),
       'import "src/adapters/audio/x";\n',
     );
     writeFileSync(
-      join(FIXTURE_ROOT, "src/domain/forbidden-by-relative-adapter.ts"),
+      path.join(FIXTURE_ROOT, "src/domain/forbidden-by-relative-adapter.ts"),
       'import "../adapters/audio/x";\n',
     );
-    mkdirSync(join(FIXTURE_ROOT, "src/domain/rules"), { recursive: true });
+    mkdirSync(path.join(FIXTURE_ROOT, "src/domain/rules"), { recursive: true });
     writeFileSync(
-      join(FIXTURE_ROOT, "src/domain/rules/forbidden-by-deep-relative-application.ts"),
+      path.join(FIXTURE_ROOT, "src/domain/rules/forbidden-by-deep-relative-application.ts"),
       'import "../../application/commands/x";\n',
     );
     for (const fixture of RESTRICTED_PACKAGE_FIXTURES) {
-      writeFileSync(join(FIXTURE_ROOT, fixture.file), `import "${fixture.importPath}";\n`);
+      writeFileSync(path.join(FIXTURE_ROOT, fixture.file), `import "${fixture.importPath}";\n`);
     }
-    writeFileSync(join(FIXTURE_ROOT, "src/domain/other.ts"), "export const other = 1;\n");
-    writeFileSync(join(FIXTURE_ROOT, "src/domain/allowed.ts"), 'import "./other";\n');
+    writeFileSync(path.join(FIXTURE_ROOT, "src/domain/other.ts"), "export const other = 1;\n");
+    writeFileSync(path.join(FIXTURE_ROOT, "src/domain/allowed.ts"), 'import "./other";\n');
     writeFileSync(
-      join(FIXTURE_ROOT, "src/domain/third-party-name-collision.ts"),
+      path.join(FIXTURE_ROOT, "src/domain/third-party-name-collision.ts"),
       'import "some-pkg-with-adapters-in-name";\n',
     );
 
@@ -107,9 +108,9 @@ describe("Biome noRestrictedImports boundary enforcement", () => {
     });
 
     expect(result.exitCode).not.toBe(0);
-    const report = JSON.parse(result.stdout.toString()) as BiomeJsonReport;
+    const report = v.parse(BiomeJsonReportSchema, JSON.parse(result.stdout.toString()));
     const diagnostics = report.diagnostics.map((diagnostic) => ({
-      file: getDiagnosticPath(diagnostic),
+      file: diagnostic.location?.path,
       message: diagnostic.message,
     }));
 
@@ -149,26 +150,20 @@ describe("Biome noRestrictedImports boundary enforcement", () => {
   });
 });
 
-interface BiomeJsonReport {
-  readonly diagnostics: ReadonlyArray<{
-    readonly description: string;
-    readonly message: string;
-    readonly location?: {
-      readonly path?: string | { readonly file?: string };
-    };
-  }>;
-}
+const FILE_LOCATION_SCHEMA = v.object({ file: v.optional(v.string()) });
+const FILE_PATH_SCHEMA = v.pipe(
+  FILE_LOCATION_SCHEMA,
+  v.transform((entry) => entry.file),
+);
+const DiagnosticPathSchema = v.union([v.string(), FILE_PATH_SCHEMA]);
 
-/**
- * Extract the file path from one Biome JSON diagnostic.
- *
- * @param diagnostic - Diagnostic emitted by `biome lint --reporter=json`.
- * @returns The repository-relative fixture path when Biome reports one.
- */
-function getDiagnosticPath(diagnostic: BiomeJsonReport["diagnostics"][number]): string | undefined {
-  const path = diagnostic.location?.path;
-  return typeof path === "string" ? path : path?.file;
-}
+const DiagnosticLocationSchema = v.object({ path: v.optional(DiagnosticPathSchema) });
+const DiagnosticSchema = v.object({
+  message: v.string(),
+  location: v.optional(DiagnosticLocationSchema),
+});
+
+const BiomeJsonReportSchema = v.object({ diagnostics: v.array(DiagnosticSchema) });
 
 /**
  * Build a fixture-local Biome config that keeps only the boundary overrides.
@@ -176,9 +171,7 @@ function getDiagnosticPath(diagnostic: BiomeJsonReport["diagnostics"][number]): 
  * @returns A JSON config string rooted at the temporary fixture tree.
  */
 function buildFixtureBiomeConfig(): string {
-  const config = parseJsonc(readFileSync("biome.jsonc", "utf8")) as BiomeConfig & {
-    readonly $schema?: string;
-  };
+  const config = parseJsonc(readFileSync("biome.jsonc", "utf8"));
 
   return `${JSON.stringify(
     {
@@ -194,9 +187,7 @@ function buildFixtureBiomeConfig(): string {
         },
       },
       overrides: config.overrides?.filter((override) =>
-        override.includes?.some((include) =>
-          BOUNDARY_LAYER_PATTERNS.includes(include as (typeof BOUNDARY_LAYER_PATTERNS)[number]),
-        ),
+        override.includes?.some((include) => BOUNDARY_LAYER_PATTERNS.has(include)),
       ),
     },
     null,

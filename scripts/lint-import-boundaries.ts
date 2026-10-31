@@ -1,7 +1,7 @@
 /** @file CLI wrapper for the source import-boundary guard. */
 
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import path from "node:path";
 
 import {
   type BoundaryCheckOptions,
@@ -70,15 +70,15 @@ export function getSourceFiles(
   readSourceFile: ReadSourceFile = readFileSync,
 ): SourceFileInput[] {
   const glob = new Bun.Glob(SOURCE_GLOB);
-  return Array.from(glob.scanSync({ cwd: projectRoot })).map((path) => {
+  return [...glob.scanSync({ cwd: projectRoot })].map((relativePath) => {
     try {
       return {
-        path,
-        sourceText: readSourceFile(resolve(projectRoot, path), "utf8"),
+        path: relativePath,
+        sourceText: readSourceFile(path.resolve(projectRoot, relativePath), "utf8"),
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error(`getSourceFiles failed to read ${path}: ${message}`);
+      const message = getErrorMessage(error);
+      console.error(`getSourceFiles failed to read ${relativePath}: ${message}`);
       throw error;
     }
   });
@@ -168,14 +168,20 @@ export function main(dependencies: LintImportBoundaryDependencies = {}): number 
 /**
  * Return a stable category for an unknown failure value.
  *
+ * Non-`Error` values are categorized by their built-in type tag, which keeps
+ * the diagnostic stable without narrowing on an unparsed representation.
+ *
  * @example
  * ```ts
  * getErrorCategory(new TypeError("bad input")); // "TypeError"
- * getErrorCategory("bad input"); // "string"
+ * getErrorCategory("bad input"); // "String"
  * ```
  */
-function getErrorCategory(error: unknown): string {
-  return error instanceof Error ? error.name : typeof error;
+function getErrorCategory(cause: unknown): string {
+  if (cause instanceof Error) {
+    return cause.name;
+  }
+  return Object.prototype.toString.call(cause).slice("[object ".length, -1);
 }
 
 /**
@@ -187,8 +193,8 @@ function getErrorCategory(error: unknown): string {
  * getErrorMessage("scan failed"); // "scan failed"
  * ```
  */
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+function getErrorMessage(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause);
 }
 
 if (import.meta.main) {

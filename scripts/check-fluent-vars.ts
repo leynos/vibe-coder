@@ -5,7 +5,8 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
-import { parse, type Resource } from "@fluent/syntax";
+import * as AST from "@fluent/syntax";
+import { parse, type Resource, Visitor } from "@fluent/syntax";
 
 type PlaceholderReport = {
   vars: Set<string>;
@@ -41,36 +42,34 @@ function listFtlFiles(locale: string): string[] {
   return files;
 }
 
-function collectVariableNames(node: unknown, vars: Set<string>): void {
-  if (!node || typeof node !== "object") {
-    return;
-  }
+/** Collects `$variable` references from a Fluent AST subtree. */
+class VariableCollector extends Visitor {
+  readonly vars = new Set<string>();
 
-  if (Array.isArray(node)) {
-    node.forEach((child) => collectVariableNames(child, vars));
-    return;
+  override visitVariableReference(node: AST.VariableReference): void {
+    this.vars.add(node.id.name);
   }
+}
 
-  // Fluent AST nodes store variable usages as VariableReference entries with an id name.
-  if ((node as { type?: string }).type === "VariableReference") {
-    const name = (node as { id?: { name?: string } }).id?.name;
-    if (name) {
-      vars.add(name);
-    }
+function collectVariableNames(node: AST.BaseNode | null, vars: Set<string>): void {
+  if (!node) return;
+  const collector = new VariableCollector();
+  collector.visit(node);
+  for (const name of collector.vars) {
+    vars.add(name);
   }
+}
 
-  for (const value of Object.values(node)) {
-    if (typeof value === "object" && value !== null) {
-      collectVariableNames(value, vars);
-    }
-  }
+/** Render a caught value as a message without assuming it is an `Error`. */
+function describeError(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause);
 }
 
 function parseResource(contents: string, filePath: string): Resource | undefined {
   try {
-    return parse(contents);
+    return parse(contents, {});
   } catch (error) {
-    console.error(`[ftl-vars] Unable to parse ${filePath}:`, (error as Error).message);
+    console.error(`[ftl-vars] Unable to parse ${filePath}:`, describeError(error));
     process.exitCode = 1;
     return undefined;
   }
@@ -92,12 +91,12 @@ function readLocalePlaceholders(locale: string): Map<string, PlaceholderReport> 
 
     resource.body.forEach((entry) => {
       if (entry.type !== "Message" && entry.type !== "Term") return;
-      const id = entry.id?.name;
+      const id = entry.id.name;
       if (!id) return;
 
       const vars = results.get(id)?.vars ?? new Set<string>();
       collectVariableNames(entry.value, vars);
-      entry.attributes?.forEach((attr) => collectVariableNames(attr.value, vars));
+      entry.attributes.forEach((attr) => collectVariableNames(attr.value, vars));
 
       const ignore = shouldIgnoreEntry(entry) || results.get(id)?.ignore === true;
       results.set(id, { vars, ignore });
@@ -105,6 +104,48 @@ function readLocalePlaceholders(locale: string): Map<string, PlaceholderReport> 
   });
 
   return results;
+}
+
+type PlaceholderMismatch = {
+  locale: string;
+  id: string;
+  missing: readonly string[];
+  extra: readonly string[];
+};
+
+function findPlaceholderMismatches(
+  locale: string,
+  baseMap: ReadonlyMap<string, PlaceholderReport>,
+): PlaceholderMismatch[] {
+  const localeMap = readLocalePlaceholders(locale);
+  const mismatches: PlaceholderMismatch[] = [];
+
+  baseMap.forEach((baseEntry, id) => {
+    if (baseEntry.ignore) return;
+    const target = localeMap.get(id);
+    if (!target || target.ignore) return;
+
+    const missing = [...baseEntry.vars].filter((name) => !target.vars.has(name));
+    const extra = [...target.vars].filter((name) => !baseEntry.vars.has(name));
+
+    if (missing.length > 0 || extra.length > 0) {
+      mismatches.push({ locale, id, missing, extra });
+    }
+  });
+
+  return mismatches;
+}
+
+function reportMismatch(mismatch: PlaceholderMismatch): void {
+  console.error(
+    `[ftl-vars] ${mismatch.locale}:${mismatch.id} placeholder mismatch vs ${BASE_LOCALE}`,
+  );
+  if (mismatch.missing.length > 0) {
+    console.error(`  missing: ${mismatch.missing.map((name) => `$${name}`).join(", ")}`);
+  }
+  if (mismatch.extra.length > 0) {
+    console.error(`  extra:   ${mismatch.extra.map((name) => `$${name}`).join(", ")}`);
+  }
 }
 
 function main(): void {
@@ -121,33 +162,15 @@ function main(): void {
 
   const baseMap = readLocalePlaceholders(BASE_LOCALE);
   const comparisonLocales = locales.filter((locale) => locale !== BASE_LOCALE);
-  let hasMismatch = false;
+  const mismatches = comparisonLocales.flatMap((locale) =>
+    findPlaceholderMismatches(locale, baseMap),
+  );
 
-  comparisonLocales.forEach((locale) => {
-    const localeMap = readLocalePlaceholders(locale);
+  for (const mismatch of mismatches) {
+    reportMismatch(mismatch);
+  }
 
-    baseMap.forEach((baseEntry, id) => {
-      if (baseEntry.ignore) return;
-      const target = localeMap.get(id);
-      if (!target || target.ignore) return;
-
-      const missing = [...baseEntry.vars].filter((name) => !target.vars.has(name));
-      const extra = [...target.vars].filter((name) => !baseEntry.vars.has(name));
-
-      if (missing.length === 0 && extra.length === 0) return;
-
-      hasMismatch = true;
-      console.error(`[ftl-vars] ${locale}:${id} placeholder mismatch vs ${BASE_LOCALE}`);
-      if (missing.length) {
-        console.error(`  missing: ${missing.map((name) => `$${name}`).join(", ")}`);
-      }
-      if (extra.length) {
-        console.error(`  extra:   ${extra.map((name) => `$${name}`).join(", ")}`);
-      }
-    });
-  });
-
-  if (hasMismatch || process.exitCode) {
+  if (mismatches.length > 0 || process.exitCode) {
     console.error("[ftl-vars] Placeholder validation failed");
     process.exit(1);
   } else {

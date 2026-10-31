@@ -1,3 +1,11 @@
+/**
+ * @file Accessibility tests for the global controls bar.
+ *
+ * Runs axe against the rendered controls and exercises keyboard-only
+ * operation, complementing the behavioural suite in
+ * `global-controls.test.tsx`.
+ */
+
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -8,11 +16,11 @@ import { renderWithProviders } from "./utils/render-with-providers";
 
 describe("GlobalControls accessibility", () => {
   beforeEach(() => {
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
   });
 
   afterEach(() => {
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
   });
 
   it("meets axe rules in the default hosted mode", async () => {
