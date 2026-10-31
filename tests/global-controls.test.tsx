@@ -8,12 +8,12 @@ import { renderWithProviders } from "./utils/render-with-providers";
 describe("GlobalControls", () => {
   beforeEach(() => {
     cleanup();
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
   });
 
   afterEach(() => {
     cleanup();
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
   });
 
   it("surfaces the hosted-mode controls stack by default", () => {

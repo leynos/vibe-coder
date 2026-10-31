@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   plugins: ["stylelint-declaration-strict-value"],
   rules: {
     "color-no-hex": true,
@@ -12,7 +12,7 @@ module.exports = {
         "fill",
         "stroke",
       ],
-      { ignoreValues: ["transparent", "currentColor", "/^var\\(--/"] },
+      { ignoreValues: ["transparent", "currentColor", String.raw`/^var\(--/`] },
     ],
     "declaration-no-important": true,
     "declaration-property-unit-disallowed-list": {

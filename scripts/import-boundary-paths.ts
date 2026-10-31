@@ -1,6 +1,6 @@
 /** @file Path and parser helpers for import-boundary checks. */
 
-import { isAbsolute, normalize, relative, sep } from "node:path";
+import path from "node:path";
 
 import ts from "typescript";
 
@@ -26,8 +26,10 @@ export const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx"] 
  * getScriptKind("file.ts"); // ts.ScriptKind.TS
  * ```
  */
-export function getScriptKind(path: string): ts.ScriptKind {
-  return path.endsWith(".tsx") || path.endsWith(".jsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
+export function getScriptKind(filePath: string): ts.ScriptKind {
+  return filePath.endsWith(".tsx") || filePath.endsWith(".jsx")
+    ? ts.ScriptKind.TSX
+    : ts.ScriptKind.TS;
 }
 
 /**
@@ -42,17 +44,17 @@ export function getScriptKind(path: string): ts.ScriptKind {
  * // "src/domain/model.ts"
  * ```
  */
-export function normalizeForComparison(path: string, basePath: string | undefined): string {
-  if (isAbsolute(path)) {
+export function normalizeForComparison(sourcePath: string, basePath: string | undefined): string {
+  if (path.isAbsolute(sourcePath)) {
     if (!basePath) {
       throw new Error(
         "normalizeForComparison: basePath is required when path is absolute; " +
           "supply it via BoundaryCheckOptions.basePath",
       );
     }
-    return normalize(relative(basePath, path)).split(sep).join("/");
+    return path.normalize(path.relative(basePath, sourcePath)).split(path.sep).join("/");
   }
-  return normalize(path).split(sep).join("/");
+  return path.normalize(sourcePath).split(path.sep).join("/");
 }
 
 /**

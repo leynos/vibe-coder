@@ -8,11 +8,11 @@ import { renderWithProviders } from "./utils/render-with-providers";
 
 describe("GlobalControls accessibility", () => {
   beforeEach(() => {
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
   });
 
   afterEach(() => {
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
   });
 
   it("meets axe rules in the default hosted mode", async () => {

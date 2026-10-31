@@ -8,13 +8,11 @@ import * as v from "valibot";
 
 import { PATH_ALIASES } from "../tools/path-aliases";
 
-const TsConfigSchema = v.object({
-  compilerOptions: v.optional(
-    v.object({
-      paths: v.optional(v.record(v.string(), v.array(v.string()))),
-    }),
-  ),
-});
+const STRING_ARRAY_SCHEMA = v.array(v.string());
+const PATHS_SCHEMA = v.record(v.string(), STRING_ARRAY_SCHEMA);
+
+const CompilerOptionsSchema = v.object({ paths: v.optional(PATHS_SCHEMA) });
+const TsConfigSchema = v.object({ compilerOptions: v.optional(CompilerOptionsSchema) });
 
 describe("PATH_ALIASES", () => {
   it("matches tsconfig compilerOptions.paths", async () => {

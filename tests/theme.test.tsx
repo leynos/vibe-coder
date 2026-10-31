@@ -29,9 +29,9 @@ function ThemeProbe(): JSX.Element {
 function findStorageKeysForValue(value: string): string[] {
   const matches: string[] = [];
 
-  for (let index = 0; index < window.localStorage.length; index += 1) {
-    const key = window.localStorage.key(index);
-    if (key && window.localStorage.getItem(key) === value) {
+  for (let index = 0; index < globalThis.localStorage.length; index += 1) {
+    const key = globalThis.localStorage.key(index);
+    if (key && globalThis.localStorage.getItem(key) === value) {
       matches.push(key);
     }
   }
@@ -42,14 +42,14 @@ function findStorageKeysForValue(value: string): string[] {
 describe("ThemeProvider", () => {
   beforeEach(() => {
     cleanup();
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
     document.documentElement.removeAttribute("data-theme");
     document.body.removeAttribute("data-theme");
   });
 
   afterEach(() => {
     cleanup();
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
     document.documentElement.removeAttribute("data-theme");
     document.body.removeAttribute("data-theme");
   });
@@ -61,7 +61,7 @@ describe("ThemeProvider", () => {
       </ThemeProvider>,
     );
 
-    const currentTheme = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    const currentTheme = screen.getByRole("status", { name: /current theme/i }).textContent;
 
     expect(currentTheme.length).toBeGreaterThan(0);
     expect(document.documentElement.getAttribute("data-theme")).toBe(currentTheme);
@@ -69,7 +69,7 @@ describe("ThemeProvider", () => {
   });
 
   it("migrates a legacy vibecoder.theme key to vibe-coder.theme on mount", () => {
-    window.localStorage.setItem("vibecoder.theme", "vibecoder-night");
+    globalThis.localStorage.setItem("vibecoder.theme", "vibecoder-night");
 
     render(
       <ThemeProvider>
@@ -77,14 +77,14 @@ describe("ThemeProvider", () => {
       </ThemeProvider>,
     );
 
-    expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-night");
-    expect(window.localStorage.getItem("vibecoder.theme")).toBeNull();
-    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    expect(globalThis.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-night");
+    expect(globalThis.localStorage.getItem("vibecoder.theme")).toBeNull();
+    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent;
     expect(displayed).toBe("vibe-coder-night");
   });
 
   it("migrates a legacy vibecoder-day theme value on mount", () => {
-    window.localStorage.setItem("vibecoder.theme", "vibecoder-day");
+    globalThis.localStorage.setItem("vibecoder.theme", "vibecoder-day");
 
     render(
       <ThemeProvider>
@@ -92,14 +92,14 @@ describe("ThemeProvider", () => {
       </ThemeProvider>,
     );
 
-    expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-day");
-    expect(window.localStorage.getItem("vibecoder.theme")).toBeNull();
-    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    expect(globalThis.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-day");
+    expect(globalThis.localStorage.getItem("vibecoder.theme")).toBeNull();
+    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent;
     expect(displayed).toBe("vibe-coder-day");
   });
 
   it("falls back to the default theme when the legacy value has no mapping", () => {
-    window.localStorage.setItem("vibecoder.theme", "vibecoder-unknown");
+    globalThis.localStorage.setItem("vibecoder.theme", "vibecoder-unknown");
 
     render(
       <ThemeProvider>
@@ -107,14 +107,14 @@ describe("ThemeProvider", () => {
       </ThemeProvider>,
     );
 
-    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent;
     expect(displayed).toBe("vibe-coder-night");
-    expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-night");
-    expect(window.localStorage.getItem("vibecoder.theme")).toBeNull();
+    expect(globalThis.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-night");
+    expect(globalThis.localStorage.getItem("vibecoder.theme")).toBeNull();
   });
 
   it("falls back to the default theme when storage holds an unsupported value", () => {
-    window.localStorage.setItem("vibe-coder.theme", "hax");
+    globalThis.localStorage.setItem("vibe-coder.theme", "hax");
 
     render(
       <ThemeProvider>
@@ -122,16 +122,16 @@ describe("ThemeProvider", () => {
       </ThemeProvider>,
     );
 
-    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    const displayed = screen.getByRole("status", { name: /current theme/i }).textContent;
     expect(displayed).toBe("vibe-coder-night");
-    expect(window.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-night");
+    expect(globalThis.localStorage.getItem("vibe-coder.theme")).toBe("vibe-coder-night");
   });
 
   it("sets data-theme to a supported value for every available theme", () => {
     const availableThemes = ["vibe-coder-night", "vibe-coder-day"] as const;
 
     for (const themeName of availableThemes) {
-      window.localStorage.setItem("vibe-coder.theme", themeName);
+      globalThis.localStorage.setItem("vibe-coder.theme", themeName);
       const { unmount } = render(
         <ThemeProvider>
           <ThemeProbe />
@@ -143,7 +143,7 @@ describe("ThemeProvider", () => {
       expect(bodyAttr).toBe(themeName);
       unmount();
       cleanup();
-      window.localStorage.clear();
+      globalThis.localStorage.clear();
       document.documentElement.removeAttribute("data-theme");
     }
   });
@@ -161,13 +161,13 @@ describe("ThemeProvider", () => {
       </ThemeProvider>,
     );
 
-    const initialTheme = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    const initialTheme = screen.getByRole("status", { name: /current theme/i }).textContent;
 
     act(() => {
       screen.getByRole("button", { name: /switch theme/i }).click();
     });
 
-    const updatedTheme = screen.getByRole("status", { name: /current theme/i }).textContent ?? "";
+    const updatedTheme = screen.getByRole("status", { name: /current theme/i }).textContent;
 
     expect(updatedTheme).not.toBe(initialTheme);
     expect(document.documentElement.getAttribute("data-theme")).toBe(updatedTheme);

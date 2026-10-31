@@ -30,13 +30,31 @@ declare global {
   }
 }
 
-expect.extend(toHaveNoViolations as unknown as Parameters<typeof expect.extend>[0]);
+// SAFETY: Vitest widens matcher inputs to `unknown`; the jest-axe matcher is
+// only invoked with the axe results produced by `axe(...)` in tests.
+expect.extend(toHaveNoViolations as Parameters<typeof expect.extend>[0]);
 
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT =
-  true;
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
-if (typeof window !== "undefined" && !window.matchMedia) {
-  window.matchMedia = (query: string): MediaQueryList => {
+type LegacyMediaQueryListener = (this: MediaQueryList, ev: MediaQueryListEvent) => void;
+
+/** Adapt either modern or legacy listener shapes to a single handler. */
+const toEventListener = (
+  listener: EventListenerOrEventListenerObject,
+): ((event: MediaQueryListEvent) => void) => {
+  if ("handleEvent" in listener) {
+    return (event) => listener.handleEvent(event);
+  }
+  return listener;
+};
+
+/** Install a deterministic `matchMedia` stub when the environment lacks one. */
+const installMatchMediaStub = (): void => {
+  if ("matchMedia" in globalThis) {
+    return;
+  }
+
+  globalThis.matchMedia = (query: string): MediaQueryList => {
     const matches = false;
     const coreListeners = new Set<(event: MediaQueryListEvent) => void>();
     const eventListenerMap = new Map<
@@ -44,36 +62,26 @@ if (typeof window !== "undefined" && !window.matchMedia) {
       (event: MediaQueryListEvent) => void
     >();
     const legacyListenerMap = new Map<
-      (this: MediaQueryList, ev: MediaQueryListEvent) => unknown,
+      LegacyMediaQueryListener,
       (event: MediaQueryListEvent) => void
     >();
 
-    const toEventListener = (
-      listener: EventListenerOrEventListenerObject,
-    ): ((event: MediaQueryListEvent) => void) => {
-      if (typeof listener === "function") {
-        return listener as (event: MediaQueryListEvent) => void;
-      }
-      if (typeof listener.handleEvent === "function") {
-        return (event) => listener.handleEvent(event);
-      }
-      return () => undefined;
-    };
-
-    const notify = (event: MediaQueryListEvent) => {
+    const notify = (event: MediaQueryListEvent): void => {
       for (const listener of coreListeners) {
         listener(event);
       }
     };
 
-    const registerEventListener = (listener?: EventListenerOrEventListenerObject | null) => {
+    const registerEventListener = (listener?: EventListenerOrEventListenerObject | null): void => {
       if (!listener) return;
       const handler = toEventListener(listener);
       eventListenerMap.set(listener, handler);
       coreListeners.add(handler);
     };
 
-    const unregisterEventListener = (listener?: EventListenerOrEventListenerObject | null) => {
+    const unregisterEventListener = (
+      listener?: EventListenerOrEventListenerObject | null,
+    ): void => {
       if (!listener) return;
       const handler = eventListenerMap.get(listener);
       if (handler) {
@@ -82,20 +90,14 @@ if (typeof window !== "undefined" && !window.matchMedia) {
       }
     };
 
-    let mediaQueryList: MediaQueryList;
-
-    const registerLegacyListener = (
-      listener: ((this: MediaQueryList, ev: MediaQueryListEvent) => unknown) | null,
-    ) => {
+    const registerLegacyListener = (listener: LegacyMediaQueryListener | null): void => {
       if (!listener) return;
       const handler = (event: MediaQueryListEvent) => listener.call(mediaQueryList, event);
       legacyListenerMap.set(listener, handler);
       coreListeners.add(handler);
     };
 
-    const unregisterLegacyListener = (
-      listener: ((this: MediaQueryList, ev: MediaQueryListEvent) => unknown) | null,
-    ) => {
+    const unregisterLegacyListener = (listener: LegacyMediaQueryListener | null): void => {
       if (!listener) return;
       const handler = legacyListenerMap.get(listener);
       if (handler) {
@@ -104,44 +106,46 @@ if (typeof window !== "undefined" && !window.matchMedia) {
       }
     };
 
-    mediaQueryList = {
+    const mediaQueryList: MediaQueryList = {
       media: query,
       matches,
       onchange: null,
       addEventListener: (
         _event: keyof MediaQueryListEventMap,
         listener: EventListenerOrEventListenerObject,
-      ) => {
+      ): void => {
         registerEventListener(listener);
       },
       removeEventListener: (
         _event: keyof MediaQueryListEventMap,
         listener: EventListenerOrEventListenerObject,
-      ) => {
+      ): void => {
         unregisterEventListener(listener);
       },
-      addListener: (
-        listener: ((this: MediaQueryList, ev: MediaQueryListEvent) => unknown) | null,
-      ) => {
+      // The deprecated listener API remains part of the MediaQueryList contract
+      // and is exercised by the display-mode fallback tests.
+      // oxlint-disable-next-line typescript/no-deprecated -- legacy MediaQueryList API
+      addListener: (listener: LegacyMediaQueryListener | null): void => {
         registerLegacyListener(listener);
       },
-      removeListener: (
-        listener: ((this: MediaQueryList, ev: MediaQueryListEvent) => unknown) | null,
-      ) => {
+      // oxlint-disable-next-line typescript/no-deprecated -- legacy MediaQueryList API
+      removeListener: (listener: LegacyMediaQueryListener | null): void => {
         unregisterLegacyListener(listener);
       },
-      dispatchEvent: (_event: Event) => {
+      dispatchEvent: (_event: Event): boolean => {
+        // SAFETY: `notify` and `onchange` only read `matches`, `media`, and
+        // `type`, which this partial event object supplies.
         const event = { matches, media: query, type: "change" } as MediaQueryListEvent;
         notify(event);
-        if (typeof mediaQueryList.onchange === "function") {
-          mediaQueryList.onchange.call(mediaQueryList, event);
-        }
+        mediaQueryList.onchange?.call(mediaQueryList, event);
         return true;
       },
-    } as MediaQueryList;
+    };
 
     return mediaQueryList;
   };
-}
+};
+
+installMatchMediaStub();
 
 await setupI18nTestHarness();

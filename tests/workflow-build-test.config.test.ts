@@ -20,47 +20,101 @@ const COMMANDS = [
   "bun run test",
 ];
 
+const StepWithSchema = v.object({
+  "persist-credentials": v.optional(v.boolean()),
+});
+
 const StepSchema = v.object({
   run: v.optional(v.string()),
   uses: v.optional(v.string()),
-  with: v.optional(v.record(v.string(), v.unknown())),
+  with: v.optional(StepWithSchema),
   if: v.optional(v.unknown()),
   "continue-on-error": v.optional(v.unknown()),
 });
+
 // Filters that would stop `build-test` running on an ordinary pull request.
-const PULL_REQUEST_FILTERS = ["branches", "branches-ignore", "paths", "paths-ignore", "types"];
+const PULL_REQUEST_FILTERS = [
+  "branches",
+  "branches-ignore",
+  "paths",
+  "paths-ignore",
+  "types",
+] as const;
+
+const JobSchema = v.object({
+  if: v.optional(v.unknown()),
+  "continue-on-error": v.optional(v.unknown()),
+  strategy: v.optional(v.unknown()),
+  steps: v.optional(v.array(StepSchema)),
+});
+
+const STRING_ARRAY_SCHEMA = v.array(v.string());
+
+const TriggerSchema = v.object({
+  branches: v.optional(STRING_ARRAY_SCHEMA),
+  "branches-ignore": v.optional(STRING_ARRAY_SCHEMA),
+  paths: v.optional(STRING_ARRAY_SCHEMA),
+  "paths-ignore": v.optional(STRING_ARRAY_SCHEMA),
+  types: v.optional(STRING_ARRAY_SCHEMA),
+});
+
+const TriggerMapSchema = v.object({
+  push: v.optional(v.nullable(TriggerSchema)),
+  pull_request: v.optional(v.nullable(TriggerSchema)),
+});
+
+const TriggerNameListSchema = v.pipe(
+  v.union([v.string(), STRING_ARRAY_SCHEMA]),
+  v.transform((value) => (Array.isArray(value) ? value : [value])),
+);
+
+const TriggerMapToNormalisedSchema = v.pipe(
+  TriggerMapSchema,
+  v.transform((triggers) => ({
+    push: triggers.push ?? null,
+    pullRequest: triggers.pull_request ?? null,
+  })),
+);
+
+const TriggerListToNormalisedSchema = v.pipe(
+  TriggerNameListSchema,
+  v.transform((names) => ({
+    push: names.includes("push") ? null : undefined,
+    pullRequest: names.includes("pull_request") ? null : undefined,
+  })),
+);
+
+const TriggersSchema = v.union([TriggerMapToNormalisedSchema, TriggerListToNormalisedSchema]);
 
 const WorkflowSchema = v.object({
-  on: v.optional(v.unknown()),
-  true: v.optional(v.unknown()),
-  jobs: v.record(
-    v.string(),
-    v.object({
-      if: v.optional(v.unknown()),
-      "continue-on-error": v.optional(v.unknown()),
-      strategy: v.optional(v.unknown()),
-      steps: v.optional(v.array(StepSchema)),
-    }),
-  ),
+  on: v.optional(TriggersSchema),
+  true: v.optional(TriggersSchema),
+  jobs: v.record(v.string(), JobSchema),
 });
 
 type Workflow = v.InferOutput<typeof WorkflowSchema>;
+type Triggers = v.InferOutput<typeof TriggersSchema>;
+
+const EMPTY_TRIGGERS: Triggers = { push: undefined, pullRequest: undefined };
 
 describe("build-test job contract", () => {
   it("runs on every pull request and on pushes to main", async () => {
     const triggers = readTriggers(await readWorkflow());
 
-    expect(Object.keys(triggers)).toContain("pull_request");
+    expect(triggers.pullRequest).not.toBeUndefined();
     // `pull_request: { types: [closed] }` would still name the trigger while
     // never running the job on an opened or updated pull request.
-    const pullRequest = (triggers["pull_request"] ?? {}) as Record<string, unknown>;
-    expect(PULL_REQUEST_FILTERS.filter((filter) => filter in pullRequest)).toEqual([]);
-    const push = triggers["push"] as { branches?: string[] } | null | undefined;
-    expect(push?.branches ?? []).toContain("main");
+    const pullRequest = triggers.pullRequest;
+    const presentFilters = PULL_REQUEST_FILTERS.filter(
+      (filter) => pullRequest?.[filter] !== undefined,
+    );
+    expect(presentFilters).toEqual([]);
+    expect(triggers.push?.branches ?? []).toContain("main");
   });
 
   it("is a single unconditional job that runs all four commands", async () => {
-    const job = (await readWorkflow()).jobs[JOB];
+    const workflow = await readWorkflow();
+    const job = workflow.jobs[JOB];
 
     expect(job).toBeDefined();
     // A matrix would report under suffixed names that no required
@@ -80,7 +134,8 @@ describe("build-test job contract", () => {
   });
 
   it("checks out without persisting credentials for the build's dependency code", async () => {
-    const steps = (await readWorkflow()).jobs[JOB]?.steps ?? [];
+    const workflow = await readWorkflow();
+    const steps = workflow.jobs[JOB]?.steps ?? [];
     const checkout = steps.find((step) => step.uses?.startsWith("actions/checkout@"));
 
     expect(checkout?.with?.["persist-credentials"]).toBe(false);
@@ -103,24 +158,21 @@ async function readWorkflow(): Promise<Workflow> {
 }
 
 /**
- * Return the workflow's triggers as a mapping.
+ * Return the workflow's triggers in a normalised form.
  *
  * YAML 1.1 readers turn an unquoted `on` key into boolean `true`, so both
- * spellings are read; a list or scalar form becomes a mapping of empty
- * values.
+ * spellings are read; a list or scalar form is widened to the same shape as
+ * the mapping form.
  *
  * @example
  * ```ts
  * readTriggers({ on: ["push", "pull_request"], jobs: {} });
- * // => { push: null, pull_request: null }
+ * // => { push: null, pullRequest: null }
  * ```
  *
  * @param workflow - A parsed workflow.
- * @returns Trigger names mapped to their configuration.
+ * @returns The `push` and `pull_request` trigger configurations, if present.
  */
-function readTriggers(workflow: Workflow): Record<string, unknown> {
-  const raw = workflow.on ?? workflow.true;
-  if (typeof raw === "string") return { [raw]: null };
-  if (Array.isArray(raw)) return Object.fromEntries(raw.map((name) => [String(name), null]));
-  return (raw ?? {}) as Record<string, unknown>;
+function readTriggers(workflow: Workflow): Triggers {
+  return workflow.on ?? workflow.true ?? EMPTY_TRIGGERS;
 }

@@ -32,11 +32,12 @@ const dedupeSupportedLocales = (
     return true;
   });
 
-  if (deduped.length === 0) {
+  const [firstLocale, ...remainingLocales] = deduped;
+  if (!firstLocale) {
     throw new Error("SUPPORTED_LOCALES must include at least one locale");
   }
 
-  return deduped as unknown as Readonly<[SupportedLocale, ...SupportedLocale[]]>;
+  return [firstLocale, ...remainingLocales];
 };
 
 const RAW_SUPPORTED_LOCALES = [
@@ -86,22 +87,29 @@ export const DEFAULT_LOCALE = SUPPORTED_LOCALES[0].code;
  */
 export const DETECTION_ORDER = ["querystring", "localStorage"] as const;
 
-const LOCALE_MAP: Record<string, SupportedLocale> = SUPPORTED_LOCALES.reduce(
-  (map, locale) => {
+/**
+ * Index supported locales by their full code and by their language-only
+ * prefix, so a lookup such as `"en"` resolves to the first English variant.
+ */
+function buildLocaleMap(): ReadonlyMap<string, SupportedLocale> {
+  const localeMap = new Map<string, SupportedLocale>();
+  for (const locale of SUPPORTED_LOCALES) {
     const fullCode = locale.code.toLowerCase();
-    map[fullCode] = locale;
+    localeMap.set(fullCode, locale);
+
     const [languagePart] = fullCode.split("-");
     const languageKey = languagePart ?? fullCode;
-    if (!map[languageKey]) {
-      map[languageKey] = locale;
+    if (!localeMap.has(languageKey)) {
+      localeMap.set(languageKey, locale);
     }
-    return map;
-  },
-  {} as Record<string, SupportedLocale>,
-);
+  }
+  return localeMap;
+}
+
+const LOCALE_MAP = buildLocaleMap();
 
 const defaultLocaleMetadata = (() => {
-  const locale = LOCALE_MAP[DEFAULT_LOCALE.toLowerCase()];
+  const locale = LOCALE_MAP.get(DEFAULT_LOCALE.toLowerCase());
   if (!locale) {
     throw new Error(`DEFAULT_LOCALE '${DEFAULT_LOCALE}' is not present in SUPPORTED_LOCALES`);
   }
@@ -114,7 +122,7 @@ const defaultLocaleMetadata = (() => {
  * @param code - Optional BCP-47 locale code to look up.
  * @returns Supported locale metadata for the best available match.
  */
-export const getLocaleMetadata = (code: string | undefined): SupportedLocale => {
+export const getLocaleMetadata = (code?: string): SupportedLocale => {
   if (!code) {
     return defaultLocaleMetadata;
   }
@@ -122,8 +130,8 @@ export const getLocaleMetadata = (code: string | undefined): SupportedLocale => 
   const lookupKey = code.toLowerCase();
   const [languagePart] = lookupKey.split("-");
   return (
-    LOCALE_MAP[lookupKey] ??
-    (languagePart ? LOCALE_MAP[languagePart] : undefined) ??
+    LOCALE_MAP.get(lookupKey) ??
+    (languagePart ? LOCALE_MAP.get(languagePart) : undefined) ??
     defaultLocaleMetadata
   );
 };
@@ -134,7 +142,7 @@ export const getLocaleMetadata = (code: string | undefined): SupportedLocale => 
  * @param code - Optional BCP-47 locale code to inspect.
  * @returns The locale direction, defaulting to left-to-right.
  */
-export const getLocaleDirection = (code: string | undefined): TextDirection => {
+export const getLocaleDirection = (code?: string): TextDirection => {
   return getLocaleMetadata(code).direction ?? "ltr";
 };
 
@@ -144,6 +152,6 @@ export const getLocaleDirection = (code: string | undefined): TextDirection => {
  * @param code - Optional BCP-47 locale code to inspect.
  * @returns True when the resolved locale direction is right-to-left.
  */
-export const isRtlLocale = (code: string | undefined): boolean => {
+export const isRtlLocale = (code?: string): boolean => {
   return getLocaleDirection(code) === "rtl";
 };

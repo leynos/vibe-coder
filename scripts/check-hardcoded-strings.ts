@@ -11,18 +11,27 @@
  */
 
 import { readFileSync } from "node:fs";
-import { relative } from "node:path";
+import path from "node:path";
 
 import ts from "typescript";
+import * as v from "valibot";
 
 interface HardcodedStringsConfig {
   minWordLength: number;
   userFacingAttributes: string[];
 }
 
-interface SemanticConfig {
-  hardcodedStrings?: Partial<HardcodedStringsConfig>;
-}
+const MIN_WORD_LENGTH = v.pipe(v.number(), v.finite(), v.minValue(1));
+const USER_FACING_ATTRIBUTES = v.array(v.string());
+
+const HardcodedStringsConfigSchema = v.object({
+  minWordLength: v.optional(MIN_WORD_LENGTH),
+  userFacingAttributes: v.optional(USER_FACING_ATTRIBUTES),
+});
+
+const SemanticConfigSchema = v.object({
+  hardcodedStrings: v.optional(HardcodedStringsConfigSchema),
+});
 
 interface Violation {
   file: string;
@@ -55,16 +64,18 @@ const DEFAULTS: HardcodedStringsConfig = {
 /** Load semantic-lint config with repo defaults for this rule. */
 function loadConfig(): HardcodedStringsConfig {
   const raw = readFileSync(CONFIG_PATH, "utf8");
-  const config = JSON.parse(raw) as SemanticConfig;
+  const config = v.parse(SemanticConfigSchema, JSON.parse(raw));
   const section = config.hardcodedStrings;
+  const configuredAttributes = section?.userFacingAttributes;
+
   return {
     minWordLength:
-      typeof section?.minWordLength === "number" && section.minWordLength > 0
-        ? Math.floor(section.minWordLength)
-        : DEFAULTS.minWordLength,
+      section?.minWordLength === undefined
+        ? DEFAULTS.minWordLength
+        : Math.floor(section.minWordLength),
     userFacingAttributes:
-      Array.isArray(section?.userFacingAttributes) && section.userFacingAttributes.length > 0
-        ? section.userFacingAttributes
+      configuredAttributes !== undefined && configuredAttributes.length > 0
+        ? configuredAttributes
         : DEFAULTS.userFacingAttributes,
   };
 }
@@ -72,7 +83,7 @@ function loadConfig(): HardcodedStringsConfig {
 /** Return the TSX files scanned by this rule. */
 function getTsxFiles(): string[] {
   const glob = new Bun.Glob("src/app/**/*.tsx");
-  return Array.from(glob.scanSync(PROJECT_ROOT));
+  return [...glob.scanSync(PROJECT_ROOT)];
 }
 
 /**
@@ -87,8 +98,7 @@ export function buildWordRegex(minLength: number): RegExp {
 
 /** Return true when the node sits inside a `t(…)` call expression. */
 function isInsideTCall(node: ts.Node): boolean {
-  let cursor = node.parent;
-  while (cursor) {
+  for (let cursor = node.parent; !ts.isSourceFile(cursor); cursor = cursor.parent) {
     if (
       ts.isCallExpression(cursor) &&
       ts.isIdentifier(cursor.expression) &&
@@ -96,7 +106,6 @@ function isInsideTCall(node: ts.Node): boolean {
     ) {
       return true;
     }
-    cursor = cursor.parent;
   }
   return false;
 }
@@ -220,17 +229,20 @@ export function analyseFile(
     }
 
     // 1. JsxText — raw text between JSX tags
-    if (ts.isJsxText(node) && wordRegex.test(node.text)) {
-      if (!isInsideTCall(node) && !shouldSkipNode(node, source, directives)) {
-        const { line, character } = source.getLineAndCharacterOfPosition(node.getStart());
-        results.push({
-          file: filePath,
-          line: line + 1,
-          column: character + 1,
-          text: node.text.trim().slice(0, 40),
-          kind: "jsx-text",
-        });
-      }
+    if (
+      ts.isJsxText(node) &&
+      wordRegex.test(node.text) &&
+      !isInsideTCall(node) &&
+      !shouldSkipNode(node, source, directives)
+    ) {
+      const { line, character } = source.getLineAndCharacterOfPosition(node.getStart());
+      results.push({
+        file: filePath,
+        line: line + 1,
+        column: character + 1,
+        text: node.text.trim().slice(0, 40),
+        kind: "jsx-text",
+      });
     }
 
     // 2. JsxAttribute with a string literal in a user-facing attribute
@@ -287,7 +299,7 @@ function main(): void {
   }
 
   for (const v of violations) {
-    const displayPath = relative(PROJECT_ROOT, v.file);
+    const displayPath = path.relative(PROJECT_ROOT, v.file);
     const label =
       v.kind === "jsx-text"
         ? "hard-coded JSX text"

@@ -35,10 +35,16 @@ export type RepoRelativePath = `src/${string}` & {
 export type AliasEntry = readonly [AliasPrefix, RepoRelativePath];
 
 /** Brand a literal `@...` prefix for use in the shared alias tuple. */
-const aliasPrefix = (value: `@${string}`): AliasPrefix => value as AliasPrefix;
+const aliasPrefix = (value: `@${string}`): AliasPrefix => {
+  // SAFETY: The brand is phantom; `value` already has the required literal shape.
+  return value as AliasPrefix;
+};
 
 /** Brand a literal `src/...` repository path for use in the shared alias tuple. */
-const repoRelativePath = (value: `src/${string}`): RepoRelativePath => value as RepoRelativePath;
+const repoRelativePath = (value: `src/${string}`): RepoRelativePath => {
+  // SAFETY: The brand is phantom; `value` already has the required literal shape.
+  return value as RepoRelativePath;
+};
 
 /**
  * Frozen list of alias-to-target pairs shared by TypeScript, Vite, and boundary tooling.

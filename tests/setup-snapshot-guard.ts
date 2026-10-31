@@ -9,15 +9,16 @@ type SnapshotStateLike = {
   getAdded?: () => number;
 };
 
+declare module "bun:test" {
+  interface Expect {
+    /** Bun exposes the current snapshot bookkeeping through this accessor. */
+    getState?(): { snapshotState?: SnapshotStateLike };
+  }
+}
+
 const snapshotWarnings: string[] = [];
 
-const resolveSnapshotState = (): SnapshotStateLike | undefined => {
-  const expectWithState = expect as unknown as {
-    getState?: () => { snapshotState?: SnapshotStateLike };
-  };
-  const state = expectWithState.getState?.();
-  return state?.snapshotState;
-};
+const resolveSnapshotState = (): SnapshotStateLike | undefined => expect.getState?.().snapshotState;
 
 afterAll(() => {
   const snapshotState = resolveSnapshotState();

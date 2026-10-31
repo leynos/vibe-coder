@@ -8,15 +8,18 @@ import { DisplayModeProvider, useDisplayMode } from "../src/app/providers/displa
 type MatchListener = (event: MediaQueryListEvent) => void;
 type MatchMap = Record<string, boolean>;
 
+const isFunction = (value: EventListenerOrEventListenerObject): value is EventListener =>
+  Object.prototype.toString.call(value) === "[object Function]";
+
 function createMatchMediaStub(initialMatches: MatchMap) {
   const listeners = new Map<string, Set<MatchListener>>();
   const currentMatches = new Map(Object.entries(initialMatches));
   const eventListenerMap = new WeakMap<EventListenerOrEventListenerObject, MatchListener>();
   const legacyListenerMap = new WeakMap<
-    (this: MediaQueryList, ev: MediaQueryListEvent) => unknown,
+    (this: MediaQueryList, ev: MediaQueryListEvent) => void,
     MatchListener
   >();
-  const originalMatchMedia = window.matchMedia;
+  const originalMatchMedia = globalThis.matchMedia;
 
   const getQueryListeners = (query: string): Set<MatchListener> => {
     const existing = listeners.get(query);
@@ -30,9 +33,9 @@ function createMatchMediaStub(initialMatches: MatchMap) {
 
   const matchMedia = (query: string): MediaQueryList => {
     const queryListeners = getQueryListeners(query);
-    let changeHandler: ((this: MediaQueryList, ev: MediaQueryListEvent) => unknown) | null = null;
+    let changeHandler: ((this: MediaQueryList, ev: MediaQueryListEvent) => void) | null = null;
 
-    const mediaQueryList = {
+    const mediaQueryList: MediaQueryList = {
       media: query,
       get matches() {
         return currentMatches.get(query) === true;
@@ -43,25 +46,19 @@ function createMatchMediaStub(initialMatches: MatchMap) {
       set onchange(handler) {
         changeHandler = handler;
       },
-      addEventListener: (
-        type: keyof MediaQueryListEventMap,
-        listener: EventListenerOrEventListenerObject | null,
-      ) => {
+      addEventListener: (type: string, listener: EventListenerOrEventListenerObject | null) => {
         if (type !== "change" || listener == null) {
           return;
         }
         const wrapped =
           eventListenerMap.get(listener) ??
-          (typeof listener === "function"
-            ? (listener as MatchListener)
-            : (event: MediaQueryListEvent) => listener.handleEvent?.(event));
+          (isFunction(listener)
+            ? listener
+            : (event: MediaQueryListEvent) => listener.handleEvent(event));
         eventListenerMap.set(listener, wrapped);
         queryListeners.add(wrapped);
       },
-      removeEventListener: (
-        type: keyof MediaQueryListEventMap,
-        listener: EventListenerOrEventListenerObject | null,
-      ) => {
+      removeEventListener: (type: string, listener: EventListenerOrEventListenerObject | null) => {
         if (type !== "change" || listener == null) {
           return;
         }
@@ -70,6 +67,7 @@ function createMatchMediaStub(initialMatches: MatchMap) {
           queryListeners.delete(wrapped);
         }
       },
+      // oxlint-disable-next-line typescript/no-deprecated -- legacy MediaQueryList API
       addListener: (listener) => {
         if (listener) {
           const wrapped =
@@ -79,6 +77,7 @@ function createMatchMediaStub(initialMatches: MatchMap) {
           queryListeners.add(wrapped);
         }
       },
+      // oxlint-disable-next-line typescript/no-deprecated -- legacy MediaQueryList API
       removeListener: (listener) => {
         if (!listener) {
           return;
@@ -89,27 +88,27 @@ function createMatchMediaStub(initialMatches: MatchMap) {
         }
       },
       dispatchEvent: () => true,
-    } as MediaQueryList;
+    };
 
     return mediaQueryList;
   };
 
-  window.matchMedia = matchMedia;
+  globalThis.matchMedia = matchMedia;
 
   return {
     setMatch(query: string, nextValue: boolean) {
       currentMatches.set(query, nextValue);
-      const event = Object.assign(new Event("change"), {
+      const event: MediaQueryListEvent = Object.assign(new Event("change"), {
         matches: nextValue,
         media: query,
-      }) as MediaQueryListEvent;
+      });
 
       for (const listener of getQueryListeners(query)) {
         listener(event);
       }
     },
     restore() {
-      window.matchMedia = originalMatchMedia;
+      globalThis.matchMedia = originalMatchMedia;
       listeners.clear();
       currentMatches.clear();
     },
@@ -119,12 +118,12 @@ function createMatchMediaStub(initialMatches: MatchMap) {
 function findStorageValues(): string[] {
   const values: string[] = [];
 
-  for (let index = 0; index < window.localStorage.length; index += 1) {
-    const key = window.localStorage.key(index);
+  for (let index = 0; index < globalThis.localStorage.length; index += 1) {
+    const key = globalThis.localStorage.key(index);
     if (!key) {
       continue;
     }
-    const value = window.localStorage.getItem(key);
+    const value = globalThis.localStorage.getItem(key);
     if (value) {
       values.push(value);
     }
@@ -159,13 +158,13 @@ describe("DisplayModeProvider", () => {
 
   beforeEach(() => {
     cleanup();
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
     matchMediaStub = null;
   });
 
   afterEach(() => {
     cleanup();
-    window.localStorage.clear();
+    globalThis.localStorage.clear();
     matchMediaStub?.restore();
     matchMediaStub = null;
   });
@@ -255,8 +254,9 @@ describe("DisplayModeProvider", () => {
 
     expect(screen.getByRole("status", { name: /display mode/i }).textContent).toBe("full-browser");
     expect(screen.getByRole("status", { name: /user preference/i }).textContent).toBe("no");
-    expect(findStorageValues()).not.toContain("hosted");
-    expect(findStorageValues()).not.toContain("full-browser");
+    const storageValues = findStorageValues();
+    expect(storageValues).not.toContain("hosted");
+    expect(storageValues).not.toContain("full-browser");
   });
 
   it("tracks viewport changes when no user preference exists", () => {

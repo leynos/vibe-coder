@@ -3,7 +3,7 @@
 import type { JSX, ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { appLogger } from "../observability/logger";
+import { appLogger, toError } from "../observability/logger";
 
 const STORAGE_KEY = "vibecoder.displayMode";
 
@@ -42,7 +42,7 @@ export interface DisplayModeContextValue {
 const DisplayModeContext = createContext<DisplayModeContextValue | undefined>(undefined);
 
 function canUseDOM(): boolean {
-  return typeof window !== "undefined" && typeof document !== "undefined";
+  return "window" in globalThis && "document" in globalThis;
 }
 
 // localStorage is accessed synchronously on the single JavaScript thread.
@@ -50,13 +50,16 @@ function canUseDOM(): boolean {
 function readStoredMode(): DisplayMode | null {
   if (!canUseDOM()) return null;
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
+    const stored = globalThis.localStorage.getItem(STORAGE_KEY);
     if (stored === "hosted" || stored === "full-browser") {
       return stored;
     }
     return null;
   } catch (error) {
-    appLogger.warn("Failed to read stored display mode", { key: STORAGE_KEY, error });
+    appLogger.warn("Failed to read stored display mode", {
+      key: STORAGE_KEY,
+      error: toError(error),
+    });
     return null;
   }
 }
@@ -64,28 +67,34 @@ function readStoredMode(): DisplayMode | null {
 function persistMode(mode: DisplayMode) {
   if (!canUseDOM()) return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, mode);
+    globalThis.localStorage.setItem(STORAGE_KEY, mode);
   } catch (error) {
-    appLogger.warn("Failed to persist display mode preference", { key: STORAGE_KEY, mode, error });
+    appLogger.warn("Failed to persist display mode preference", {
+      key: STORAGE_KEY,
+      mode,
+      error: toError(error),
+    });
   }
 }
 
 function clearPersistedMode() {
   if (!canUseDOM()) return;
   try {
-    window.localStorage.removeItem(STORAGE_KEY);
+    globalThis.localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
     // Removal failures leave the stored preference in place; log for diagnostics.
-    appLogger.warn("Failed to clear stored display mode", { key: STORAGE_KEY, error });
+    appLogger.warn("Failed to clear stored display mode", {
+      key: STORAGE_KEY,
+      error: toError(error),
+    });
   }
 }
 
 function matchMediaQuery(query: string): boolean {
-  if (!canUseDOM() || typeof window.matchMedia !== "function") {
+  if (!canUseDOM()) {
     return false;
   }
-  const result = window.matchMedia(query);
-  return Boolean(result?.matches);
+  return globalThis.matchMedia(query).matches;
 }
 
 function detectPreferredDisplayMode(): DisplayMode {
@@ -136,7 +145,7 @@ export function DisplayModeProvider({ children }: DisplayModeProviderProps): JSX
   }, []);
 
   useEffect(() => {
-    if (!canUseDOM() || typeof window.matchMedia !== "function") {
+    if (!canUseDOM()) {
       return;
     }
     if (hasUserPreference) {
@@ -145,38 +154,18 @@ export function DisplayModeProvider({ children }: DisplayModeProviderProps): JSX
 
     const evaluate = () => {
       setModeState((current) => {
-        if (hasUserPreference) {
-          return current;
-        }
         const detected = detectPreferredDisplayMode();
         return detected === current ? current : detected;
       });
     };
 
-    const widthQuery = window.matchMedia("(max-width: 768px)");
+    const widthQuery = globalThis.matchMedia("(max-width: 768px)");
 
     evaluate();
-
-    const listeners: Array<
-      [MediaQueryList, (event: MediaQueryList | MediaQueryListEvent) => void]
-    > = [[widthQuery, evaluate]];
-
-    listeners.forEach(([mediaQuery, listener]) => {
-      if (typeof mediaQuery.addEventListener === "function") {
-        mediaQuery.addEventListener("change", listener);
-      } else if (typeof mediaQuery.addListener === "function") {
-        mediaQuery.addListener(listener);
-      }
-    });
+    widthQuery.addEventListener("change", evaluate);
 
     return () => {
-      listeners.forEach(([mediaQuery, listener]) => {
-        if (typeof mediaQuery.removeEventListener === "function") {
-          mediaQuery.removeEventListener("change", listener);
-        } else if (typeof mediaQuery.removeListener === "function") {
-          mediaQuery.removeListener(listener);
-        }
-      });
+      widthQuery.removeEventListener("change", evaluate);
     };
   }, [hasUserPreference]);
 

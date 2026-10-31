@@ -12,7 +12,7 @@ import {
   getLocaleMetadata,
   SUPPORTED_LOCALES,
 } from "./app/i18n/supported-locales";
-import { appLogger, reportError } from "./app/observability/logger";
+import { appLogger, reportError, toError } from "./app/observability/logger";
 
 const supportedLngs = SUPPORTED_LOCALES.map((locale) => locale.code);
 
@@ -25,12 +25,12 @@ const supportedLngs = SUPPORTED_LOCALES.map((locale) => locale.code);
  *
  * @example
  * ```ts
- * normalizeBasePath(undefined)    // "/"
+ * normalizeBasePath()             // "/"
  * normalizeBasePath("app")        // "/app/"
  * normalizeBasePath("/game/")     // "/game/"
  * ```
  */
-export const normalizeBasePath = (rawBase: string | undefined): string => {
+export const normalizeBasePath = (rawBase?: string): string => {
   const candidate = rawBase && rawBase.length > 0 ? rawBase : "/";
   const withLeading = candidate.startsWith("/") ? candidate : `/${candidate}`;
   return withLeading.endsWith("/") ? withLeading : `${withLeading}/`;
@@ -102,9 +102,10 @@ const fetchAjax = (
   const controller = new AbortController();
   activeI18nControllers.add(controller);
 
+  const requestMethod = method ?? "GET";
   const request: RequestInit = {
     credentials: withCredentials ? "include" : "same-origin",
-    method: method ?? "GET",
+    method: requestMethod,
     signal: controller.signal,
   };
 
@@ -128,9 +129,9 @@ const fetchAjax = (
       callback(text, { status, statusText });
     })
     .catch((error) => {
-      const typedError = error as Error;
-      const message = typedError?.message ?? "Unexpected i18n network failure";
-      const name = typedError?.name ?? "Error";
+      const typedError = toError(error);
+      const message = typedError.message || "Unexpected i18n network failure";
+      const { name } = typedError;
 
       if (name === "AbortError") {
         callback(typedError, { status: 408, statusText: message });
@@ -144,7 +145,7 @@ const fetchAjax = (
 
       const context = {
         url,
-        method: request.method,
+        method: requestMethod,
         withCredentials: Boolean(withCredentials),
         status,
         statusText: message,
@@ -179,7 +180,7 @@ const fetchAjax = (
  * // document.documentElement.dir === "rtl"
  * ```
  */
-export const applyDocumentLocale = (language: string | undefined): void => {
+export const applyDocumentLocale = (language?: string): void => {
   if (typeof document === "undefined") return;
 
   const metadata = getLocaleMetadata(language ?? DEFAULT_LOCALE);
@@ -187,17 +188,13 @@ export const applyDocumentLocale = (language: string | undefined): void => {
   const direction = getLocaleDirection(resolvedLanguage);
 
   const htmlElement = document.documentElement;
-  if (htmlElement) {
-    htmlElement.lang = resolvedLanguage;
-    htmlElement.dir = direction;
-    htmlElement.setAttribute("data-direction", direction);
-  }
+  htmlElement.lang = resolvedLanguage;
+  htmlElement.dir = direction;
+  htmlElement.setAttribute("data-direction", direction);
 
-  if (document.body) {
-    document.body.lang = resolvedLanguage;
-    document.body.dir = direction;
-    document.body.setAttribute("data-direction", direction);
-  }
+  document.body.lang = resolvedLanguage;
+  document.body.dir = direction;
+  document.body.setAttribute("data-direction", direction);
 };
 
 /**
@@ -222,7 +219,7 @@ export const i18nReady = i18n
   .use(initReactI18next)
   .init({
     backend: {
-      loadPath: buildFluentLoadPath(import.meta.env.BASE_URL as string | undefined),
+      loadPath: buildFluentLoadPath(import.meta.env.BASE_URL),
       ajax: fetchAjax,
     },
     fallbackLng: DEFAULT_LOCALE,
@@ -245,12 +242,11 @@ export const i18nReady = i18n
     },
   });
 
-void i18nReady.then(() => {
-  applyDocumentLocale(i18n.resolvedLanguage ?? i18n.language ?? DEFAULT_LOCALE);
-});
+await i18nReady;
+applyDocumentLocale(i18n.resolvedLanguage);
 
 i18n.on("languageChanged", (nextLanguage) => {
   applyDocumentLocale(nextLanguage);
 });
 
-export default i18n;
+export { default } from "i18next";

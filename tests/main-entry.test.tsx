@@ -83,7 +83,7 @@ describe("main entry Suspense flow", () => {
     await act(async () => {
       const mountedRoot = renderApp(mount, {
         AppComponent: () => <p>Mounted</p>,
-      }) as unknown as { unmount: () => void };
+      });
       dispose = () => mountedRoot.unmount();
       await Promise.resolve();
     });

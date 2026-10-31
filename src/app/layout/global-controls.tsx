@@ -3,8 +3,8 @@
 import { type ChangeEvent, type JSX, useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "../i18n/supported-locales";
-import { appLogger, reportError } from "../observability/logger";
+import { SUPPORTED_LOCALES } from "../i18n/supported-locales";
+import { appLogger, reportError, toError } from "../observability/logger";
 import { useDisplayMode } from "../providers/display-mode-provider";
 import { useTheme } from "../providers/theme-provider";
 
@@ -15,9 +15,7 @@ const selectClass =
 
 function LanguageSelect(): JSX.Element {
   const { i18n, t } = useTranslation();
-  const [language, setLanguage] = useState(
-    () => i18n.resolvedLanguage ?? i18n.language ?? DEFAULT_LOCALE,
-  );
+  const [language, setLanguage] = useState(() => i18n.resolvedLanguage ?? i18n.language);
   const [isSwitching, setIsSwitching] = useState(false);
 
   useEffect(() => {
@@ -43,10 +41,11 @@ function LanguageSelect(): JSX.Element {
 
     i18n
       .changeLanguage(nextLanguage)
-      .catch((error: unknown) => {
+      .catch((error) => {
+        const typedError = toError(error);
         const context = { nextLanguage, previousLanguage };
-        appLogger.error("Failed to change language", context, error);
-        reportError(error, { ...context, scope: "global-controls.language-change" });
+        appLogger.error("Failed to change language", context, typedError);
+        reportError(typedError, { ...context, scope: "global-controls.language-change" });
         setLanguage(previousLanguage);
       })
       .finally(() => {
@@ -170,13 +169,7 @@ function Drawer(): JSX.Element {
   const [open, setOpen] = useState(false);
   const headingId = useId();
   const { t, i18n } = useTranslation();
-  const resolvedLanguage = i18n.resolvedLanguage ?? i18n.language ?? DEFAULT_LOCALE;
-  const direction =
-    typeof i18n.dir === "function"
-      ? i18n.dir(resolvedLanguage)
-      : typeof document !== "undefined"
-        ? (document.documentElement?.dir ?? "ltr")
-        : "ltr";
+  const direction = i18n.dir(i18n.resolvedLanguage);
   const collapsedTranslateClass = direction === "rtl" ? "-translate-x-full" : "translate-x-full";
   const triggerLabel = t("controls-trigger-label", { defaultValue: "Controls" });
 

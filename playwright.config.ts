@@ -1,21 +1,28 @@
 /** @file Playwright configuration for e2e tests. */
 
 import { spawnSync } from "node:child_process";
-import { createServer, type AddressInfo } from "node:net";
+import { createServer } from "node:net";
 import { URL } from "node:url";
 
 import { defineConfig, devices } from "@playwright/test";
+import * as v from "valibot";
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= "0";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173";
-const parsedBaseURL = new URL(baseURL);
-const basePort =
-  parsedBaseURL.port !== ""
-    ? Number.parseInt(parsedBaseURL.port, 10)
-    : parsedBaseURL.protocol === "https:"
-      ? 443
-      : 80;
+
+/** Return the effective port for a URL, defaulting by protocol. */
+function resolvePort(url: URL): number {
+  if (url.port !== "") {
+    return Math.trunc(Number(url.port));
+  }
+  return url.protocol === "https:" ? 443 : 80;
+}
+
+const basePort = resolvePort(new URL(baseURL));
+
+/** Shape of the OS-provided listening address; other address kinds are rejected. */
+const AddressInfoSchema = v.object({ port: v.number() });
 
 function serverIsReachable(target: string): boolean {
   if (process.env.PLAYWRIGHT_SKIP_WEBSERVER === "1") {
@@ -23,7 +30,7 @@ function serverIsReachable(target: string): boolean {
   }
   try {
     const url = new URL(target);
-    const port = url.port ? Number.parseInt(url.port, 10) : url.protocol === "https:" ? 443 : 80;
+    const port = resolvePort(url);
     const hostArg = JSON.stringify(url.hostname);
     const portArg = JSON.stringify(port);
     const script = `
@@ -46,12 +53,12 @@ async function findAvailablePort(preferred: number): Promise<number> {
     const attempt = createServer();
 
     const resolveWithPortAndClose = (server: ReturnType<typeof createServer>) => {
-      const address = server.address() as AddressInfo | null;
-      if (!address || typeof address.port !== "number") {
+      const parsedAddress = v.safeParse(AddressInfoSchema, server.address());
+      if (!parsedAddress.success) {
         server.close(() => reject(new Error("Unable to determine listening port")));
         return;
       }
-      server.close(() => resolve(address.port));
+      server.close(() => resolve(parsedAddress.output.port));
     };
 
     const startFallback = () => {
@@ -87,46 +94,39 @@ async function findAvailablePort(preferred: number): Promise<number> {
   });
 }
 
-const resolvedPortPromise = shouldLaunchWebServer ? findAvailablePort(basePort) : Promise.resolve(basePort);
+const resolvedPort = shouldLaunchWebServer ? await findAvailablePort(basePort) : basePort;
+const resolvedBase = new URL(baseURL);
+resolvedBase.port = String(resolvedPort);
+const resolvedBaseURL = resolvedBase.toString();
 
-const resolvedConfig = resolvedPortPromise.then((resolvedPort) => {
-  const resolvedBase = new URL(baseURL);
-  if (resolvedPort) {
-    resolvedBase.port = String(resolvedPort);
-  }
-  const resolvedBaseURL = resolvedBase.toString();
-
-  return defineConfig({
-    testDir: "./tests/e2e",
-    testMatch: ["**/*.pw.ts"],
-    timeout: 60_000,
-    expect: {
-      timeout: 10_000,
-    },
-    use: {
-      baseURL: resolvedBaseURL,
-      trace: "retain-on-failure",
-    },
-    projects: [
-      {
-        name: "chromium",
-        use: {
-          ...devices["Desktop Chrome"],
-          viewport: { width: 390, height: 844 },
-        },
+export default defineConfig({
+  testDir: "./tests/e2e",
+  testMatch: ["**/*.pw.ts"],
+  timeout: 60_000,
+  expect: {
+    timeout: 10_000,
+  },
+  use: {
+    baseURL: resolvedBaseURL,
+    trace: "retain-on-failure",
+  },
+  projects: [
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 390, height: 844 },
       },
-    ],
-    webServer: shouldLaunchWebServer
-      ? {
-          command: `bun run dev -- --host --port ${resolvedPort}`,
-          url: resolvedBaseURL,
-          reuseExistingServer: true,
-          stdout: "pipe",
-          stderr: "pipe",
-          timeout: 120_000,
-        }
-      : undefined,
-  });
+    },
+  ],
+  webServer: shouldLaunchWebServer
+    ? {
+        command: `bun run dev -- --host --port ${resolvedPort}`,
+        url: resolvedBaseURL,
+        reuseExistingServer: true,
+        stdout: "pipe",
+        stderr: "pipe",
+        timeout: 120_000,
+      }
+    : undefined,
 });
-
-export default await resolvedConfig;

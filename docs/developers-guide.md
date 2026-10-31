@@ -60,12 +60,18 @@ build caching that benefits from sequential execution.
 
 ```sh
 make check-fmt   # Format check (Biome formatter)
-make lint        # Biome lint + stylelint
+make lint        # Biome lint + Oxlint (Unicorn and Deslop plugins)
 make typecheck   # tsc --noEmit
 make docs-check  # TypeDoc documentation gate
 make test        # bun test (unit + component tests)
 bun semantic     # Full semantic lint pass
 ```
+
+`make lint` runs Biome's CI check followed by Oxlint. Oxlint applies the pinned
+Unicorn and Deslop plugins configured in `.oxlintrc.json`; ADR 012 records the
+rule set and the decisions taken where a rule does not fit this repository. A
+type assertion must carry a `SAFETY:` comment explaining the invariant that
+makes it sound, and code should use `globalThis` rather than `window`.
 
 ### The documentation gate
 
@@ -162,7 +168,7 @@ it, switching off `notDocumented`, `notExported`, `invalidLink` or
    be internationalized via the i18n pipeline.
 5. **Semgrep** — runs the custom rule set in `tools/semgrep-semantic.yml`
    against TypeScript source and test files. Requires `uvx` (provided by `uv`).
-6. **Stylelint** — validates CSS files against `tools/stylelint.config.cjs`.
+6. **Stylelint** — validates CSS files against `tools/stylelint.config.js`.
 
 ______________________________________________________________________
 

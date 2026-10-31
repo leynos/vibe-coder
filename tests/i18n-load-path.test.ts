@@ -11,6 +11,6 @@ describe("i18n load path", () => {
   it("normalizes missing slashes on base paths", () => {
     expect(normalizeBasePath("example-app")).toBe("/example-app/");
     expect(normalizeBasePath("/example-app")).toBe("/example-app/");
-    expect(normalizeBasePath(undefined)).toBe("/");
+    expect(normalizeBasePath()).toBe("/");
   });
 });

@@ -61,22 +61,22 @@ describe("appMachine type contracts", () => {
   });
 
   test("keeps actor sends limited to declared machine events", () => {
-    expectTypeOf<ActorSendEvent>().toMatchTypeOf<AppMachineEvent>();
-    expectTypeOf<{ type: "BOOT_READY" }>().toMatchTypeOf<AppMachineEvent>();
-    expectTypeOf<{ type: "BOOT_STARTED" }>().not.toMatchTypeOf<AppMachineEvent>();
+    expectTypeOf<ActorSendEvent>().toExtend<AppMachineEvent>();
+    expectTypeOf<{ type: "BOOT_READY" }>().toExtend<AppMachineEvent>();
+    expectTypeOf<{ type: "BOOT_STARTED" }>().not.toExtend<AppMachineEvent>();
   });
 
   test("keeps state and action contracts limited to declared values", () => {
-    expectTypeOf<"booting">().toMatchTypeOf<AppMachineStateValue>();
-    expectTypeOf<"running">().not.toMatchTypeOf<AppMachineStateValue>();
-    expectTypeOf<{ type: "recordBootFailed" }>().toMatchTypeOf<AppMachineAction>();
-    expectTypeOf<{ type: "recordBootCancelled" }>().not.toMatchTypeOf<AppMachineAction>();
+    expectTypeOf<"booting">().toExtend<AppMachineStateValue>();
+    expectTypeOf<"running">().not.toExtend<AppMachineStateValue>();
+    expectTypeOf<{ type: "recordBootFailed" }>().toExtend<AppMachineAction>();
+    expectTypeOf<{ type: "recordBootCancelled" }>().not.toExtend<AppMachineAction>();
   });
 
   test("keeps the valid type fixtures assignable", () => {
-    expectTypeOf<typeof validEvents>().toMatchTypeOf<readonly AppMachineEvent[]>();
-    expectTypeOf<typeof validStateValues>().toMatchTypeOf<readonly AppMachineStateValue[]>();
-    expectTypeOf<typeof validActions>().toMatchTypeOf<readonly AppMachineAction[]>();
+    expectTypeOf<typeof validEvents>().toExtend<readonly AppMachineEvent[]>();
+    expectTypeOf<typeof validStateValues>().toExtend<readonly AppMachineStateValue[]>();
+    expectTypeOf<typeof validActions>().toExtend<readonly AppMachineAction[]>();
   });
 
   test("keeps the public unions exhaustive", () => {

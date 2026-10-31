@@ -3,8 +3,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from "bun:test
 import { DEFAULT_LOCALE } from "../src/app/i18n/supported-locales";
 import i18n, { applyDocumentLocale, i18nReady } from "../src/i18n";
 
-const readBodyDirection = () =>
-  (document.body.dataset as DOMStringMap & { direction?: string }).direction ?? undefined;
+const readBodyDirection = (): string | undefined =>
+  document.body.getAttribute("data-direction") ?? undefined;
 
 describe("i18n runtime configuration", () => {
   beforeAll(async () => {
@@ -37,10 +37,9 @@ describe("i18n runtime configuration", () => {
     document.documentElement.lang = "zz";
     document.documentElement.dir = "rtl";
     document.body.dir = "rtl";
-    const bodyDataset = document.body.dataset as DOMStringMap & { direction?: string };
-    bodyDataset.direction = "rtl";
+    document.body.setAttribute("data-direction", "rtl");
 
-    applyDocumentLocale(undefined);
+    applyDocumentLocale();
 
     expect(document.documentElement.lang).toBe(DEFAULT_LOCALE);
     expect(document.documentElement.dir).toBe("ltr");

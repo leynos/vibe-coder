@@ -2,12 +2,55 @@
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
+/** Primitive values accepted in a structured log context. */
+type LogPrimitive = string | number | boolean | null;
+
+/**
+ * A value that may be attached to a structured log context.
+ *
+ * The type is intentionally closed over JSON-shaped data plus `Error`, which
+ * keeps log payloads predictable and serializable. Callers should normalize
+ * caught values with {@link toError} before logging them.
+ */
+export type LogValue =
+  | LogPrimitive
+  | Error
+  | readonly LogValue[]
+  | { readonly [key: string]: LogValue };
+
+/** Structured key/value detail attached to a log entry. */
+export type LogContext = Readonly<Record<string, LogValue>>;
+
 interface LogEntry {
   level: LogLevel;
   message: string;
-  context?: Record<string, unknown>;
-  error?: unknown;
+  context?: LogContext;
+  error?: Error;
   timestamp: string;
+}
+
+/**
+ * Normalize a caught value to an {@link Error}.
+ *
+ * JavaScript permits throwing any value, so `catch` bindings are typed
+ * `unknown`. Logging and reporting need an `Error`; non-`Error` throws are
+ * wrapped with the thrown value preserved as the cause.
+ *
+ * @param cause - The value caught from a `try`/`catch` block.
+ * @returns The original `Error`, or a wrapper that retains the thrown value.
+ *
+ * @example
+ * ```ts
+ * try {
+ *   risky();
+ * } catch (cause) {
+ *   appLogger.error("risky() failed", {}, toError(cause));
+ * }
+ * ```
+ */
+export function toError(cause: unknown): Error {
+  if (cause instanceof Error) return cause;
+  return new Error("Non-Error value thrown", { cause });
 }
 
 /**
@@ -17,14 +60,14 @@ interface LogEntry {
  * serializes `Error` instances to include `name`, `message`, and `stack` so
  * diagnostic details are preserved in log output.
  */
-function safeStringify(value: unknown): string {
-  const seen = new Set<unknown>();
+function safeStringify(value: LogValue): string {
+  const seen = new Set<object>();
   try {
-    return JSON.stringify(value, (_key, val: unknown) => {
+    return JSON.stringify(value, (_key, val) => {
       if (val instanceof Error) {
         return { name: val.name, message: val.message, stack: val.stack };
       }
-      if (typeof val === "object" && val !== null) {
+      if (val instanceof Object) {
         if (seen.has(val)) return "[Circular]";
         seen.add(val);
       }
@@ -46,35 +89,44 @@ function formatLogEntry(entry: LogEntry): string {
 function createLogEntry(
   level: LogLevel,
   message: string,
-  context?: Record<string, unknown>,
-  error?: unknown,
+  context?: LogContext,
+  error?: Error,
 ): LogEntry {
-  return {
+  const entry: LogEntry = {
     level,
     message,
     timestamp: new Date().toISOString(),
-    ...(context ? { context } : {}),
-    ...(typeof error !== "undefined" ? { error } : {}),
   };
+  if (context) {
+    entry.context = context;
+  }
+  if (error !== undefined) {
+    entry.error = error;
+  }
+  return entry;
 }
 
-function log(level: LogLevel, message: string, context?: Record<string, unknown>, error?: unknown) {
+function log(level: LogLevel, message: string, context?: LogContext, error?: Error) {
   const entry = createLogEntry(level, message, context, error);
   const formatted = formatLogEntry(entry);
 
   switch (level) {
-    case "debug":
+    case "debug": {
       console.debug(formatted, error ?? "");
       break;
-    case "info":
+    }
+    case "info": {
       console.info(formatted);
       break;
-    case "warn":
+    }
+    case "warn": {
       console.warn(formatted);
       break;
-    case "error":
+    }
+    case "error": {
       console.error(formatted, error ?? "");
       break;
+    }
   }
 }
 
@@ -89,13 +141,13 @@ function log(level: LogLevel, message: string, context?: Record<string, unknown>
  */
 export const appLogger = {
   /** Logs a debug-level entry; use for verbose diagnostic detail. */
-  debug: (message: string, context?: Record<string, unknown>) => log("debug", message, context),
+  debug: (message: string, context?: LogContext) => log("debug", message, context),
   /** Logs an info-level entry; use for routine operational events. */
-  info: (message: string, context?: Record<string, unknown>) => log("info", message, context),
+  info: (message: string, context?: LogContext) => log("info", message, context),
   /** Logs a warn-level entry; use for recoverable, unexpected conditions. */
-  warn: (message: string, context?: Record<string, unknown>) => log("warn", message, context),
+  warn: (message: string, context?: LogContext) => log("warn", message, context),
   /** Logs an error-level entry, optionally attaching the causing error. */
-  error: (message: string, context?: Record<string, unknown>, error?: unknown) =>
+  error: (message: string, context?: LogContext, error?: Error) =>
     log("error", message, context, error),
 };
 
@@ -103,6 +155,6 @@ export const appLogger = {
  * Report an error to the observability system.
  * In production, this would send to an error tracking service.
  */
-export function reportError(error: unknown, context?: Record<string, unknown>): void {
+export function reportError(error: Error, context?: LogContext): void {
   appLogger.error("Error reported", context, error);
 }

@@ -25,8 +25,8 @@ describe("Biome noRestrictedImports boundary overrides", () => {
     expect(patterns).toHaveLength(1);
     const group = patterns?.[0]?.group;
     expect(group).toBeDefined();
-    expect([...(group ?? [])].sort()).toEqual(
-      buildForbiddenPatterns(["application", "adapters"]).sort(),
+    expect([...(group ?? [])].toSorted()).toEqual(
+      buildForbiddenPatterns(["application", "adapters"]).toSorted(),
     );
     expect(group?.every((pattern) => !pattern.startsWith("**/"))).toBe(true);
   });
@@ -40,7 +40,7 @@ describe("Biome noRestrictedImports boundary overrides", () => {
     expect(patterns).toHaveLength(1);
     const group = patterns?.[0]?.group;
     expect(group).toBeDefined();
-    expect([...(group ?? [])].sort()).toEqual(buildForbiddenPatterns(["adapters"]).sort());
+    expect([...(group ?? [])].toSorted()).toEqual(buildForbiddenPatterns(["adapters"]).toSorted());
     expect(group?.every((pattern) => !pattern.startsWith("**/"))).toBe(true);
   });
 
@@ -50,13 +50,13 @@ describe("Biome noRestrictedImports boundary overrides", () => {
     const applicationPaths =
       getNoRestrictedImportsOverride(config, "src/application/**").options.paths ?? {};
 
-    expect(Object.keys(domainPaths).sort()).toEqual([
+    expect(Object.keys(domainPaths).toSorted()).toEqual([
       "dexie",
       "react",
       "react-dom",
       "react-dom/client",
     ]);
-    expect(Object.keys(applicationPaths).sort()).toEqual([
+    expect(Object.keys(applicationPaths).toSorted()).toEqual([
       "dexie",
       "react",
       "react-dom",

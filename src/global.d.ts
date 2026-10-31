@@ -32,7 +32,7 @@ declare module "jest-axe" {
 }
 
 declare module "i18next-fluent-backend" {
-  import type { BackendModule, Services } from "i18next";
+  import type { BackendModule, ReadCallback, Services } from "i18next";
 
   interface FluentBackendOptions {
     loadPath?: string;
@@ -45,13 +45,9 @@ declare module "i18next-fluent-backend" {
     // eslint-disable-next-line @typescript-eslint/no-misused-new
     constructor(services?: Services, options?: FluentBackendOptions);
 
-    init?(options?: FluentBackendOptions, callback?: (error?: unknown) => void): void;
+    init(services: Services, options?: FluentBackendOptions): void;
 
-    read(
-      language: string,
-      namespace: string,
-      callback: (error: unknown, data: unknown) => void,
-    ): void;
+    read(language: string, namespace: string, callback: ReadCallback): void;
   }
 
   export default FluentBackend;
@@ -71,18 +67,16 @@ declare module "vitest" {
   }
 
   interface AsymmetricMatchersContaining {
-    toHaveNoViolations(): unknown;
-    toBeInTheDocument(): unknown;
+    toHaveNoViolations(): void;
+    toBeInTheDocument(): void;
   }
 
   export * from "bun:test";
 }
 
-declare global {
-  // eslint-disable-next-line no-var
-  var IS_REACT_ACT_ENVIRONMENT: boolean;
+// eslint-disable-next-line no-var
+declare var IS_REACT_ACT_ENVIRONMENT: boolean;
 
-  interface GlobalThis {
-    IS_REACT_ACT_ENVIRONMENT: boolean;
-  }
+interface GlobalThis {
+  IS_REACT_ACT_ENVIRONMENT: boolean;
 }

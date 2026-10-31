@@ -1,3 +1,6 @@
+import tailwindcss from "@tailwindcss/postcss";
+import autoprefixer from "autoprefixer";
+
 const removeDaisyRadialProgressProperty = () => ({
   postcssPlugin: "remove-daisy-radial-progress-property",
   AtRule(atRule) {
@@ -9,10 +12,10 @@ const removeDaisyRadialProgressProperty = () => ({
 
 removeDaisyRadialProgressProperty.postcss = true;
 
-module.exports = {
+export default {
   plugins: [
-    require("@tailwindcss/postcss"),
-    require("autoprefixer"),
+    tailwindcss,
+    autoprefixer,
     // Drop DaisyUI's radial progress @property to avoid Lightning CSS warnings in Vite builds.
     removeDaisyRadialProgressProperty(),
   ],
