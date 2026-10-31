@@ -196,6 +196,23 @@ describe("find-near-duplicate-classes", () => {
     expect(occurrences).toHaveLength(3);
   });
 
+  it("ignores groups below the minimum occurrence count", () => {
+    writeFixture(
+      CONFIG_PATH,
+      JSON.stringify({
+        nearDuplicateClasses: { failOnViolation: true, minOccurrences: 3 },
+      }),
+    );
+    const stack = classListModule(["flex", "items-center", "gap-2", "p-4"]);
+    writeFixture("src/app/one.tsx", stack);
+    writeFixture("src/app/two.tsx", stack);
+
+    const result = runScript(NEAR_DUPLICATE_SCRIPT);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).not.toContain("Repeated class stack found");
+  });
+
   it("suppresses stacks whose tokens all match a configured prefix", () => {
     writeFixture(
       CONFIG_PATH,
