@@ -193,7 +193,10 @@ line.
 ### Normalizing caught values
 
 `toError(cause: unknown): Error` returns the value unchanged when it is already
-an `Error`, and otherwise wraps it in
+an `Error`. Values that fail `instanceof Error` but expose string `name` and
+`message` fields — cross-realm errors, or plain objects thrown by third-party
+code — are wrapped in a new `Error` that copies those fields, so callers can
+still branch on names such as `AbortError`. Every other value is wrapped in
 `new Error("Non-Error value thrown", { cause })`. Every `catch` binding is
 `unknown` under the project's TypeScript settings, so callers must normalize
 before logging or reporting:

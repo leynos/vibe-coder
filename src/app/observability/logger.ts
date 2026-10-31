@@ -7,8 +7,9 @@ type LogLevel = "debug" | "info" | "warn" | "error";
 /**
  * Shape of a thrown value that exposes the `Error` diagnostic fields.
  *
- * Browser `DOMException` values carry `name` and `message` without inheriting
- * from `Error`, so a structural check is the only way to recover them.
+ * Some values fail `instanceof Error` yet still carry `name` and `message`,
+ * such as errors created in another realm or plain objects thrown by
+ * third-party code. A structural decode recovers those diagnostics.
  */
 const errorLikeSchema = object({ name: string(), message: string() });
 
@@ -44,9 +45,9 @@ interface LogEntry {
  *
  * JavaScript permits throwing any value, so `catch` bindings are typed
  * `unknown`. Logging and reporting need an `Error`; non-`Error` throws are
- * wrapped with the thrown value preserved as the cause. Values that expose
- * `name` and `message` (such as a browser `DOMException`) keep those
- * diagnostics on the wrapper.
+ * wrapped with the thrown value preserved as the cause. Values that fail
+ * `instanceof Error` but expose `name` and `message` keep those diagnostics
+ * on the wrapper.
  *
  * @param cause - The value caught from a `try`/`catch` block.
  * @returns The original `Error`, or a wrapper that retains the thrown value.
@@ -63,9 +64,10 @@ interface LogEntry {
 export function toError(cause: unknown): Error {
   if (cause instanceof Error) return cause;
 
-  // Browsers expose `DOMException` without an `Error` prototype, so an
-  // aborted `fetch` rejects with a value that still carries `name` and
-  // `message`. Preserve them; callers branch on `name === "AbortError"`.
+  // A thrown value may expose `name` and `message` without being an `Error`,
+  // for example an error from another realm or a plain object thrown by
+  // third-party code. Preserve them; callers branch on names such as
+  // "AbortError".
   const parsed = safeParse(errorLikeSchema, cause);
   if (parsed.success) {
     const error = new Error(parsed.output.message, { cause });

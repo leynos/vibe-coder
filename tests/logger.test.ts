@@ -47,9 +47,10 @@ describe("toError", () => {
     expect(wrapped.cause).toBe(thrown);
   });
 
-  it("preserves the diagnostic fields of a non-Error DOMException", () => {
-    // Browsers reject an aborted fetch with a `DOMException`, which does not
-    // inherit from `Error`; callers still branch on its `name`.
+  it("preserves the diagnostic fields of an error-like object", () => {
+    // Values that fail `instanceof Error` can still expose `name` and
+    // `message`, for example cross-realm errors or third-party plain objects;
+    // callers still branch on the name.
     const thrown = { name: "AbortError", message: "The operation was aborted." };
 
     const wrapped = toError(thrown);
