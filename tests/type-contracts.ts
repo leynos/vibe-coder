@@ -1,5 +1,5 @@
 /**
- * @file Compile-time contracts for the hand-written ambient declarations.
+ * @file Compile-time contracts for the handwritten ambient declarations.
  *
  * Bun's test runner does not discover this file; `tsc` typechecks it. Each
  * `@ts-expect-error` documents an argument the declarations must reject, so a
