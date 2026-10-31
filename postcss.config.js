@@ -1,3 +1,11 @@
+/**
+ * @file PostCSS pipeline for the Vite build.
+ *
+ * Runs Tailwind CSS v4 followed by Autoprefixer, then drops daisyUI's
+ * `@property --radialprogress` declaration so Lightning CSS does not warn
+ * about it during production builds.
+ */
+
 import tailwindcss from "@tailwindcss/postcss";
 import autoprefixer from "autoprefixer";
 

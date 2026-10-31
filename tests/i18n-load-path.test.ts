@@ -1,3 +1,10 @@
+/**
+ * @file Tests for Fluent bundle path construction.
+ *
+ * Verifies that the configured base path is normalised and prefixed so bundles
+ * resolve under a sub-path deployment as well as the site root.
+ */
+
 import { describe, expect, it } from "bun:test";
 
 import { buildFluentLoadPath, normalizeBasePath } from "../src/i18n";

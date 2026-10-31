@@ -1,4 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+/**
+ * @file Behavioural tests for the display-mode provider.
+ *
+ * Covers viewport-based defaults, persistence across remounts, explicit user
+ * choices, and fallbacks when browser storage or `matchMedia` is unavailable.
+ */
+
+import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { JSX } from "react";
 import { act } from "react";
@@ -277,5 +284,41 @@ describe("DisplayModeProvider", () => {
     });
 
     expect(screen.getByRole("status", { name: /display mode/i }).textContent).toBe("full-browser");
+  });
+
+  it("falls back to the desktop default and warns once when matchMedia is unavailable", () => {
+    const originalMatchMedia = globalThis.matchMedia;
+    const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+
+    try {
+      Object.defineProperty(globalThis, "matchMedia", {
+        configurable: true,
+        value: undefined,
+      });
+
+      const { unmount } = render(
+        <DisplayModeProvider>
+          <ModeProbe />
+        </DisplayModeProvider>,
+      );
+
+      expect(screen.getByRole("status", { name: /display mode/i }).textContent).toBe("hosted");
+      unmount();
+
+      render(
+        <DisplayModeProvider>
+          <ModeProbe />
+        </DisplayModeProvider>,
+      );
+
+      expect(warnSpy.mock.calls).toHaveLength(1);
+      expect(warnSpy.mock.calls[0]?.[0]).toContain("Media query support is unavailable");
+    } finally {
+      warnSpy.mockRestore();
+      Object.defineProperty(globalThis, "matchMedia", {
+        configurable: true,
+        value: originalMatchMedia,
+      });
+    }
   });
 });

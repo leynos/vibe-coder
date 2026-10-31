@@ -197,6 +197,21 @@ export const applyDocumentLocale = (language?: string): void => {
   document.body.setAttribute("data-direction", direction);
 };
 
+// Register the listeners before `i18nReady` is created so an `initialized`
+// emit during a synchronous init cannot be missed. Reacting to the event
+// instead of awaiting `i18nReady` at module scope keeps module evaluation
+// non-blocking: the locale bundle is fetched over the network, and the
+// application entry point must not wait for it before its exports exist.
+// i18next emits `initialized` even when the backend fails, with the error
+// already reported through `fetchAjax`.
+i18n.on("initialized", () => {
+  applyDocumentLocale(i18n.resolvedLanguage);
+});
+
+i18n.on("languageChanged", (nextLanguage) => {
+  applyDocumentLocale(nextLanguage);
+});
+
 /**
  * Promise that resolves when i18next has finished initializing and the first
  * locale bundle is available. React Suspense boundaries await this indirectly
@@ -241,12 +256,5 @@ export const i18nReady = i18n
       fluentBundleOptions: { useIsolating: false },
     },
   });
-
-await i18nReady;
-applyDocumentLocale(i18n.resolvedLanguage);
-
-i18n.on("languageChanged", (nextLanguage) => {
-  applyDocumentLocale(nextLanguage);
-});
 
 export { default } from "i18next";

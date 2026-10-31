@@ -16,6 +16,8 @@ import path from "node:path";
 import ts from "typescript";
 import * as v from "valibot";
 
+import { SEMANTIC_LINT_CONFIG_PATH } from "./semantic-lint-config";
+
 interface HardcodedStringsConfig {
   minWordLength: number;
   userFacingAttributes: string[];
@@ -46,7 +48,6 @@ interface LintDirectives {
   readonly fileLevelDisabled: boolean;
 }
 
-const CONFIG_PATH = "tools/semantic-lint.config.json";
 const PROJECT_ROOT = process.cwd();
 
 const DEFAULTS: HardcodedStringsConfig = {
@@ -63,7 +64,7 @@ const DEFAULTS: HardcodedStringsConfig = {
 
 /** Load semantic-lint config with repo defaults for this rule. */
 function loadConfig(): HardcodedStringsConfig {
-  const raw = readFileSync(CONFIG_PATH, "utf8");
+  const raw = readFileSync(SEMANTIC_LINT_CONFIG_PATH, "utf8");
   const config = v.parse(SemanticConfigSchema, JSON.parse(raw));
   const section = config.hardcodedStrings;
   const configuredAttributes = section?.userFacingAttributes;

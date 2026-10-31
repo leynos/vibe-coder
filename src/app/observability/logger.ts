@@ -78,6 +78,12 @@ function safeStringify(value: LogValue): string {
   }
 }
 
+/**
+ * Render a log entry as one line: level, timestamp, message, then context.
+ *
+ * The context is appended only when it has at least one key, so a bare
+ * message is not followed by an empty `{}`.
+ */
 function formatLogEntry(entry: LogEntry): string {
   const parts = [`[${entry.level.toUpperCase()}]`, entry.timestamp, entry.message];
   if (entry.context && Object.keys(entry.context).length > 0) {
@@ -86,6 +92,12 @@ function formatLogEntry(entry: LogEntry): string {
   return parts.join(" ");
 }
 
+/**
+ * Build a log entry, stamping it with the current time.
+ *
+ * `context` and `error` are attached only when supplied, so optional fields
+ * stay distinguishable from explicitly present but empty values.
+ */
 function createLogEntry(
   level: LogLevel,
   message: string,
@@ -106,6 +118,13 @@ function createLogEntry(
   return entry;
 }
 
+/**
+ * Write one entry at `level` to the matching console method.
+ *
+ * Error-level entries pass the `Error` object as a second console argument so
+ * the browser can render its stack, while debug entries do the same for
+ * parity; the formatted line already carries the serialized context.
+ */
 function log(level: LogLevel, message: string, context?: LogContext, error?: Error) {
   const entry = createLogEntry(level, message, context, error);
   const formatted = formatLogEntry(entry);

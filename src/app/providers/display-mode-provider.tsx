@@ -41,12 +41,25 @@ export interface DisplayModeContextValue {
 
 const DisplayModeContext = createContext<DisplayModeContextValue | undefined>(undefined);
 
+/**
+ * Return whether the runtime exposes a DOM.
+ *
+ * The provider is safe to import during server-side rendering and in unit
+ * tests that do not install a DOM; in both cases storage and media-query
+ * access must be skipped rather than attempted.
+ */
 function canUseDOM(): boolean {
   return "window" in globalThis && "document" in globalThis;
 }
 
-// localStorage is accessed synchronously on the single JavaScript thread.
-// No explicit cross-provider locking is required.
+/**
+ * Read the persisted mode, or `null` when absent, invalid, or unreadable.
+ *
+ * localStorage is accessed synchronously on the single JavaScript thread, so
+ * no explicit cross-provider locking is required. A storage failure is logged
+ * and treated as "no stored preference" rather than propagated, because the
+ * provider must still render.
+ */
 function readStoredMode(): DisplayMode | null {
   if (!canUseDOM()) return null;
   try {
@@ -64,6 +77,12 @@ function readStoredMode(): DisplayMode | null {
   }
 }
 
+/**
+ * Persist an explicit user choice.
+ *
+ * Storage failures (quota exceeded, private mode) are logged and swallowed:
+ * the in-memory choice remains in force for the session.
+ */
 function persistMode(mode: DisplayMode) {
   if (!canUseDOM()) return;
   try {
@@ -77,6 +96,12 @@ function persistMode(mode: DisplayMode) {
   }
 }
 
+/**
+ * Remove the persisted preference when the user resets to the viewport default.
+ *
+ * As with {@link persistMode}, a storage failure is logged rather than thrown
+ * so the reset still takes effect in memory.
+ */
 function clearPersistedMode() {
   if (!canUseDOM()) return;
   try {
@@ -90,13 +115,68 @@ function clearPersistedMode() {
   }
 }
 
-function matchMediaQuery(query: string): boolean {
+// The missing-API warning is emitted once per page load; a provider that
+// re-renders must not turn an unsupported runtime into a log flood.
+let hasWarnedMissingMatchMedia = false;
+
+/**
+ * Return the runtime's media-query API, or `undefined` when it is absent.
+ *
+ * The DOM library declares `matchMedia` as always present, so the union
+ * return type records the runtime reality that a few non-browser
+ * environments provide a DOM without it.
+ */
+function getMediaQueryMatcher(): typeof globalThis.matchMedia | undefined {
+  return globalThis.matchMedia;
+}
+
+/**
+ * Return whether the runtime exposes the media-query API.
+ *
+ * `matchMedia` is absent in a few non-browser runtimes. Without it the
+ * provider falls back to the desktop default instead of throwing during
+ * render, and reports the degraded mode once.
+ */
+function canUseMediaQuery(): boolean {
   if (!canUseDOM()) {
     return false;
   }
-  return globalThis.matchMedia(query).matches;
+  if (getMediaQueryMatcher() === undefined) {
+    if (!hasWarnedMissingMatchMedia) {
+      hasWarnedMissingMatchMedia = true;
+      appLogger.warn("Media query support is unavailable; using the default display mode", {
+        operation: "display-mode.detect",
+        fallback: DESKTOP_DEFAULT_MODE,
+      });
+    }
+    return false;
+  }
+  return true;
 }
 
+/**
+ * Evaluate a media query, treating an unsupported runtime as "no match".
+ *
+ * Reporting `false` keeps the caller on the desktop default instead of
+ * throwing during render.
+ */
+function matchMediaQuery(query: string): boolean {
+  if (!canUseMediaQuery()) {
+    return false;
+  }
+  const matcher = getMediaQueryMatcher();
+  if (matcher === undefined) {
+    return false;
+  }
+  return matcher(query).matches;
+}
+
+/**
+ * Infer the layout mode from the viewport width.
+ *
+ * Narrow viewports get the full-browser layout; everything else, including a
+ * runtime without `matchMedia`, gets the hosted default.
+ */
 function detectPreferredDisplayMode(): DisplayMode {
   const prefersMobileViewport = matchMediaQuery("(max-width: 768px)");
   if (prefersMobileViewport) {
@@ -145,7 +225,7 @@ export function DisplayModeProvider({ children }: DisplayModeProviderProps): JSX
   }, []);
 
   useEffect(() => {
-    if (!canUseDOM()) {
+    if (!canUseMediaQuery()) {
       return;
     }
     if (hasUserPreference) {

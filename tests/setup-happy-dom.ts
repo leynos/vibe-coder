@@ -1,3 +1,11 @@
+/**
+ * @file Bun test preload that installs a Happy DOM window.
+ *
+ * Registers the DOM globals, teaches the bundler to treat imported image
+ * assets as modules, and installs the shared i18n test harness so component
+ * suites can render without a browser.
+ */
+
 import { Window } from "happy-dom";
 
 import { setupI18nTestHarness } from "./support/i18n-test-runtime";

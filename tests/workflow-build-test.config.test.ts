@@ -70,9 +70,12 @@ const TriggerNameListSchema = v.pipe(
 
 const TriggerMapToNormalisedSchema = v.pipe(
   TriggerMapSchema,
+  // The mapping form already distinguishes the three states the assertions
+  // need: absent (undefined), present without filters (null), and present
+  // with filters (the parsed filter object).
   v.transform((triggers) => ({
-    push: triggers.push ?? null,
-    pullRequest: triggers.pull_request ?? null,
+    push: triggers.push,
+    pullRequest: triggers.pull_request,
   })),
 );
 
@@ -131,6 +134,23 @@ describe("build-test job contract", () => {
       expect(step.if).toBeUndefined();
       expect(step["continue-on-error"]).toBeUndefined();
     }
+  });
+
+  it("distinguishes an absent trigger from a present trigger without filters", () => {
+    const parsed = v.parse(WorkflowSchema, {
+      on: { push: null, pull_request: { types: ["closed"] } },
+      jobs: {},
+    });
+
+    // `push: null` means the trigger is present and unfiltered. Omitting
+    // `pull_request` entirely must stay distinguishable from that state;
+    // otherwise a workflow that never runs on pull requests could pass the
+    // filter assertions above.
+    expect(parsed.on?.push).toBeNull();
+    expect(parsed.on?.pullRequest).toEqual({ types: ["closed"] });
+
+    const pushOnly = v.parse(WorkflowSchema, { on: { push: null }, jobs: {} });
+    expect(pushOnly.on?.pullRequest).toBeUndefined();
   });
 
   it("checks out without persisting credentials for the build's dependency code", async () => {

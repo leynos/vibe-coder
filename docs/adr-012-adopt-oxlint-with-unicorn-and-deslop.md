@@ -64,8 +64,15 @@ and it makes each accepted rule visible in review.
 - `unicorn/*` — the plugin's recommended profile, applied to `src`, `tests`,
   `scripts`, `tools`, the token pipeline, and the repository configuration
   files.
-- `deslop/*` — every rule the plugin publishes at 0.4.9, covering runtime type
-  narrowing, assertion hygiene, dictionary contracts, and test structure.
+- `deslop/*` — every rule in the plugin's recommended profile at 0.4.9, plus
+  the five opt-in rules `no-duplicate-consts`, `no-duplicate-types`,
+  `no-pass-through-schema`, `no-renamed-imports`, and
+  `no-reexports-outside-entrypoints`. Together these cover runtime type
+  narrowing, assertion hygiene, dictionary contracts, and test structure. The
+  remaining opt-in rule, `canonical-class-names`, is not enabled: it resolves
+  the generated Tailwind design system and rewrites class spellings across the
+  application, which belongs in a separate change rather than in the gate
+  adoption.
 - `typescript/no-deprecated`, `typescript/no-require-imports`,
   `typescript/no-floating-promises`, and
   `typescript/no-unnecessary-condition` — type-aware checks that the existing
@@ -88,9 +95,21 @@ One Unicorn rule is disabled for a directory rather than globally:
   architecture rules for their directory, and the path-alias contract requires
   those directories to exist. The rule remains active for every other file.
 
-Where Unicorn and Deslop cover the same ground, the Unicorn rule wins. No such
-conflict currently requires a disabled rule; both plugins agree on
-`typeof`-based narrowing, for example.
+Where Unicorn and Deslop cover the same ground, the Unicorn rule wins:
+
+- `deslop/no-reflect-apply` — disabled. It rejects the `Reflect.apply(...)`
+  form that `unicorn/prefer-reflect-apply` requires callers to use, so the two
+  rules cannot both be satisfied. The Unicorn form is preferred.
+
+`deslop/no-runtime-typeof` and `unicorn/no-typeof-undefined` agree rather than
+conflict: both push callers towards direct comparison with `undefined`.
+
+One Deslop rule is configured rather than disabled for particular files:
+
+- `deslop/no-reexports-outside-entrypoints` accepts an `entrypoints` list. It
+  keeps its default `**/index.ts` globs and adds `src/i18n.ts`, the i18n module
+  façade, and `src/global.d.ts`, whose ambient `declare module` block
+  re-exports the test runner's types by design.
 
 No rule is disabled to accommodate TypeDoc or the `df12-lints` guidance.
 TypeDoc concerns documentation comments, and its requirements are satisfied by

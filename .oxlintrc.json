@@ -175,7 +175,7 @@
     "deslop/no-known-value-widening": "error",
     "deslop/no-module-mocking": "error",
     "deslop/no-object-parameters": "error",
-    "deslop/no-reflect-apply": "error",
+    "deslop/no-reflect-apply": "off",
     "deslop/no-reflect-get": "error",
     "deslop/no-runtime-typeof": "error",
     "deslop/no-shape-in-symbol-names": "error",
@@ -193,7 +193,21 @@
     "typescript/no-require-imports": "error",
     "typescript/no-floating-promises": "error",
     "typescript/no-unnecessary-condition": "error",
-    "no-unreachable": "error"
+    "no-unreachable": "error",
+    "deslop/no-duplicate-consts": "error",
+    "deslop/no-duplicate-types": "error",
+    "deslop/no-pass-through-schema": "error",
+    "deslop/no-reexports-outside-entrypoints": [
+      "error",
+      {
+        "entrypoints": [
+          "**/index.ts",
+          "src/i18n.ts",
+          "src/global.d.ts"
+        ]
+      }
+    ],
+    "deslop/no-renamed-imports": "error"
   },
   "options": {
     "typeAware": true

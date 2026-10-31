@@ -1,8 +1,19 @@
+/**
+ * @file Semantic lint: report near-duplicate Tailwind class lists.
+ *
+ * Groups `className` strings across the codebase by Jaccard similarity on
+ * their whitespace-separated tokens, and reports groups whose members are
+ * similar enough to suggest a shared utility or component variant. Thresholds
+ * and suppression prefixes come from `tools/semantic-lint.config.json`.
+ */
+
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import ts from "typescript";
 import * as v from "valibot";
+
+import { SEMANTIC_LINT_CONFIG_PATH } from "./semantic-lint-config";
 
 type Occurrence = {
   file: string;
@@ -46,7 +57,6 @@ type ConceptHint = {
 };
 
 const PROJECT_ROOT = process.cwd();
-const CONFIG_PATH = "tools/semantic-lint.config.json";
 const DEFAULT_OPTIONS: NearDuplicateOptions = {
   minTokenCount: 4,
   maxJaccardDistance: 0.2,
@@ -83,7 +93,7 @@ const CONCEPT_HINTS: ConceptHint[] = [
 ];
 
 function loadOptions(): NearDuplicateOptions {
-  const raw = readFileSync(CONFIG_PATH, "utf8");
+  const raw = readFileSync(SEMANTIC_LINT_CONFIG_PATH, "utf8");
   const config = v.parse(SemanticConfigSchema, JSON.parse(raw));
   return { ...DEFAULT_OPTIONS, ...config.nearDuplicateClasses };
 }

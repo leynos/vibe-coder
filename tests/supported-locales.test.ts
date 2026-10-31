@@ -1,3 +1,10 @@
+/**
+ * @file Tests for the supported-locale registry.
+ *
+ * Verifies locale metadata, the default locale, and right-to-left detection
+ * for the languages the application ships.
+ */
+
 import { describe, expect, it } from "bun:test";
 
 import {

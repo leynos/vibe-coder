@@ -1,3 +1,10 @@
+/**
+ * @file Tests for the i18n runtime.
+ *
+ * Covers initialisation, locale switching, and the document-level language and
+ * direction attributes that the UI relies on for right-to-left locales.
+ */
+
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "bun:test";
 
 import { DEFAULT_LOCALE } from "../src/app/i18n/supported-locales";
@@ -20,6 +27,19 @@ describe("i18n runtime configuration", () => {
   });
 
   it("sets document language and direction once the runtime is ready", () => {
+    expect(document.documentElement.lang).toBe(DEFAULT_LOCALE);
+    expect(document.documentElement.dir).toBe("ltr");
+    expect(readBodyDirection()).toBe("ltr");
+  });
+
+  it("applies the resolved locale when i18next reports initialization", () => {
+    document.documentElement.lang = "zz";
+    document.documentElement.dir = "rtl";
+    document.body.dir = "rtl";
+    document.body.setAttribute("data-direction", "rtl");
+
+    i18n.emit("initialized", i18n.options);
+
     expect(document.documentElement.lang).toBe(DEFAULT_LOCALE);
     expect(document.documentElement.dir).toBe("ltr");
     expect(readBodyDirection()).toBe("ltr");

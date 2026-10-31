@@ -1,8 +1,19 @@
+/**
+ * @file Semantic lint: enforce a maximum `className` length in TSX sources.
+ *
+ * Scans every TSX source under `src` for string-literal `className` values
+ * and fails when any exceeds the threshold in `tools/semantic-lint.config.json`
+ * (16 by default). Long class lists are a readability smell that more often
+ * belongs in a named utility or component variant.
+ */
+
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import ts from "typescript";
 import * as v from "valibot";
+
+import { SEMANTIC_LINT_CONFIG_PATH } from "./semantic-lint-config";
 
 const MAX_CLASSLIST_LENGTH = v.pipe(v.number(), v.finite(), v.minValue(1));
 
@@ -17,11 +28,10 @@ interface Violation {
   length: number;
 }
 
-const CONFIG_PATH = "tools/semantic-lint.config.json";
 const PROJECT_ROOT = process.cwd();
 
 function loadThreshold(): number {
-  const raw = readFileSync(CONFIG_PATH, "utf8");
+  const raw = readFileSync(SEMANTIC_LINT_CONFIG_PATH, "utf8");
   const config = v.parse(SemanticConfigSchema, JSON.parse(raw));
   return config.maxClasslistLength === undefined ? 16 : Math.floor(config.maxClasslistLength);
 }

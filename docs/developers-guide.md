@@ -172,6 +172,62 @@ it, switching off `notDocumented`, `notExported`, `invalidLink` or
 
 ______________________________________________________________________
 
+## Structured logging
+
+`src/app/observability/logger.ts` is the single entry point for application
+logging. It exposes a closed data contract rather than a thin `console`
+wrapper, so log payloads stay serializable and greppable.
+
+### Value and context contracts
+
+`LogValue` is the closed union of values a log entry may carry: `string`,
+`number`, `boolean`, `null`, `Error`, arrays of `LogValue`, and plain objects
+whose properties are `LogValue`. `undefined`, functions, class instances other
+than `Error`, and `Date` are not assignable, which keeps every payload
+representable in JSON and in a remote sink.
+
+`LogContext` is `Readonly<Record<string, LogValue>>` — the per-entry detail
+object. An empty context counts as absent and is omitted from the formatted
+line.
+
+### Normalizing caught values
+
+`toError(cause: unknown): Error` returns the value unchanged when it is already
+an `Error`, and otherwise wraps it in
+`new Error("Non-Error value thrown", { cause })`. Every `catch` binding is
+`unknown` under the project's TypeScript settings, so callers must normalize
+before logging or reporting:
+
+```ts
+try {
+  await persist();
+} catch (cause) {
+  reportError(toError(cause), { operation: "persist" });
+}
+```
+
+### Logging and reporting
+
+`appLogger` provides four methods, each of which writes one formatted,
+timestamped line to the matching console method:
+
+- `appLogger.debug(message, context?)`
+- `appLogger.info(message, context?)`
+- `appLogger.warn(message, context?)`
+- `appLogger.error(message, context?, error?)`
+
+`reportError(error, context?)` is the reporting seam: it logs at error level
+with the message `"Error reported"` and the error attached. Production code
+should call `reportError` rather than `appLogger.error` when the intent is
+error reporting, so that a remote telemetry sink can be added behind this one
+function without touching call sites.
+
+A context containing `Error` values serializes each one as
+`{ name, message, stack }`, and circular references serialize to `"[Circular]"`
+instead of throwing.
+
+______________________________________________________________________
+
 ## Directory structure and boundary rules
 
 ### High-level layout
@@ -613,6 +669,7 @@ ______________________________________________________________________
 | 009 | Use semantic audio events for reactive sound.               |
 | 010 | Run fixed-tick simulation outside React rendering.          |
 | 011 | Use TLA+ for self-play promotion safety.                    |
+| 012 | Adopt Oxlint with the Unicorn and Deslop plugins.           |
 
 ______________________________________________________________________
 

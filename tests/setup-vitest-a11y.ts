@@ -1,3 +1,10 @@
+/**
+ * @file Vitest setup for the accessibility suite.
+ *
+ * Adds jest-dom matchers, jest-axe's `toHaveNoViolations`, Testing Library
+ * cleanup, and the shared i18n harness used by the a11y specs.
+ */
+
 import "@testing-library/jest-dom/vitest";
 import { configure } from "@testing-library/dom";
 import { cleanup } from "@testing-library/react";

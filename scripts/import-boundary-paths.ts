@@ -4,12 +4,6 @@ import path from "node:path";
 
 import ts from "typescript";
 
-export {
-  PATH_ALIASES,
-  type AliasEntry,
-  type AliasPrefix,
-  type RepoRelativePath,
-} from "../tools/path-aliases";
 import { PATH_ALIASES } from "../tools/path-aliases";
 
 /**
