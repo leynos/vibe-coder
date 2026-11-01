@@ -296,21 +296,21 @@ describe("DisplayModeProvider", () => {
         value: undefined,
       });
 
-      const { unmount } = render(
+      const { rerender } = render(
+        <DisplayModeProvider>
+          <ModeProbe />
+        </DisplayModeProvider>,
+      );
+
+      // The provider owns the once-only guard, so re-rendering the same
+      // instance must not repeat the warning.
+      rerender(
         <DisplayModeProvider>
           <ModeProbe />
         </DisplayModeProvider>,
       );
 
       expect(screen.getByRole("status", { name: /display mode/i }).textContent).toBe("hosted");
-      unmount();
-
-      render(
-        <DisplayModeProvider>
-          <ModeProbe />
-        </DisplayModeProvider>,
-      );
-
       expect(warnSpy.mock.calls).toHaveLength(1);
       expect(warnSpy.mock.calls[0]?.[0]).toContain("Media query support is unavailable");
     } finally {

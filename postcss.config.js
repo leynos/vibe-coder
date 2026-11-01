@@ -9,6 +9,21 @@
 import tailwindcss from "@tailwindcss/postcss";
 import autoprefixer from "autoprefixer";
 
+/**
+ * Build the PostCSS plugin that strips daisyUI's `--radialprogress` property.
+ *
+ * Lightning CSS warns about the declaration on every production build, and
+ * the property is not needed once Tailwind has inlined the utilities that use
+ * it, so removing it keeps builds quiet without changing rendered output.
+ *
+ * @returns A PostCSS plugin object registered as
+ * `remove-daisy-radial-progress-property`.
+ *
+ * @example
+ * ```js
+ * export default { plugins: [removeDaisyRadialProgressProperty()] };
+ * ```
+ */
 const removeDaisyRadialProgressProperty = () => ({
   postcssPlugin: "remove-daisy-radial-progress-property",
   AtRule(atRule) {

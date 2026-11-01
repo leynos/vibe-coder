@@ -17,6 +17,7 @@ const BASE_LOCALE = process.env.FTL_BASE_LOCALE ?? "en-GB";
 const LOCALES_DIR = path.resolve(process.cwd(), "public/locales");
 const IGNORE_MARKER = "vars: ignore-mismatch";
 
+/** Return the locale directory names under `public/locales`, unsorted. */
 function listLocaleDirs(): string[] {
   return fs
     .readdirSync(LOCALES_DIR, { withFileTypes: true })
@@ -24,6 +25,7 @@ function listLocaleDirs(): string[] {
     .map((dirent) => dirent.name);
 }
 
+/** Collect every `.ftl` file under one locale, including nested namespaces. */
 function listFtlFiles(locale: string): string[] {
   const startDir = path.join(LOCALES_DIR, locale);
   const queue = [startDir];
@@ -51,6 +53,7 @@ class VariableCollector extends Visitor {
   }
 }
 
+/** Add every `$variable` referenced in `node` to the shared `vars` set. */
 function collectVariableNames(node: AST.BaseNode | null, vars: Set<string>): void {
   if (!node) return;
   const collector = new VariableCollector();
@@ -90,6 +93,13 @@ function describeJunk(entries: readonly AST.Junk[], source: string): string {
   return reasons.length > 0 ? reasons.join("; ") : "unknown syntax error";
 }
 
+/**
+ * Parse one Fluent file, recording a failure on `process.exitCode`.
+ *
+ * @param contents - Raw file text.
+ * @param filePath - Path used in diagnostics only.
+ * @returns The parsed resource, or `undefined` when it is unusable.
+ */
 function parseResource(contents: string, filePath: string): Resource | undefined {
   let resource: Resource;
   try {
@@ -110,11 +120,18 @@ function parseResource(contents: string, filePath: string): Resource | undefined
   return resource;
 }
 
+/** Report whether an entry opts out via the `vars: ignore-mismatch` marker. */
 function shouldIgnoreEntry(entry: { comment?: { content?: string } | null }): boolean {
   const comment = entry.comment?.content ?? "";
   return comment.includes(IGNORE_MARKER);
 }
 
+/**
+ * Map each message id in one locale to the placeholders it references.
+ *
+ * The same message may be split across several files, so variables and the
+ * ignore marker accumulate rather than overwrite.
+ */
 function readLocalePlaceholders(locale: string): Map<string, PlaceholderReport> {
   const files = listFtlFiles(locale);
   const results = new Map<string, PlaceholderReport>();
@@ -148,6 +165,7 @@ type PlaceholderMismatch = {
   extra: readonly string[];
 };
 
+/** Compare one locale against the base map and return every divergence. */
 function findPlaceholderMismatches(
   locale: string,
   baseMap: ReadonlyMap<string, PlaceholderReport>,
@@ -171,6 +189,7 @@ function findPlaceholderMismatches(
   return mismatches;
 }
 
+/** Print one mismatch, naming the missing and extra placeholders. */
 function reportMismatch(mismatch: PlaceholderMismatch): void {
   console.error(
     `[ftl-vars] ${mismatch.locale}:${mismatch.id} placeholder mismatch vs ${BASE_LOCALE}`,
@@ -183,6 +202,7 @@ function reportMismatch(mismatch: PlaceholderMismatch): void {
   }
 }
 
+/** Validate every locale against the base locale and exit non-zero on drift. */
 function main(): void {
   if (!fs.existsSync(LOCALES_DIR)) {
     console.error(`[ftl-vars] No locales directory at ${LOCALES_DIR}`);

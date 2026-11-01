@@ -5,7 +5,7 @@
  * direction attributes that the UI relies on for right-to-left locales.
  */
 
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import * as v from "valibot";
 
 import { DEFAULT_LOCALE } from "../src/app/i18n/supported-locales";
@@ -123,7 +123,8 @@ describe("i18n runtime configuration", () => {
     expect(readBodyDirection()).toBe("rtl");
   });
 
-  it("leaves metadata untouched when the document has no root element", () => {
+  it("leaves metadata untouched and warns when the document has no root element", () => {
+    const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
     Object.defineProperty(document, "documentElement", {
       configurable: true,
       value: null,
@@ -132,7 +133,17 @@ describe("i18n runtime configuration", () => {
     try {
       expect(() => applyDocumentLocale("ar")).not.toThrow();
       expect(document.documentElement).toBeNull();
+
+      // The fallback is invisible to users, so diagnostics must carry stable
+      // fields an operator can search for.
+      expect(warnSpy.mock.calls).toHaveLength(1);
+      const line = warnSpy.mock.calls[0]?.[0];
+      expect(line).toContain("Cannot apply document locale");
+      expect(line).toContain('"operation":"i18n.applyDocumentLocale"');
+      expect(line).toContain('"reason":"missing-document-element"');
+      expect(line).toContain('"language":"ar"');
     } finally {
+      warnSpy.mockRestore();
       Reflect.deleteProperty(document, "documentElement");
     }
   });

@@ -170,6 +170,13 @@ it, switching off `notDocumented`, `notExported`, `invalidLink` or
    against TypeScript source and test files. Requires `uvx` (provided by `uv`).
 6. **Stylelint** — validates CSS files against `tools/stylelint.config.js`.
 
+The three repository-specific checks (class-list length, near-duplicate class
+lists, and hardcoded strings) share one configuration file,
+`tools/semantic-lint.config.json`, loaded through
+`scripts/semantic-lint-config.ts`. Each check reads only its own section, so a
+threshold changes in one place and applies wherever the rule runs. Add narrow
+project prefixes and suppression lists there rather than in the scripts.
+
 ______________________________________________________________________
 
 ## Structured logging
@@ -481,9 +488,24 @@ intentional DOM change.
 Playwright tests live in `tests/e2e/`. Run them with:
 
 ```sh
-bun test:e2e          # requires a running dev server
+bun test:e2e            # launches or reuses a dev server
 bun test:e2e:container  # headless, no network
 ```
+
+`playwright.config.ts` derives the base URL from `PLAYWRIGHT_BASE_URL`, which
+defaults to `http://localhost:5173`. `resolvePort` fills in the protocol
+default when the URL omits a port, and the tests pin that behaviour so an
+explicit port is never silently replaced.
+
+Configuration probes the base URL before launching anything. If something
+already accepts connections there, Playwright reuses it (`reuseExistingServer`)
+and does not spawn a second dev server. When the preferred port cannot be bound,
+`findAvailablePort` falls back to an OS-assigned port and writes it back into
+the base URL, so the suite still runs on a machine where another checkout holds
+port 5173. Set `PLAYWRIGHT_SKIP_WEBSERVER=1` to skip both the probe and the
+launch when a server is managed outside Playwright; the flag is read from the
+environment, and tests that evaluate the configuration in a child process strip
+inherited values first so each case controls its own settings.
 
 ### Accessibility tests
 
@@ -512,6 +534,30 @@ t("homeTitle");    // avoid camelCase keys
 Locale files are Fluent (`.ftl`) files in `public/locales/<locale>/`. The
 default locale is `en`. Add new locales by adding a directory and registering
 the locale in `src/app/i18n/supported-locales.ts`.
+
+______________________________________________________________________
+
+## DOM access at module scope
+
+Module evaluation can run before the parser has created `<body>` or `<html>`.
+`lib.dom` types both as non-null, so code that trusts the types can throw an
+opaque `TypeError` from a property assignment. Import the accessors in
+`src/app/dom/document-body.ts` instead of touching `document.body` or
+`document.documentElement` directly:
+
+| Helper               | Returns               | Use when                                   |
+| :------------------- | :-------------------- | :----------------------------------------- |
+| `getDocumentBody`    | `HTMLElement \| null` | Writing body-level attributes or mounting. |
+| `getDocumentElement` | `HTMLElement \| null` | Writing document-level `lang` or `dir`.    |
+| `isTestEnvironment`  | `boolean`             | Skipping browser bootstrap under tests.    |
+
+`src/app/dom/runtime-environment.ts` exposes `isTestEnvironment`, which probes
+both `process` and `process.env` before reading `NODE_ENV`. The browser bundle
+has no `process` at all, and some bundlers install a shim without `env`, so the
+probe takes an injectable host object and never mutates the global one. A
+missing document root is reported through `appLogger` with a stable `operation`
+and `reason`; it is not silently ignored, because the user-visible effect is
+that locale or theme attributes keep their previous values.
 
 ______________________________________________________________________
 
@@ -578,6 +624,23 @@ bun tokens:build
 
 This generates CSS custom properties and TypeScript token exports in
 `tokens/dist/`. The output directory is not tracked in git.
+
+The build runs two stages. Style Dictionary reads `tokens/src/tokens.json` and
+emits `dist/css/variables.css`; then `tokens/build/style-dictionary.js`
+resolves every `{path.to.token}` reference, derives per-theme core and alias
+custom properties, and writes the Tailwind preset, daisyUI theme plugin blocks,
+and TypeScript exports beside it. The pure transformers live in
+`tokens/build/token-resolve.js`, which sorts keys with a numeric-aware collator
+so the generated artefacts are byte-for-byte stable across machines. A circular
+or unknown token reference fails the build rather than emitting an empty value.
+
+### Tailwind and PostCSS
+
+`postcss.config.js` runs Tailwind CSS v4 and then Autoprefixer. A small local
+plugin then removes daisyUI's `@property --radialprogress` declaration, which
+Lightning CSS otherwise warns about on every production build. The property is
+no longer load-bearing once Tailwind has inlined the utilities that use it, so
+removing it keeps builds quiet without changing rendered output.
 
 ### Visual design references
 

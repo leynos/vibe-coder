@@ -1,7 +1,15 @@
 /** @file Display mode provider switching between hosted and full-browser layouts. */
 
 import type { JSX, ReactNode } from "react";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { appLogger, toError } from "../observability/logger";
 
@@ -115,10 +123,6 @@ function clearPersistedMode() {
   }
 }
 
-// The missing-API warning is emitted once per page load; a provider that
-// re-renders must not turn an unsupported runtime into a log flood.
-let hasWarnedMissingMatchMedia = false;
-
 /**
  * Return the runtime's media-query API, or `undefined` when it is absent.
  *
@@ -135,23 +139,34 @@ function getMediaQueryMatcher(): typeof globalThis.matchMedia | undefined {
  *
  * `matchMedia` is absent in a few non-browser runtimes. Without it the
  * provider falls back to the desktop default instead of throwing during
- * render, and reports the degraded mode once.
+ * render. The probe stays side-effect free: reporting the degraded runtime is
+ * an effect's job, so a query never mutates module state or logs.
  */
 function canUseMediaQuery(): boolean {
-  if (!canUseDOM()) {
-    return false;
-  }
-  if (getMediaQueryMatcher() === undefined) {
-    if (!hasWarnedMissingMatchMedia) {
-      hasWarnedMissingMatchMedia = true;
-      appLogger.warn("Media query support is unavailable; using the default display mode", {
-        operation: "display-mode.detect",
-        fallback: DESKTOP_DEFAULT_MODE,
-      });
+  return canUseDOM() && getMediaQueryMatcher() !== undefined;
+}
+
+/**
+ * Report a missing media-query API once per mounted provider.
+ *
+ * A provider-owned ref keeps re-renders from repeating the message, and
+ * mounting the effect only after render keeps the capability probe itself
+ * pure. The warning is skipped where no DOM exists at all, because server-side
+ * rendering is an expected environment rather than a degraded one.
+ */
+function useMissingMediaQueryWarning(): void {
+  const hasWarned = useRef(false);
+
+  useEffect(() => {
+    if (hasWarned.current || !canUseDOM() || canUseMediaQuery()) {
+      return;
     }
-    return false;
-  }
-  return true;
+    hasWarned.current = true;
+    appLogger.warn("Media query support is unavailable; using the default display mode", {
+      operation: "display-mode.detect",
+      fallback: DESKTOP_DEFAULT_MODE,
+    });
+  }, []);
 }
 
 /**
@@ -197,6 +212,7 @@ export interface DisplayModeProviderProps {
  * user choices back to `localStorage`.
  */
 export function DisplayModeProvider({ children }: DisplayModeProviderProps): JSX.Element {
+  useMissingMediaQueryWarning();
   const storedMode = readStoredMode();
   const [mode, setModeState] = useState<DisplayMode>(() => {
     if (storedMode) {

@@ -189,9 +189,19 @@ export const applyDocumentLocale = (language?: string): void => {
   const direction = getLocaleDirection(resolvedLanguage);
 
   // `lib.dom` declares `documentElement` as non-null, but a document being
-  // parsed can still lack one. Leave the metadata untouched in that case.
+  // parsed can still lack one. Leave the metadata untouched in that case, but
+  // report it: without the root element every locale-dependent style and
+  // assistive-technology hint silently keeps its previous value.
   const htmlElement = getDocumentElement();
-  if (!htmlElement) return;
+  if (!htmlElement) {
+    appLogger.warn("Cannot apply document locale without a root element", {
+      operation: "i18n.applyDocumentLocale",
+      reason: "missing-document-element",
+      language: resolvedLanguage,
+      direction,
+    });
+    return;
+  }
 
   htmlElement.lang = resolvedLanguage;
   htmlElement.dir = direction;

@@ -14,6 +14,9 @@ import * as v from "valibot";
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 const CONFIG_URL = path.join(REPO_ROOT, "playwright.config.ts");
 
+/** Environment flag that tells the config to reuse a server started elsewhere. */
+const SKIP_WEBSERVER_ENV = "PLAYWRIGHT_SKIP_WEBSERVER";
+
 const READ_CONFIG_SCRIPT = `
 const { resolvePort } = await import(${JSON.stringify(CONFIG_URL)});
 const config = (await import(${JSON.stringify(CONFIG_URL)})).default;
@@ -51,10 +54,12 @@ type ReadConfigOptions = {
 
 /** Evaluate the configuration in a child process with the requested environment. */
 function readConfig({ baseURL, skipWebServer = true }: ReadConfigOptions = {}): ConfigSnapshot {
-  // Start from a copy without any inherited base URL so the default case
-  // exercises the configuration's own fallback rather than the parent's.
+  // Start from a copy without any inherited base URL or skip flag so the
+  // requested case drives the configuration rather than the parent process.
   const env = Object.fromEntries(
-    Object.entries(process.env).filter(([key]) => key !== "PLAYWRIGHT_BASE_URL"),
+    Object.entries(process.env).filter(
+      ([key]) => key !== "PLAYWRIGHT_BASE_URL" && key !== "PLAYWRIGHT_SKIP_WEBSERVER",
+    ),
   );
   if (skipWebServer) {
     Object.assign(env, { PLAYWRIGHT_SKIP_WEBSERVER: "1" });
@@ -131,12 +136,37 @@ describe("Playwright web server launch", () => {
     expect(config.webServer?.url).toBe(config.baseURL);
   });
 
+  it("ignores an inherited skip flag when the caller asks for the web server", async () => {
+    const port = await reserveFreePort();
+    const previous = process.env[SKIP_WEBSERVER_ENV];
+    process.env[SKIP_WEBSERVER_ENV] = "1";
+
+    try {
+      const config = readConfig({
+        baseURL: `http://127.0.0.1:${port}`,
+        skipWebServer: false,
+      });
+
+      expect(config.webServer?.command).toContain(`--port ${port}`);
+      expect(config.webServer?.url).toBe(config.baseURL);
+    } finally {
+      if (previous === undefined) {
+        Reflect.deleteProperty(process.env, SKIP_WEBSERVER_ENV);
+      } else {
+        process.env[SKIP_WEBSERVER_ENV] = previous;
+      }
+    }
+  });
+
   it("falls back to an ephemeral port when the preferred port cannot be bound", async () => {
-    // The probe dials 127.0.0.1, so a listener on another loopback address
-    // leaves it unreachable while still blocking the configuration's
-    // all-interfaces bind and forcing the fallback branch.
+    // The probe dials 127.0.0.1, so the occupier listens on the IPv6 loopback
+    // instead. A listener bound to a specific address conflicts with the
+    // configuration's wildcard bind, forcing the fallback branch, while the
+    // IPv4 probe still finds the port closed. The IPv6 loopback exists on
+    // every supported platform, unlike extra IPv4 loopback aliases such as
+    // 127.0.0.2, which macOS does not configure by default.
     const occupier = createServer();
-    await listenOn(occupier, "127.0.0.2", 0);
+    await listenOn(occupier, "::1", 0);
     const { port: preferred } = v.parse(AddressSchema, occupier.address());
 
     try {

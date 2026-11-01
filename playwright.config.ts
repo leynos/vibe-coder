@@ -35,6 +35,23 @@ const basePort = resolvePort(new URL(baseURL));
 /** Shape of the OS-provided listening address; other address kinds are rejected. */
 const AddressInfoSchema = v.object({ port: v.number() });
 
+/**
+ * Report whether something already accepts connections at `target`.
+ *
+ * Used to decide whether Playwright should spawn the dev server. The probe
+ * runs in a child process so a hung connection cannot block configuration
+ * evaluation, and it waits at most 500 ms. `PLAYWRIGHT_SKIP_WEBSERVER=1`
+ * short-circuits to `true`, which lets CI reuse a server started elsewhere.
+ *
+ * @param target - Absolute URL, typically the configured base URL.
+ * @returns `true` when the port accepts a TCP connection, or when the web
+ * server is explicitly skipped.
+ *
+ * @example
+ * ```ts
+ * serverIsReachable("http://127.0.0.1:5173"); // true when Vite is running
+ * ```
+ */
 function serverIsReachable(target: string): boolean {
   if (process.env.PLAYWRIGHT_SKIP_WEBSERVER === "1") {
     return true;
@@ -59,10 +76,29 @@ setTimeout(() => { socket.destroy(); process.exit(1); }, 500);
 }
 
 const shouldLaunchWebServer = !serverIsReachable(baseURL);
+
+/**
+ * Bind `preferred`, falling back to an ephemeral port when it is taken.
+ *
+ * The preferred port usually comes from the base URL, so honouring it keeps
+ * the launched server at the URL the tests expect. Another checkout may
+ * already hold it, though, and failing configuration outright would make the
+ * e2e suite unusable on a shared machine; falling back keeps the run going
+ * because the resolved port is written back into the base URL.
+ *
+ * @param preferred - Port to try first.
+ * @returns The bound port, with the probe socket already closed.
+ *
+ * @example
+ * ```ts
+ * const port = await findAvailablePort(5173); // 5173, or a free port if taken
+ * ```
+ */
 async function findAvailablePort(preferred: number): Promise<number> {
   return await new Promise<number>((resolve, reject) => {
     const attempt = createServer();
 
+    /** Close `server` and resolve with the port the OS actually bound. */
     const resolveWithPortAndClose = (server: ReturnType<typeof createServer>) => {
       const parsedAddress = v.safeParse(AddressInfoSchema, server.address());
       if (!parsedAddress.success) {
@@ -72,9 +108,11 @@ async function findAvailablePort(preferred: number): Promise<number> {
       server.close(() => resolve(parsedAddress.output.port));
     };
 
+    /** Retry the bind on an OS-assigned port after `preferred` was refused. */
     const startFallback = () => {
       attempt.close(() => {
         const fallback = createServer();
+        /** Drop both one-shot listeners so the losing branch cannot fire. */
         const cleanupFallback = () => {
           fallback.removeAllListeners("error");
           fallback.removeAllListeners("listening");

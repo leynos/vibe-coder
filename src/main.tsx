@@ -8,6 +8,7 @@ import "./i18n";
 
 import App from "./app/app";
 import { getDocumentBody } from "./app/dom/document-body";
+import { isTestEnvironment } from "./app/dom/runtime-environment";
 import { appLogger } from "./app/observability/logger";
 import "./index.css";
 
@@ -89,12 +90,7 @@ export function renderApp(target: HTMLElement, props?: AppRootProps): Root {
   return root;
 }
 
-// `process` is undefined in the browser bundle, so the guard is required even
-// though the test runner always defines it. Bundlers that shim `process` also
-// provide its `env` object.
-const isTestEnvironment = typeof process !== "undefined" && process.env.NODE_ENV === "test";
-
-if (!isTestEnvironment) {
+if (!isTestEnvironment()) {
   // A module loaded before `<body>` exists would otherwise fail with an
   // opaque TypeError from the property access below.
   const body = getDocumentBody();
