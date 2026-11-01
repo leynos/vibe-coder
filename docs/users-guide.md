@@ -28,6 +28,35 @@ available in the [game HUD mockup](vibe-coder-game-hud-mockup.html).
 
 ______________________________________________________________________
 
+## Controls and display settings
+
+Theme, display-mode, and language controls are available throughout a run. In
+hosted mode they appear as a floating stack of buttons; in full-browser mode a
+**Controls** button opens a side drawer holding the same controls.
+
+- **Display mode.** *Hosted* frames the game in a fixed mobile-sized viewport;
+  *full-browser* fills the available window. Until a mode is chosen explicitly,
+  the game follows the viewport: 768 pixels wide or narrower selects
+  full-browser, and anything wider selects hosted. An explicit choice is
+  remembered in browser storage and stops the automatic switching. **Reset to
+  device default** discards the stored display-mode preference and returns the
+  game to following the viewport. A runtime without media-query support starts
+  in hosted mode.
+- **Theme.** *Night* is the default, and the toggle switches between *Night*
+  and *Day*. The chosen theme is applied to the page and remembered in browser
+  storage.
+- **Language.** The language selector lists every supported locale, each shown
+  in its own script. Selecting a language applies it immediately and sets the
+  page language and text direction: Arabic and Hebrew read right to left, and
+  every other locale reads left to right. If a locale fails to load, the
+  selector reverts to the previous language.
+
+When browser storage is unavailable, for example in private browsing or when
+the quota is full, changes still apply for the current session, but the game
+cannot remember them for the next visit.
+
+______________________________________________________________________
+
 ## Starting a run — the typing ritual
 
 Each run begins with a manual typing ritual: a short timed input that

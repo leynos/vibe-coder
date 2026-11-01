@@ -497,12 +497,12 @@ Playwright directly, so `bun test:e2e` launches or reuses the dev server
 through the configuration described below. Other hosts delegate to
 `scripts/e2e-container.sh`, which runs Playwright inside the container image
 and expects a dev server to be reachable already; it performs a pre-flight
-check and exits rather than starting one. Start the server yourself, or point
-`PLAYWRIGHT_BASE_URL` at an existing one, before using the container route.
+check and exits rather than starting one. Start a server before using the
+container route, or point `PLAYWRIGHT_BASE_URL` at an existing one.
 
 `playwright.config.ts` derives the base URL from `PLAYWRIGHT_BASE_URL`, which
 defaults to `http://localhost:5173`. `resolvePort` fills in the protocol
-default when the URL omits a port, and the tests pin that behaviour so an
+default when the URL omits a port, and the tests pin that behaviour, so an
 explicit port is never silently replaced.
 
 Configuration probes the base URL before launching anything. If something
@@ -510,13 +510,13 @@ already accepts connections there, Playwright reuses it (`reuseExistingServer`)
 and does not spawn a second dev server; a dev server started from another
 checkout on port 5173 answers that probe, so the suite would run against that
 checkout instead of this one. The fallback applies to the other failure mode:
-when nothing answers the probe but the preferred port still cannot be bound,
+when nothing answers the probe, but the preferred port still cannot be bound
 because another process holds it on a specific address, `findAvailablePort`
 binds an OS-assigned port and writes it back into the base URL. Set
 `PLAYWRIGHT_SKIP_WEBSERVER=1` to skip both the probe and the launch when a
 server is managed outside Playwright; the flag is read from the environment,
 and tests that evaluate the configuration in a child process strip inherited
-values first so each case controls its own settings.
+values first, so each case controls its own settings.
 
 ### Accessibility tests
 
