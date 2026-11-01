@@ -489,8 +489,16 @@ Playwright tests live in `tests/e2e/`. Run them with:
 
 ```sh
 bun test:e2e            # launches or reuses a dev server
-bun test:e2e:container  # headless, no network
+bun test:e2e:container  # requires a dev server that is already running
 ```
+
+`scripts/e2e.sh` dispatches on the host distribution: Debian-family hosts run
+Playwright directly, so `bun test:e2e` launches or reuses the dev server
+through the configuration described below. Other hosts delegate to
+`scripts/e2e-container.sh`, which runs Playwright inside the container image
+and expects a dev server to be reachable already; it performs a pre-flight
+check and exits rather than starting one. Start the server yourself, or point
+`PLAYWRIGHT_BASE_URL` at an existing one, before using the container route.
 
 `playwright.config.ts` derives the base URL from `PLAYWRIGHT_BASE_URL`, which
 defaults to `http://localhost:5173`. `resolvePort` fills in the protocol
@@ -499,13 +507,16 @@ explicit port is never silently replaced.
 
 Configuration probes the base URL before launching anything. If something
 already accepts connections there, Playwright reuses it (`reuseExistingServer`)
-and does not spawn a second dev server. When the preferred port cannot be bound,
-`findAvailablePort` falls back to an OS-assigned port and writes it back into
-the base URL, so the suite still runs on a machine where another checkout holds
-port 5173. Set `PLAYWRIGHT_SKIP_WEBSERVER=1` to skip both the probe and the
-launch when a server is managed outside Playwright; the flag is read from the
-environment, and tests that evaluate the configuration in a child process strip
-inherited values first so each case controls its own settings.
+and does not spawn a second dev server; a dev server started from another
+checkout on port 5173 answers that probe, so the suite would run against that
+checkout instead of this one. The fallback applies to the other failure mode:
+when nothing answers the probe but the preferred port still cannot be bound,
+because another process holds it on a specific address, `findAvailablePort`
+binds an OS-assigned port and writes it back into the base URL. Set
+`PLAYWRIGHT_SKIP_WEBSERVER=1` to skip both the probe and the launch when a
+server is managed outside Playwright; the flag is read from the environment,
+and tests that evaluate the configuration in a child process strip inherited
+values first so each case controls its own settings.
 
 ### Accessibility tests
 
@@ -631,8 +642,13 @@ resolves every `{path.to.token}` reference, derives per-theme core and alias
 custom properties, and writes the Tailwind preset, daisyUI theme plugin blocks,
 and TypeScript exports beside it. The pure transformers live in
 `tokens/build/token-resolve.js`, which sorts keys with a numeric-aware collator
-so the generated artefacts are byte-for-byte stable across machines. A circular
-or unknown token reference fails the build rather than emitting an empty value.
+so the generated artefacts are byte-for-byte stable across machines.
+
+A reference is resolved only when it occupies the whole value:
+`{path.to.token}` is replaced, while an embedded reference such as
+`solid {missing}` is copied through unchanged and is not validated during the
+build. A circular or unknown whole-value reference fails the build rather than
+emitting an empty value.
 
 ### Tailwind and PostCSS
 

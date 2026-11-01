@@ -159,19 +159,20 @@ describe("Playwright web server launch", () => {
   });
 
   it("falls back to an ephemeral port when the preferred port cannot be bound", async () => {
-    // The probe dials 127.0.0.1, so the occupier listens on the IPv6 loopback
-    // instead. A listener bound to a specific address conflicts with the
-    // configuration's wildcard bind, forcing the fallback branch, while the
-    // IPv4 probe still finds the port closed. The IPv6 loopback exists on
-    // every supported platform, unlike extra IPv4 loopback aliases such as
-    // 127.0.0.2, which macOS does not configure by default.
+    // Two addresses are needed, because the configuration probes before it
+    // binds. The occupier listens on 127.0.0.1, where it holds the port against
+    // the configuration's wildcard bind and so forces the fallback branch. The
+    // probe targets 127.0.0.2, where nothing listens, so it reports the port as
+    // closed and the configuration reaches that bind. 127.0.0.2 is only
+    // dialled, never bound, so it needs no configured alias and the fixture
+    // works on hosts that configure just 127.0.0.1 or that disable IPv6.
     const occupier = createServer();
-    await listenOn(occupier, "::1", 0);
+    await listenOn(occupier, "127.0.0.1", 0);
     const { port: preferred } = v.parse(AddressSchema, occupier.address());
 
     try {
       const config = readConfig({
-        baseURL: `http://127.0.0.1:${preferred}`,
+        baseURL: `http://127.0.0.2:${preferred}`,
         skipWebServer: false,
       });
       const resolved = Number(new URL(config.baseURL).port);
