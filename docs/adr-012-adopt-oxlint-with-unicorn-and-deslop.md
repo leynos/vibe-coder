@@ -41,7 +41,9 @@ record also serves as the addendum that pins the tool versions.
 
 Adopt [Oxlint](https://oxc.rs/docs/guide/usage/linter) as a second JavaScript
 linter, configured through `.oxlintrc.json`, and run it from the `lint` script
-so `make lint` and `bun test:all` enforce it.
+so `make lint` and `bun test:all` enforce it. The `lint` CI job runs
+`bun run oxlint` as its own step, because that job invokes `bun semantic`
+rather than `make lint`, and `bun semantic` covers Biome but not Oxlint.
 
 ### Pinned versions
 
