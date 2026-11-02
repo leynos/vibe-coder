@@ -266,6 +266,39 @@ describe("ThemeProvider", () => {
     expect(document.documentElement.getAttribute("data-theme")).toBe(updatedTheme);
   });
 
+  it("warns with stable fields when the document has no root element", () => {
+    const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+    const originalRoot = Object.getOwnPropertyDescriptor(document, "documentElement");
+
+    render(
+      <ThemeProvider>
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    Object.defineProperty(document, "documentElement", { configurable: true, value: null });
+
+    try {
+      act(() => {
+        screen.getByRole("button", { name: /switch theme/i }).click();
+      });
+    } finally {
+      if (originalRoot) {
+        Object.defineProperty(document, "documentElement", originalRoot);
+      } else {
+        Reflect.deleteProperty(document, "documentElement");
+      }
+    }
+
+    // The fallback is invisible to users, so diagnostics must carry stable
+    // fields an operator can search for.
+    const logged = warnSpy.mock.calls.flat().map(String).join(" ");
+    expect(logged).toContain("Cannot apply theme");
+    expect(logged).toContain('"operation":"theme.apply"');
+    expect(logged).toContain('"reason":"missing-document-element"');
+    warnSpy.mockRestore();
+  });
+
   it("persists and reapplies a new theme", () => {
     render(
       <ThemeProvider>

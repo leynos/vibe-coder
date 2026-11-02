@@ -76,6 +76,40 @@ describe("GlobalControls", () => {
     expect(screen.queryByRole("button", { name: /controls/i })).toBeNull();
   });
 
+  it("collapses the drawer toward the right in right-to-left locales", () => {
+    // Only the en-GB bundle ships, so switching the runtime to "ar" would
+    // suspend on a missing namespace. Stub the direction lookup instead: the
+    // drawer's branch selection is what this test pins.
+    const dirSpy = spyOn(i18n, "dir").mockReturnValue("rtl");
+
+    try {
+      renderWithProviders(<GlobalControls />);
+
+      act(() => {
+        screen.getByRole("button", { name: /switch to full view/i }).click();
+      });
+
+      // The drawer stays mounted while collapsed, so include hidden nodes when
+      // querying for it.
+      const drawer = screen.getByRole("dialog", { hidden: true });
+      expect(drawer.className).toContain("-translate-x-full");
+    } finally {
+      dirSpy.mockRestore();
+    }
+  });
+
+  it("collapses the drawer toward the left in left-to-right locales", () => {
+    renderWithProviders(<GlobalControls />);
+
+    act(() => {
+      screen.getByRole("button", { name: /switch to full view/i }).click();
+    });
+
+    const drawer = screen.getByRole("dialog", { hidden: true });
+    expect(drawer.className).toContain("translate-x-full");
+    expect(drawer.className).not.toContain("-translate-x-full");
+  });
+
   it("restores the previous selection when a language change is rejected", async () => {
     const previousLanguage = i18n.resolvedLanguage ?? i18n.language;
     const changeSpy = spyOn(i18n, "changeLanguage").mockRejectedValue(

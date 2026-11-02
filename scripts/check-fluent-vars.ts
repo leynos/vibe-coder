@@ -13,7 +13,7 @@ type PlaceholderReport = {
   ignore: boolean;
 };
 
-const BASE_LOCALE = process.env.FTL_BASE_LOCALE ?? "en-GB";
+const BASE_LOCALE = process.env["FTL_BASE_LOCALE"] ?? "en-GB";
 const LOCALES_DIR = path.resolve(process.cwd(), "public/locales");
 const IGNORE_MARKER = "vars: ignore-mismatch";
 
@@ -93,31 +93,42 @@ function describeJunk(entries: readonly AST.Junk[], source: string): string {
   return reasons.length > 0 ? reasons.join("; ") : "unknown syntax error";
 }
 
+/** Outcome of parsing one Fluent file, with failures returned as data. */
+export type ParseOutcome =
+  | { readonly ok: true; readonly resource: Resource }
+  | { readonly ok: false; readonly reason: string };
+
 /**
- * Parse one Fluent file, recording a failure on `process.exitCode`.
+ * Parse one Fluent file without side effects.
+ *
+ * The parser is a query: it reports a syntax failure in its return value
+ * rather than logging or setting `process.exitCode`. Callers decide how to
+ * surface the failure, which keeps the CLI boundary the only place that
+ * writes to the console or changes the process exit status.
  *
  * @param contents - Raw file text.
- * @param filePath - Path used in diagnostics only.
- * @returns The parsed resource, or `undefined` when it is unusable.
+ * @returns The parsed resource, or the reason it is unusable.
+ *
+ * @example
+ * ```ts
+ * const outcome = parseResource("hello = Hello { $name }\n");
+ * if (!outcome.ok) console.error(outcome.reason);
+ * ```
  */
-function parseResource(contents: string, filePath: string): Resource | undefined {
+export function parseResource(contents: string): ParseOutcome {
   let resource: Resource;
   try {
     resource = parse(contents, {});
   } catch (error) {
-    console.error(`[ftl-vars] Unable to parse ${filePath}:`, describeError(error));
-    process.exitCode = 1;
-    return undefined;
+    return { ok: false, reason: describeError(error) };
   }
 
   const junk = resource.body.filter((entry): entry is AST.Junk => entry.type === "Junk");
   if (junk.length > 0) {
-    console.error(`[ftl-vars] Unable to parse ${filePath}: ${describeJunk(junk, contents)}`);
-    process.exitCode = 1;
-    return undefined;
+    return { ok: false, reason: describeJunk(junk, contents) };
   }
 
-  return resource;
+  return { ok: true, resource };
 }
 
 /** Report whether an entry opts out via the `vars: ignore-mismatch` marker. */
@@ -126,36 +137,54 @@ function shouldIgnoreEntry(entry: { comment?: { content?: string } | null }): bo
   return comment.includes(IGNORE_MARKER);
 }
 
+/** A file that could not be parsed, reported by the CLI boundary. */
+export type ParseFailure = {
+  readonly filePath: string;
+  readonly reason: string;
+};
+
+/** Placeholders and parse failures read from one locale directory. */
+export type LocaleReadResult = {
+  readonly placeholders: Map<string, PlaceholderReport>;
+  readonly failures: readonly ParseFailure[];
+};
+
 /**
  * Map each message id in one locale to the placeholders it references.
  *
  * The same message may be split across several files, so variables and the
- * ignore marker accumulate rather than overwrite.
+ * ignore marker accumulate rather than overwrite. Unparseable files are
+ * returned alongside the placeholders instead of being logged here, so the
+ * caller can report every failure in one place.
  */
-function readLocalePlaceholders(locale: string): Map<string, PlaceholderReport> {
+export function readLocalePlaceholders(locale: string): LocaleReadResult {
   const files = listFtlFiles(locale);
-  const results = new Map<string, PlaceholderReport>();
+  const placeholders = new Map<string, PlaceholderReport>();
+  const failures: ParseFailure[] = [];
 
   files.forEach((filePath) => {
     const contents = fs.readFileSync(filePath, "utf8");
-    const resource = parseResource(contents, filePath);
-    if (!resource) return;
+    const outcome = parseResource(contents);
+    if (!outcome.ok) {
+      failures.push({ filePath, reason: outcome.reason });
+      return;
+    }
 
-    resource.body.forEach((entry) => {
+    outcome.resource.body.forEach((entry) => {
       if (entry.type !== "Message" && entry.type !== "Term") return;
       const id = entry.id.name;
       if (!id) return;
 
-      const vars = results.get(id)?.vars ?? new Set<string>();
+      const vars = placeholders.get(id)?.vars ?? new Set<string>();
       collectVariableNames(entry.value, vars);
       entry.attributes.forEach((attr) => collectVariableNames(attr.value, vars));
 
-      const ignore = shouldIgnoreEntry(entry) || results.get(id)?.ignore === true;
-      results.set(id, { vars, ignore });
+      const ignore = shouldIgnoreEntry(entry) || placeholders.get(id)?.ignore === true;
+      placeholders.set(id, { vars, ignore });
     });
   });
 
-  return results;
+  return { placeholders, failures };
 }
 
 type PlaceholderMismatch = {
@@ -169,8 +198,8 @@ type PlaceholderMismatch = {
 function findPlaceholderMismatches(
   locale: string,
   baseMap: ReadonlyMap<string, PlaceholderReport>,
+  localeMap: ReadonlyMap<string, PlaceholderReport>,
 ): PlaceholderMismatch[] {
-  const localeMap = readLocalePlaceholders(locale);
   const mismatches: PlaceholderMismatch[] = [];
 
   baseMap.forEach((baseEntry, id) => {
@@ -187,6 +216,11 @@ function findPlaceholderMismatches(
   });
 
   return mismatches;
+}
+
+/** Print one unparseable file, naming the file and the parser's reason. */
+function reportParseFailure(failure: ParseFailure): void {
+  console.error(`[ftl-vars] Unable to parse ${failure.filePath}: ${failure.reason}`);
 }
 
 /** Print one mismatch, naming the missing and extra placeholders. */
@@ -215,17 +249,26 @@ function main(): void {
     process.exit(1);
   }
 
-  const baseMap = readLocalePlaceholders(BASE_LOCALE);
+  const base = readLocalePlaceholders(BASE_LOCALE);
   const comparisonLocales = locales.filter((locale) => locale !== BASE_LOCALE);
-  const mismatches = comparisonLocales.flatMap((locale) =>
-    findPlaceholderMismatches(locale, baseMap),
-  );
+  const comparison = comparisonLocales.map((locale) => ({
+    locale,
+    ...readLocalePlaceholders(locale),
+  }));
 
+  const failures = [base.failures, ...comparison.map((entry) => entry.failures)].flat();
+  for (const failure of failures) {
+    reportParseFailure(failure);
+  }
+
+  const mismatches = comparison.flatMap((entry) =>
+    findPlaceholderMismatches(entry.locale, base.placeholders, entry.placeholders),
+  );
   for (const mismatch of mismatches) {
     reportMismatch(mismatch);
   }
 
-  if (mismatches.length > 0 || process.exitCode) {
+  if (failures.length > 0 || mismatches.length > 0) {
     console.error("[ftl-vars] Placeholder validation failed");
     process.exit(1);
   } else {
@@ -233,4 +276,9 @@ function main(): void {
   }
 }
 
-main();
+// Importing this module for its pure helpers must not run the CLI. Bun sets
+// `import.meta.main` only for the entry point, so tests can exercise the
+// parser without spawning a process or mutating the test runner's exit code.
+if (import.meta.main) {
+  main();
+}

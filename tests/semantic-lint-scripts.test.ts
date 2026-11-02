@@ -19,6 +19,16 @@ const HARDCODED_STRINGS_SCRIPT = path.join(REPO_ROOT, "scripts/check-hardcoded-s
 const NEAR_DUPLICATE_SCRIPT = path.join(REPO_ROOT, "scripts/find-near-duplicate-classes.ts");
 const CONFIG_PATH = "tools/semantic-lint.config.json";
 
+/**
+ * Headroom for tests that spawn a script.
+ *
+ * Bun's default 5 s timeout is tight when the whole suite runs in parallel and
+ * the host is busy; a cold `bun` start alone can approach it. The scripts
+ * themselves finish in well under a second, so a longer timeout only absorbs
+ * scheduling delay.
+ */
+const SCRIPT_TIMEOUT_MS = 30_000;
+
 let fixtureRoot = "";
 
 /** Create a temporary project tree for one test. */
@@ -59,230 +69,305 @@ function classListModule(utilities: readonly string[]): string {
 }
 
 describe("check-classlist-length", () => {
-  it("accepts a class list within the configured limit", () => {
-    writeFixture("src/app/sample.tsx", classListModule(["flex", "items-center", "gap-2"]));
+  it(
+    "accepts a class list within the configured limit",
+    () => {
+      writeFixture("src/app/sample.tsx", classListModule(["flex", "items-center", "gap-2"]));
 
-    const result = runScript(CLASS_LIST_SCRIPT);
+      const result = runScript(CLASS_LIST_SCRIPT);
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).toBe("");
-  });
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toBe("");
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("rejects a class list that exceeds the default limit", () => {
-    const utilities = Array.from({ length: 17 }, (_, index) => `u${index}`);
-    writeFixture("src/app/sample.tsx", classListModule(utilities));
+  it(
+    "rejects a class list that exceeds the default limit",
+    () => {
+      const utilities = Array.from({ length: 17 }, (_, index) => `u${index}`);
+      writeFixture("src/app/sample.tsx", classListModule(utilities));
 
-    const result = runScript(CLASS_LIST_SCRIPT);
+      const result = runScript(CLASS_LIST_SCRIPT);
 
-    expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("className has 17 utilities (max 16)");
-  });
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("className has 17 utilities (max 16)");
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("honours a configured limit", () => {
-    writeFixture(CONFIG_PATH, JSON.stringify({ maxClasslistLength: 2 }));
-    writeFixture("src/app/sample.tsx", classListModule(["flex", "items-center", "gap-2"]));
+  it(
+    "honours a configured limit",
+    () => {
+      writeFixture(CONFIG_PATH, JSON.stringify({ maxClasslistLength: 2 }));
+      writeFixture("src/app/sample.tsx", classListModule(["flex", "items-center", "gap-2"]));
 
-    const result = runScript(CLASS_LIST_SCRIPT);
+      const result = runScript(CLASS_LIST_SCRIPT);
 
-    expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("max 2");
-  });
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("max 2");
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("accepts a class list exactly at the limit", () => {
-    const utilities = Array.from({ length: 16 }, (_, index) => `u${index}`);
-    writeFixture("src/app/sample.tsx", classListModule(utilities));
+  it(
+    "accepts a class list exactly at the limit",
+    () => {
+      const utilities = Array.from({ length: 16 }, (_, index) => `u${index}`);
+      writeFixture("src/app/sample.tsx", classListModule(utilities));
 
-    const result = runScript(CLASS_LIST_SCRIPT);
+      const result = runScript(CLASS_LIST_SCRIPT);
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).toBe("");
-  });
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toBe("");
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("floors a fractional configured limit before comparing", () => {
-    writeFixture(CONFIG_PATH, JSON.stringify({ maxClasslistLength: 2.9 }));
-    writeFixture("src/app/sample.tsx", classListModule(["flex", "items-center", "gap-2"]));
+  it(
+    "floors a fractional configured limit before comparing",
+    () => {
+      writeFixture(CONFIG_PATH, JSON.stringify({ maxClasslistLength: 2.9 }));
+      writeFixture("src/app/sample.tsx", classListModule(["flex", "items-center", "gap-2"]));
 
-    const result = runScript(CLASS_LIST_SCRIPT);
+      const result = runScript(CLASS_LIST_SCRIPT);
 
-    expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("max 2");
-  });
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("max 2");
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("rejects a configuration value of the wrong type", () => {
-    writeFixture(CONFIG_PATH, JSON.stringify({ maxClasslistLength: "two" }));
-    writeFixture("src/app/sample.tsx", classListModule(["flex"]));
+  it(
+    "rejects a configuration value of the wrong type",
+    () => {
+      writeFixture(CONFIG_PATH, JSON.stringify({ maxClasslistLength: "two" }));
+      writeFixture("src/app/sample.tsx", classListModule(["flex"]));
 
-    const result = runScript(CLASS_LIST_SCRIPT);
+      const result = runScript(CLASS_LIST_SCRIPT);
 
-    expect(result.exitCode).not.toBe(0);
-    expect(result.stderr).toContain('Invalid type: Expected number but received "two"');
-  });
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr).toContain('Invalid type: Expected number but received "two"');
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 });
 
 describe("check-hardcoded-strings", () => {
-  it("rejects user-facing JSX text that is not translated", () => {
-    writeFixture(
-      "src/app/sample.tsx",
-      "export function Sample() {\n  return <p>Hello there</p>;\n}\n",
-    );
+  it(
+    "rejects user-facing JSX text that is not translated",
+    () => {
+      writeFixture(
+        "src/app/sample.tsx",
+        "export function Sample() {\n  return <p>Hello there</p>;\n}\n",
+      );
 
-    const result = runScript(HARDCODED_STRINGS_SCRIPT);
+      const result = runScript(HARDCODED_STRINGS_SCRIPT);
 
-    expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("hard-coded JSX text");
-  });
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("hard-coded JSX text");
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("accepts JSX text wrapped in t()", () => {
-    writeFixture(
-      "src/app/sample.tsx",
-      'export function Sample() {\n  return <p>{t("hello")}</p>;\n}\n',
-    );
+  it(
+    "accepts JSX text wrapped in t()",
+    () => {
+      writeFixture(
+        "src/app/sample.tsx",
+        'export function Sample() {\n  return <p>{t("hello")}</p>;\n}\n',
+      );
 
-    const result = runScript(HARDCODED_STRINGS_SCRIPT);
+      const result = runScript(HARDCODED_STRINGS_SCRIPT);
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).toBe("");
-  });
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toBe("");
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("ignores regions marked with data-i18n-ignore", () => {
-    writeFixture(
-      "src/app/sample.tsx",
-      "export function Sample() {\n  return <p data-i18n-ignore>Raw text</p>;\n}\n",
-    );
+  it(
+    "ignores regions marked with data-i18n-ignore",
+    () => {
+      writeFixture(
+        "src/app/sample.tsx",
+        "export function Sample() {\n  return <p data-i18n-ignore>Raw text</p>;\n}\n",
+      );
 
-    const result = runScript(HARDCODED_STRINGS_SCRIPT);
+      const result = runScript(HARDCODED_STRINGS_SCRIPT);
 
-    expect(result.exitCode).toBe(0);
-  });
+      expect(result.exitCode).toBe(0);
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("rejects a configuration value of the wrong type", () => {
-    writeFixture(CONFIG_PATH, JSON.stringify({ hardcodedStrings: { minWordLength: "two" } }));
-    writeFixture("src/app/sample.tsx", classListModule(["flex"]));
+  it(
+    "rejects a configuration value of the wrong type",
+    () => {
+      writeFixture(CONFIG_PATH, JSON.stringify({ hardcodedStrings: { minWordLength: "two" } }));
+      writeFixture("src/app/sample.tsx", classListModule(["flex"]));
 
-    const result = runScript(HARDCODED_STRINGS_SCRIPT);
+      const result = runScript(HARDCODED_STRINGS_SCRIPT);
 
-    expect(result.exitCode).not.toBe(0);
-    expect(result.stderr).toContain('Invalid type: Expected number but received "two"');
-  });
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr).toContain('Invalid type: Expected number but received "two"');
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("rejects a user-facing attribute list that is not an array", () => {
-    writeFixture(
-      CONFIG_PATH,
-      JSON.stringify({ hardcodedStrings: { userFacingAttributes: "aria-label" } }),
-    );
-    writeFixture("src/app/sample.tsx", classListModule(["flex"]));
+  it(
+    "rejects a user-facing attribute list that is not an array",
+    () => {
+      writeFixture(
+        CONFIG_PATH,
+        JSON.stringify({ hardcodedStrings: { userFacingAttributes: "aria-label" } }),
+      );
+      writeFixture("src/app/sample.tsx", classListModule(["flex"]));
 
-    const result = runScript(HARDCODED_STRINGS_SCRIPT);
+      const result = runScript(HARDCODED_STRINGS_SCRIPT);
 
-    expect(result.exitCode).not.toBe(0);
-    expect(result.stderr).toContain("Invalid type: Expected Array but received");
-  });
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr).toContain("Invalid type: Expected Array but received");
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 });
 
 describe("find-near-duplicate-classes", () => {
-  it("reports identical class stacks across files", () => {
-    writeFixture(CONFIG_PATH, JSON.stringify({ nearDuplicateClasses: { failOnViolation: true } }));
-    writeFixture("src/app/one.tsx", classListModule(["flex", "items-center", "gap-2", "p-4"]));
-    writeFixture("src/app/two.tsx", classListModule(["flex", "items-center", "gap-2", "p-4"]));
+  it(
+    "reports identical class stacks across files",
+    () => {
+      writeFixture(
+        CONFIG_PATH,
+        JSON.stringify({ nearDuplicateClasses: { failOnViolation: true } }),
+      );
+      writeFixture("src/app/one.tsx", classListModule(["flex", "items-center", "gap-2", "p-4"]));
+      writeFixture("src/app/two.tsx", classListModule(["flex", "items-center", "gap-2", "p-4"]));
 
-    const result = runScript(NEAR_DUPLICATE_SCRIPT);
+      const result = runScript(NEAR_DUPLICATE_SCRIPT);
 
-    expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("Repeated class stack found");
-  });
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("Repeated class stack found");
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("does not fail the build unless failOnViolation is set", () => {
-    writeFixture("src/app/one.tsx", classListModule(["flex", "items-center", "gap-2", "p-4"]));
-    writeFixture("src/app/two.tsx", classListModule(["flex", "items-center", "gap-2", "p-4"]));
+  it(
+    "does not fail the build unless failOnViolation is set",
+    () => {
+      writeFixture("src/app/one.tsx", classListModule(["flex", "items-center", "gap-2", "p-4"]));
+      writeFixture("src/app/two.tsx", classListModule(["flex", "items-center", "gap-2", "p-4"]));
 
-    const result = runScript(NEAR_DUPLICATE_SCRIPT);
+      const result = runScript(NEAR_DUPLICATE_SCRIPT);
 
-    expect(result.exitCode).toBe(0);
-  });
+      expect(result.exitCode).toBe(0);
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("reports only groups that meet the minimum occurrence count", () => {
-    writeFixture(
-      CONFIG_PATH,
-      JSON.stringify({
-        nearDuplicateClasses: { failOnViolation: true, minOccurrences: 3 },
-      }),
-    );
-    const stack = classListModule(["flex", "items-center", "gap-2", "p-4"]);
-    writeFixture("src/app/one.tsx", stack);
-    writeFixture("src/app/two.tsx", stack);
-    writeFixture("src/app/three.tsx", stack);
+  it(
+    "reports only groups that meet the minimum occurrence count",
+    () => {
+      writeFixture(
+        CONFIG_PATH,
+        JSON.stringify({
+          nearDuplicateClasses: { failOnViolation: true, minOccurrences: 3 },
+        }),
+      );
+      const stack = classListModule(["flex", "items-center", "gap-2", "p-4"]);
+      writeFixture("src/app/one.tsx", stack);
+      writeFixture("src/app/two.tsx", stack);
+      writeFixture("src/app/three.tsx", stack);
 
-    const result = runScript(NEAR_DUPLICATE_SCRIPT);
+      const result = runScript(NEAR_DUPLICATE_SCRIPT);
 
-    expect(result.exitCode).toBe(1);
-    const occurrences = result.stderr.match(/src\/app\//gu) ?? [];
-    expect(occurrences).toHaveLength(3);
-  });
+      expect(result.exitCode).toBe(1);
+      const occurrences = result.stderr.match(/src\/app\//gu) ?? [];
+      expect(occurrences).toHaveLength(3);
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("ignores groups below the minimum occurrence count", () => {
-    writeFixture(
-      CONFIG_PATH,
-      JSON.stringify({
-        nearDuplicateClasses: { failOnViolation: true, minOccurrences: 3 },
-      }),
-    );
-    const stack = classListModule(["flex", "items-center", "gap-2", "p-4"]);
-    writeFixture("src/app/one.tsx", stack);
-    writeFixture("src/app/two.tsx", stack);
+  it(
+    "ignores groups below the minimum occurrence count",
+    () => {
+      writeFixture(
+        CONFIG_PATH,
+        JSON.stringify({
+          nearDuplicateClasses: { failOnViolation: true, minOccurrences: 3 },
+        }),
+      );
+      const stack = classListModule(["flex", "items-center", "gap-2", "p-4"]);
+      writeFixture("src/app/one.tsx", stack);
+      writeFixture("src/app/two.tsx", stack);
 
-    const result = runScript(NEAR_DUPLICATE_SCRIPT);
+      const result = runScript(NEAR_DUPLICATE_SCRIPT);
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).not.toContain("Repeated class stack found");
-  });
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).not.toContain("Repeated class stack found");
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("suppresses stacks whose tokens all match a configured prefix", () => {
-    writeFixture(
-      CONFIG_PATH,
-      JSON.stringify({
-        nearDuplicateClasses: { failOnViolation: true, suppressPrefixes: ["sr-"] },
-      }),
-    );
-    const stack = classListModule(["sr-only", "sr-field", "sr-label", "sr-help"]);
-    writeFixture("src/app/one.tsx", stack);
-    writeFixture("src/app/two.tsx", stack);
+  it(
+    "suppresses stacks whose tokens all match a configured prefix",
+    () => {
+      writeFixture(
+        CONFIG_PATH,
+        JSON.stringify({
+          nearDuplicateClasses: { failOnViolation: true, suppressPrefixes: ["sr-"] },
+        }),
+      );
+      const stack = classListModule(["sr-only", "sr-field", "sr-label", "sr-help"]);
+      writeFixture("src/app/one.tsx", stack);
+      writeFixture("src/app/two.tsx", stack);
 
-    const result = runScript(NEAR_DUPLICATE_SCRIPT);
+      const result = runScript(NEAR_DUPLICATE_SCRIPT);
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).not.toContain("Repeated class stack found");
-  });
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).not.toContain("Repeated class stack found");
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("reports near-duplicate stacks independently of the occurrence count", () => {
-    writeFixture(
-      CONFIG_PATH,
-      JSON.stringify({
-        nearDuplicateClasses: {
-          failOnViolation: true,
-          maxJaccardDistance: 1,
-          minOccurrences: 3,
-        },
-      }),
-    );
-    writeFixture("src/app/one.tsx", classListModule(["flex", "items-center", "gap-2", "p-4"]));
-    writeFixture("src/app/two.tsx", classListModule(["flex", "items-center", "gap-2", "p-8"]));
+  it(
+    "reports near-duplicate stacks independently of the occurrence count",
+    () => {
+      writeFixture(
+        CONFIG_PATH,
+        JSON.stringify({
+          nearDuplicateClasses: {
+            failOnViolation: true,
+            maxJaccardDistance: 1,
+            minOccurrences: 3,
+          },
+        }),
+      );
+      writeFixture("src/app/one.tsx", classListModule(["flex", "items-center", "gap-2", "p-4"]));
+      writeFixture("src/app/two.tsx", classListModule(["flex", "items-center", "gap-2", "p-8"]));
 
-    const result = runScript(NEAR_DUPLICATE_SCRIPT);
+      const result = runScript(NEAR_DUPLICATE_SCRIPT);
 
-    expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("Near-duplicate class stacks found");
-  });
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("Near-duplicate class stacks found");
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 
-  it("rejects a configuration value of the wrong type", () => {
-    writeFixture(
-      CONFIG_PATH,
-      JSON.stringify({ nearDuplicateClasses: { minOccurrences: "three" } }),
-    );
-    writeFixture("src/app/one.tsx", classListModule(["flex"]));
+  it(
+    "rejects a configuration value of the wrong type",
+    () => {
+      writeFixture(
+        CONFIG_PATH,
+        JSON.stringify({ nearDuplicateClasses: { minOccurrences: "three" } }),
+      );
+      writeFixture("src/app/one.tsx", classListModule(["flex"]));
 
-    const result = runScript(NEAR_DUPLICATE_SCRIPT);
+      const result = runScript(NEAR_DUPLICATE_SCRIPT);
 
-    expect(result.exitCode).not.toBe(0);
-    expect(result.stderr).toContain('Invalid type: Expected number but received "three"');
-  });
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr).toContain('Invalid type: Expected number but received "three"');
+    },
+    SCRIPT_TIMEOUT_MS,
+  );
 });

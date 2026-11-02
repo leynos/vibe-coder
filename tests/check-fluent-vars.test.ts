@@ -6,11 +6,12 @@
  * `vars: ignore-mismatch` opt-out.
  */
 
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import { parseResource } from "../scripts/check-fluent-vars";
 import type { ScriptResult } from "./support/script-result";
 
 const SCRIPT_PATH = path.resolve(import.meta.dir, "../scripts/check-fluent-vars.ts");
@@ -120,5 +121,33 @@ describe("check-fluent-vars", () => {
     const result = runCheck();
 
     expect(result.exitCode).toBe(0);
+  });
+});
+
+describe("parseResource", () => {
+  it("returns the parsed resource for valid Fluent", () => {
+    const outcome = parseResource("hello = Hello { $name }\n");
+
+    expect(outcome.ok).toBe(true);
+    if (!outcome.ok) throw new Error("expected a successful parse");
+    expect(outcome.resource.body).toHaveLength(1);
+  });
+
+  it("returns a syntax failure as data without logging or exiting", () => {
+    const errorSpy = spyOn(console, "error").mockImplementation(() => {});
+    const originalExitCode = process.exitCode;
+
+    try {
+      const outcome = parseResource("broken = }\n");
+
+      expect(outcome.ok).toBe(false);
+      if (outcome.ok) throw new Error("expected a failed parse");
+      expect(outcome.reason).toContain("line 1");
+      // The parser is a query: reporting belongs to the CLI boundary.
+      expect(errorSpy).not.toHaveBeenCalled();
+      expect(process.exitCode).toBe(originalExitCode);
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 });

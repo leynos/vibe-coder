@@ -543,8 +543,60 @@ t("homeTitle");    // avoid camelCase keys
 ```
 
 Locale files are Fluent (`.ftl`) files in `public/locales/<locale>/`. The
-default locale is `en`. Add new locales by adding a directory and registering
-the locale in `src/app/i18n/supported-locales.ts`.
+default locale is `en-GB`. Add new locales by adding a directory and
+registering the locale in `src/app/i18n/supported-locales.ts`.
+
+### Locale metadata lookups
+
+`src/app/i18n/supported-locales.ts` exposes three query helpers. Each accepts
+an optional BCP 47 code and never throws for an unknown input:
+
+| Helper               | Returns           | Behaviour                                        |
+| :------------------- | :---------------- | :----------------------------------------------- |
+| `getLocaleMetadata`  | `SupportedLocale` | Full code, then language-only, then the default. |
+| `getLocaleDirection` | `TextDirection`   | The metadata direction, defaulting to `ltr`.     |
+| `isRtlLocale`        | `boolean`         | `true` when the resolved direction is `rtl`.     |
+
+The fallback ladder for `getLocaleMetadata("en")` is: no exact `en` entry, so
+the language-only prefix resolves to the first English variant (`en-GB`). A
+code with no language match (`"zz"`) or no argument at all resolves to
+`DEFAULT_LOCALE`. `getLocaleDirection("ar")` returns `rtl`; an unknown code
+returns `ltr`.
+
+### Applying locale metadata to the document
+
+`applyDocumentLocale(language?)` in `src/i18n.ts` writes `lang`, `dir`, and
+`data-direction` to both `<html>` and `<body>`. It is registered on two i18next
+events:
+
+- `initialized` applies `i18n.resolvedLanguage`, falling back to
+  `i18n.language` when a failed bundle load left the resolved value unset. The
+  fallback avoids resetting the document to the default locale metadata after
+  an attempted language.
+- `languageChanged` applies the newly selected language.
+
+Both listeners are registered before `i18nReady` is created, so an
+`initialized` event emitted during a synchronous init is not missed. The
+handlers run instead of awaiting `i18nReady` at module scope, which keeps
+module evaluation non-blocking while the first locale bundle is fetched.
+
+`i18nReady` is the promise returned by the i18next `init` chain. React
+components await it indirectly through `useTranslation` and Suspense; direct
+consumers can `await i18nReady` before reading locale-dependent state outside
+React:
+
+```typescript
+import { i18nReady } from "./i18n";
+
+await i18nReady;
+// i18n.hasLoadedNamespace("common") === true when the fetch succeeded
+```
+
+`applyDocumentLocale` is safe to call where there is no `document`, and it
+tolerates a document whose root element is not yet parsed. In that case it
+reports `operation: "i18n.applyDocumentLocale"` and
+`reason: "missing-document-element"` through `appLogger` and returns without
+throwing; see [DOM access at module scope](#dom-access-at-module-scope).
 
 ______________________________________________________________________
 

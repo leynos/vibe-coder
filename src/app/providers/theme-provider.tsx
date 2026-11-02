@@ -82,6 +82,15 @@ function applyTheme(theme: ThemeName): void {
   const root = getDocumentElement();
   if (root) {
     root.setAttribute("data-theme", theme);
+  } else {
+    // A missing root is a degraded state: the theme silently keeps its
+    // previous value, so report it with stable fields an operator can search
+    // for rather than swallowing it.
+    appLogger.warn("Cannot apply theme without a document root", {
+      operation: "theme.apply",
+      reason: "missing-document-element",
+      theme,
+    });
   }
 
   const body = getDocumentBody();

@@ -175,6 +175,32 @@ describe("i18n runtime configuration", () => {
     }
   });
 
+  it("reports the request method when a non-abort fetch fails", async () => {
+    const originalFetch = globalThis.fetch;
+    const errorSpy = spyOn(console, "error").mockImplementation(() => {});
+    globalThis.fetch = Object.assign(() => Promise.reject(new TypeError("Failed to fetch")), {
+      preconnect: originalFetch.preconnect,
+    });
+
+    try {
+      const ajax = readLocaleAjax();
+      const outcome = await new Promise<{ data: string | Error; status: number }>((resolve) => {
+        ajax("/locales/en-GB/common.ftl", { method: "POST" }, (data, response) => {
+          resolve({ data, status: response.status });
+        });
+      });
+
+      expect(outcome.status).toBe(502);
+      // The method is part of the diagnostic context, so an operator can tell
+      // a failed write from a failed read.
+      const logged = errorSpy.mock.calls.flat().map(String).join(" ");
+      expect(logged).toContain('"method":"POST"');
+    } finally {
+      globalThis.fetch = originalFetch;
+      errorSpy.mockRestore();
+    }
+  });
+
   it("falls back to the default locale metadata when a locale is missing", () => {
     document.documentElement.lang = "zz";
     document.documentElement.dir = "rtl";
