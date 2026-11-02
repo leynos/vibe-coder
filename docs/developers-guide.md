@@ -488,17 +488,17 @@ intentional DOM change.
 Playwright tests live in `tests/e2e/`. Run them with:
 
 ```sh
-bun test:e2e            # launches or reuses a dev server
+bun test:e2e            # launches or reuses a dev server on supported hosts
 bun test:e2e:container  # requires a dev server that is already running
 ```
 
-`scripts/e2e.sh` dispatches on the host distribution: Debian-family hosts run
-Playwright directly, so `bun test:e2e` launches or reuses the dev server
-through the configuration described below. Other hosts delegate to
-`scripts/e2e-container.sh`, which runs Playwright inside the container image
-and expects a dev server to be reachable already; it performs a pre-flight
-check and exits rather than starting one. Start a server before using the
-container route, or point `PLAYWRIGHT_BASE_URL` at an existing one.
+`scripts/e2e.sh` dispatches on the host identifier: `ubuntu`, `debian`,
+`linuxmint`, and `pop` run Playwright directly, so `bun test:e2e` launches or
+reuses the dev server through the configuration described below. Other hosts
+delegate to `scripts/e2e-container.sh`, which runs Playwright inside the
+container image and expects a dev server to be reachable already; it performs a
+pre-flight check and exits rather than starting one. Start a server before
+using the container route, or point `PLAYWRIGHT_BASE_URL` at an existing one.
 
 `playwright.config.ts` derives the base URL from `PLAYWRIGHT_BASE_URL`, which
 defaults to `http://localhost:5173`. `resolvePort` fills in the protocol

@@ -31,7 +31,7 @@ ______________________________________________________________________
 ## Controls and display settings
 
 Theme, display-mode, and language controls are available throughout a run. In
-hosted mode they appear as a floating stack of buttons; in full-browser mode a
+hosted mode they appear as a floating stack of controls; in full-browser mode a
 **Controls** button opens a side drawer holding the same controls.
 
 - **Display mode.** *Hosted* frames the game in a fixed mobile-sized viewport;
@@ -39,9 +39,10 @@ hosted mode they appear as a floating stack of buttons; in full-browser mode a
   the game follows the viewport: 768 pixels wide or narrower selects
   full-browser, and anything wider selects hosted. An explicit choice is
   remembered in browser storage and stops the automatic switching. **Reset to
-  device default** discards the stored display-mode preference and returns the
-  game to following the viewport. A runtime without media-query support starts
-  in hosted mode.
+  device default** clears the stored display-mode preference when browser
+  storage permits and returns the game to following the viewport; if the stored
+  entry cannot be removed, the reset lasts for the current session only. A
+  runtime without media-query support starts in hosted mode.
 - **Theme.** *Night* is the default, and the toggle switches between *Night*
   and *Day*. The chosen theme is applied to the page and remembered in browser
   storage.
