@@ -566,8 +566,8 @@ returns `ltr`.
 ### Applying locale metadata to the document
 
 `applyDocumentLocale(language?)` in `src/i18n.ts` writes `lang`, `dir`, and
-`data-direction` to both `<html>` and `<body>`. It is registered on two i18next
-events:
+`data-direction` to `<html>` and mirrors them to `<body>` when the body element
+exists. It is registered on two i18next events:
 
 - `initialized` applies `i18n.resolvedLanguage`, falling back to
   `i18n.language` when a failed bundle load left the resolved value unset. The
@@ -592,11 +592,13 @@ await i18nReady;
 // i18n.hasLoadedNamespace("common") === true when the fetch succeeded
 ```
 
-`applyDocumentLocale` is safe to call where there is no `document`, and it
-tolerates a document whose root element is not yet parsed. In that case it
-reports `operation: "i18n.applyDocumentLocale"` and
+`applyDocumentLocale` is safe to call where there is no `document`. It also
+tolerates a document that is still being parsed: when the root element is
+missing it reports `operation: "i18n.applyDocumentLocale"` and
 `reason: "missing-document-element"` through `appLogger` and returns without
-throwing; see [DOM access at module scope](#dom-access-at-module-scope).
+throwing, and when only `<body>` is missing it updates `<html>` and skips the
+mirrored body attributes. See
+[DOM access at module scope](#dom-access-at-module-scope).
 
 ______________________________________________________________________
 

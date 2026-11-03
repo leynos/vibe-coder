@@ -76,7 +76,7 @@ describe("GlobalControls", () => {
     expect(screen.queryByRole("button", { name: /controls/i })).toBeNull();
   });
 
-  it("collapses the drawer toward the right in right-to-left locales", () => {
+  it("collapses the drawer toward the left in right-to-left locales", () => {
     // Only the en-GB bundle ships, so switching the runtime to "ar" would
     // suspend on a missing namespace. Stub the direction lookup instead: the
     // drawer's branch selection is what this test pins.
@@ -98,7 +98,7 @@ describe("GlobalControls", () => {
     }
   });
 
-  it("collapses the drawer toward the left in left-to-right locales", () => {
+  it("collapses the drawer toward the right in left-to-right locales", () => {
     renderWithProviders(<GlobalControls />);
 
     act(() => {

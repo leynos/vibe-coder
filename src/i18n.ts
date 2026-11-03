@@ -163,8 +163,8 @@ const fetchAjax = (
 
 /**
  * Apply a resolved BCP 47 language tag and its text direction to the HTML
- * document, setting `lang`, `dir`, and `data-direction` on both `<html>` and
- * `<body>`.
+ * document, setting `lang`, `dir`, and `data-direction` on `<html>` and
+ * mirroring them to `<body>` when it exists.
  *
  * Safe to call in non-browser environments — returns immediately when
  * `document` is undefined.
