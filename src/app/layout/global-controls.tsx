@@ -169,7 +169,13 @@ function Drawer(): JSX.Element {
   const [open, setOpen] = useState(false);
   const headingId = useId();
   const { t, i18n } = useTranslation();
-  const direction = i18n.dir(i18n.resolvedLanguage);
+  // The document direction follows the language the user selected, which is
+  // what `languageChanged` reports. `resolvedLanguage` names the bundle whose
+  // messages are displayed instead, and falls back to the default locale when
+  // the selected one has no bundle; deriving the drawer direction from it
+  // would leave the drawer sliding right while the document flows right to
+  // left.
+  const direction = i18n.dir(i18n.language);
   const collapsedTranslateClass = direction === "rtl" ? "-translate-x-full" : "translate-x-full";
   const triggerLabel = t("controls-trigger-label", { defaultValue: "Controls" });
 

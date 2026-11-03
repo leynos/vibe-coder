@@ -617,13 +617,15 @@ are included. A message or term that legitimately diverges from the base locale
 opts out with a `# vars: ignore-mismatch` comment. The checker runs as part of
 `bun run test:all`.
 
-The module splits queries from the CLI boundary. `parseResource` returns a
-`ParseOutcome` and `readLocalePlaceholders` returns a `LocaleReadResult`
+The module splits queries from the CLI boundary. `parseResource` takes the
+contents of one `.ftl` file and returns a `ParseOutcome`;
+`readLocalePlaceholders` takes a locale and returns a `LocaleReadResult`
 holding both the placeholders and any `LocaleFailure` entries, so neither
-function logs, throws, or changes the exit status. Both take an optional
-`LocaleFileSystem`, which the unit tests replace to exercise the
-unreadable-path branches without depending on real permissions. Only the CLI
-boundary reports the collected failures and sets the exit status.
+function logs, throws, or changes the exit status. Only
+`readLocalePlaceholders` accepts an optional `LocaleFileSystem`, which the unit
+tests replace to exercise the unreadable-path branches without depending on
+real permissions. The CLI boundary alone reports the collected failures and
+sets the exit status.
 
 ______________________________________________________________________
 

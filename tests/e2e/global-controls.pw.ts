@@ -138,4 +138,24 @@ test.describe("locale direction", () => {
     await reopened.getByRole("button", { name: "Close display controls" }).click();
     await expect(drawerOf(page)).not.toHaveClass(/-translate-x-full/);
   });
+
+  test("follows the selected language when its bundle is missing", async ({ page }) => {
+    // A host without an Arabic bundle answers 404, so i18next serves the
+    // default locale's messages while the document still honours the selected
+    // language. The drawer must follow the language, not the fallback bundle.
+    await page.route("**/locales/ar/common.ftl", (route) =>
+      route.fulfill({ status: 404, body: "" }),
+    );
+
+    // Without the bundle, every message renders as its id, so the controls are
+    // located structurally rather than by their accessible names.
+    const trigger = page.locator("button.global-controls__trigger");
+    await trigger.click();
+    await page.locator("#global-controls-drawer select").selectOption("ar");
+
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+
+    await trigger.click();
+    await expect(drawerOf(page)).toHaveClass(/-translate-x-full/);
+  });
 });

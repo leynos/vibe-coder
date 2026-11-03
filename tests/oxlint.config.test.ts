@@ -51,6 +51,7 @@ const OxlintConfigSchema = v.object({
 
 const PackageSchema = v.object({
   devDependencies: v.record(v.string(), v.string()),
+  scripts: v.record(v.string(), v.string()),
 });
 
 type OxlintConfig = v.InferOutput<typeof OxlintConfigSchema>;
@@ -190,6 +191,22 @@ describe("committed oxlint command", () => {
     expect(output).toContain("deslop(no-renamed-imports)");
     expect(output).toContain(fixtureName);
   }, 180_000);
+});
+
+describe("lint gate wiring", () => {
+  it("runs Biome and then Oxlint from the lint script", async () => {
+    const manifest = v.parse(PackageSchema, await Bun.file(PACKAGE_PATH).json());
+    // Destructuring avoids a computed key, which Biome's `useLiteralKeys`
+    // flags and `noPropertyAccessFromIndexSignature` forbids as a property.
+    const { lint = "" } = manifest.scripts;
+    const biomeIndex = lint.indexOf("bunx biome ci");
+    const oxlintIndex = lint.indexOf("bunx oxlint");
+
+    // Order matters: Biome fails fast on formatting and its own rules, and its
+    // verdict must not be masked by Oxlint's exit status.
+    expect(biomeIndex).toBeGreaterThanOrEqual(0);
+    expect(oxlintIndex).toBeGreaterThan(biomeIndex);
+  });
 });
 
 describe("pinned tooling versions", () => {
