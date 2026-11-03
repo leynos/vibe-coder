@@ -2,8 +2,9 @@
  * @file Contract tests for the Oxlint configuration.
  *
  * Guards the decisions recorded in ADR 012: the plugins stay pinned, every
- * published Deslop rule is configured, and the one deliberate conflict is
- * resolved in Unicorn's favour.
+ * published Deslop rule is configured at the intended severity, and the one
+ * deliberate conflict is resolved in Unicorn's favour. Fixture tests then
+ * prove the committed `oxlint` command actually reports the configured rules.
  */
 
 import { describe, expect, it } from "bun:test";
@@ -28,6 +29,13 @@ const ADOPTED_OPT_IN_RULES = [
   "deslop/no-reexports-outside-entrypoints",
 ] as const;
 
+// The recommended profile publishes every rule as an error, except this one,
+// which Unicorn's equivalent replaces.
+const DELIBERATELY_DISABLED_RULE = "deslop/no-reflect-apply";
+
+// Modules allowed to re-export symbols; everything else must import directly.
+const RE_EXPORT_ENTRYPOINTS = ["**/index.ts", "src/i18n.ts", "src/global.d.ts"];
+
 const PINNED_PACKAGES = ["oxlint", "oxlint-tsgolint", "ai-deslop"] as const;
 
 const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
@@ -46,6 +54,12 @@ const PackageSchema = v.object({
 });
 
 type OxlintConfig = v.InferOutput<typeof OxlintConfigSchema>;
+type RuleSetting = OxlintConfig["rules"][string];
+
+type LintFixture = {
+  name: string;
+  source: string;
+};
 
 /** Read and validate the Oxlint configuration. */
 async function readConfig(): Promise<OxlintConfig> {
@@ -53,8 +67,45 @@ async function readConfig(): Promise<OxlintConfig> {
 }
 
 /** Return the severity string for a rule, whether plain or in tuple form. */
-function severityOf(setting: string | unknown[]): string {
-  return Array.isArray(setting) ? String(setting[0]) : setting;
+function severityOf(setting: RuleSetting | undefined): string {
+  if (Array.isArray(setting)) return String(setting[0]);
+  return setting ?? "unconfigured";
+}
+
+/** Return the rules configured at the `error` severity. */
+function errorRules(config: OxlintConfig): string[] {
+  return Object.entries(config.rules)
+    .filter(([, setting]) => severityOf(setting) === "error")
+    .map(([rule]) => rule);
+}
+
+/**
+ * Run the committed `oxlint` command with temporary fixtures at the
+ * repository root, so the test observes the same rule set the `lint` gate
+ * applies without depending on Biome's formatting verdict.
+ */
+function lintFixtures(fixtures: readonly LintFixture[]) {
+  const paths = fixtures.map(({ name, source }) => {
+    const fixturePath = path.join(REPO_ROOT, name);
+    writeFileSync(fixturePath, source);
+    return fixturePath;
+  });
+
+  try {
+    const result = Bun.spawnSync([process.execPath, "run", "oxlint"], {
+      cwd: REPO_ROOT,
+      env: { ...process.env },
+      timeout: 120_000,
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    return {
+      exitCode: result.exitCode,
+      output: `${result.stdout.toString()}${result.stderr.toString()}`,
+    };
+  } finally {
+    for (const fixturePath of paths) rmSync(fixturePath, { force: true });
+  }
 }
 
 describe("Oxlint plugin wiring", () => {
@@ -75,55 +126,69 @@ describe("Oxlint plugin wiring", () => {
 });
 
 describe("Deslop rule coverage", () => {
-  it("configures every rule in the plugin's recommended profile", async () => {
+  it("configures every rule in the plugin's recommended profile as an error", async () => {
     const config = await readConfig();
-    const missing = Object.keys(recommendedRules)
+    const recommended = Object.keys(recommendedRules)
       .filter((rule) => rule.startsWith("deslop/"))
-      .filter((rule) => config.rules[rule] === undefined);
+      .filter((rule) => rule !== DELIBERATELY_DISABLED_RULE);
 
-    expect(missing).toEqual([]);
+    expect(recommended.filter((rule) => severityOf(config.rules[rule]) !== "error")).toEqual([]);
   });
 
-  it("configures every adopted opt-in rule", async () => {
+  it("configures every adopted opt-in rule as an error", async () => {
     const config = await readConfig();
 
     for (const rule of ADOPTED_OPT_IN_RULES) {
-      expect(config.rules[rule]).toBeDefined();
+      expect(severityOf(config.rules[rule])).toBe("error");
     }
+  });
+
+  it("restricts re-exports to the declared entrypoints", async () => {
+    const config = await readConfig();
+    const setting = config.rules["deslop/no-reexports-outside-entrypoints"];
+
+    expect(Array.isArray(setting)).toBe(true);
+    expect(setting).toEqual(["error", { entrypoints: RE_EXPORT_ENTRYPOINTS }]);
   });
 
   it("disables no-reflect-apply so unicorn/prefer-reflect-apply wins", async () => {
     const config = await readConfig();
 
-    expect(severityOf(config.rules["unicorn/prefer-reflect-apply"] ?? "")).toBe("error");
-    expect(severityOf(config.rules["deslop/no-reflect-apply"] ?? "")).toBe("off");
+    expect(severityOf(config.rules["unicorn/prefer-reflect-apply"])).toBe("error");
+    expect(severityOf(config.rules[DELIBERATELY_DISABLED_RULE])).toBe("off");
+    expect(errorRules(config)).not.toContain(DELIBERATELY_DISABLED_RULE);
   });
 });
 
-describe("committed lint command", () => {
+describe("committed oxlint command", () => {
   it("fails and names the rule when a source file violates it", () => {
-    const fixtureName = `lint-fixture-${process.pid}.ts`;
-    const fixturePath = path.join(REPO_ROOT, fixtureName);
-    // The fixture sits outside the paths Biome checks, so the committed
-    // `lint` command reaches Oxlint and reports the Unicorn violation.
-    writeFileSync(fixturePath, "export function lintFixture(): never {\n  throw new Error();\n}\n");
+    const fixtureName = `lint-fixture-${process.pid}-unicorn.ts`;
+    const { exitCode, output } = lintFixtures([
+      {
+        name: fixtureName,
+        source: "export function lintFixture(): never {\n  throw new Error();\n}\n",
+      },
+    ]);
 
-    try {
-      const result = Bun.spawnSync([process.execPath, "run", "lint"], {
-        cwd: REPO_ROOT,
-        env: { ...process.env },
-        timeout: 120_000,
-        stdout: "pipe",
-        stderr: "pipe",
-      });
-      const output = `${result.stdout.toString()}${result.stderr.toString()}`;
+    expect(exitCode).not.toBe(0);
+    expect(output).toContain("unicorn(error-message)");
+    expect(output).toContain(fixtureName);
+  }, 180_000);
 
-      expect(result.exitCode).not.toBe(0);
-      expect(output).toContain("unicorn(error-message)");
-      expect(output).toContain(fixtureName);
-    } finally {
-      rmSync(fixturePath, { force: true });
-    }
+  it("reports an adopted opt-in rule through the committed oxlint command", () => {
+    const fixtureName = `lint-fixture-${process.pid}-deslop.ts`;
+    const { exitCode, output } = lintFixtures([
+      {
+        name: fixtureName,
+        source:
+          'import { readFileSync as readFixture } from "node:fs";\n' +
+          "export const fixture = readFixture;\n",
+      },
+    ]);
+
+    expect(exitCode).not.toBe(0);
+    expect(output).toContain("deslop(no-renamed-imports)");
+    expect(output).toContain(fixtureName);
   }, 180_000);
 });
 

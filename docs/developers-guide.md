@@ -600,6 +600,31 @@ throwing, and when only `<body>` is missing it updates `<html>` and skips the
 mirrored body attributes. See
 [DOM access at module scope](#dom-access-at-module-scope).
 
+### Validating Fluent placeholders
+
+`bun run lint:ftl-vars` runs `scripts/check-fluent-vars.ts`, which compares
+every locale against the base locale named by `FTL_BASE_LOCALE` (default
+`en-GB`). It fails when:
+
+- a translation is missing a `$variable` the base locale uses, or adds one the
+  base locale does not;
+- a `.ftl` file cannot be parsed, reporting the parser message and line;
+- a locale path cannot be read, reporting the path and the operating-system
+  error.
+
+The walk covers `public/locales/<locale>/` recursively, so nested namespaces
+are included. A message or term that legitimately diverges from the base locale
+opts out with a `# vars: ignore-mismatch` comment. The checker runs as part of
+`bun run test:all`.
+
+The module splits queries from the CLI boundary. `parseResource` returns a
+`ParseOutcome` and `readLocalePlaceholders` returns a `LocaleReadResult`
+holding both the placeholders and any `LocaleFailure` entries, so neither
+function logs, throws, or changes the exit status. Both take an optional
+`LocaleFileSystem`, which the unit tests replace to exercise the
+unreadable-path branches without depending on real permissions. Only the CLI
+boundary reports the collected failures and sets the exit status.
+
 ______________________________________________________________________
 
 ## DOM access at module scope

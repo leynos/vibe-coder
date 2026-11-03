@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
-import * as AST from "@fluent/syntax";
+import type * as AST from "@fluent/syntax";
 import { lineOffset, parse, type Resource, Visitor } from "@fluent/syntax";
 
 type PlaceholderReport = {
@@ -17,6 +17,30 @@ const BASE_LOCALE = process.env["FTL_BASE_LOCALE"] ?? "en-GB";
 const LOCALES_DIR = path.resolve(process.cwd(), "public/locales");
 const IGNORE_MARKER = "vars: ignore-mismatch";
 
+/** The subset of `fs.Stats` the directory walk needs. */
+type FileStats = {
+  isDirectory(): boolean;
+  isFile(): boolean;
+};
+
+/**
+ * The narrow filesystem surface the checker needs.
+ *
+ * Injecting it keeps the walk and the reads testable without touching the real
+ * filesystem, and makes every failure path reachable in a unit test.
+ */
+export type LocaleFileSystem = {
+  readonly stat: (filePath: string) => FileStats;
+  readonly readdir: (directoryPath: string) => readonly string[];
+  readonly readFile: (filePath: string) => string;
+};
+
+const nodeFileSystem: LocaleFileSystem = {
+  stat: (filePath) => fs.statSync(filePath),
+  readdir: (directoryPath) => fs.readdirSync(directoryPath),
+  readFile: (filePath) => fs.readFileSync(filePath, "utf8"),
+};
+
 /** Return the locale directory names under `public/locales`, unsorted. */
 function listLocaleDirs(): string[] {
   return fs
@@ -25,23 +49,50 @@ function listLocaleDirs(): string[] {
     .map((dirent) => dirent.name);
 }
 
-/** Collect every `.ftl` file under one locale, including nested namespaces. */
-function listFtlFiles(locale: string): string[] {
+/** Files found by the walk, plus the paths it could not inspect. */
+type FtlWalkResult = {
+  readonly files: readonly string[];
+  readonly failures: readonly LocaleFailure[];
+};
+
+/**
+ * Collect every `.ftl` file under one locale, including nested namespaces.
+ *
+ * A path that disappears or cannot be inspected is recorded as a read failure
+ * and skipped, so one unreadable directory does not hide the rest of the tree.
+ */
+function listFtlFiles(locale: string, fileSystem: LocaleFileSystem): FtlWalkResult {
   const startDir = path.join(LOCALES_DIR, locale);
   const queue = [startDir];
   const files: string[] = [];
+  const failures: LocaleFailure[] = [];
+
   while (queue.length > 0) {
     const current = queue.pop();
     if (!current) continue;
-    const stats = fs.statSync(current);
+
+    let stats: FileStats;
+    try {
+      stats = fileSystem.stat(current);
+    } catch (error) {
+      failures.push({ filePath: current, kind: "read", reason: describeError(error) });
+      continue;
+    }
+
     if (stats.isDirectory()) {
-      const children = fs.readdirSync(current);
-      children.forEach((child) => queue.push(path.join(current, child)));
+      try {
+        for (const child of fileSystem.readdir(current)) {
+          queue.push(path.join(current, child));
+        }
+      } catch (error) {
+        failures.push({ filePath: current, kind: "read", reason: describeError(error) });
+      }
     } else if (stats.isFile() && current.endsWith(".ftl")) {
       files.push(current);
     }
   }
-  return files;
+
+  return { files, failures };
 }
 
 /** Collects `$variable` references from a Fluent AST subtree. */
@@ -137,36 +188,58 @@ function shouldIgnoreEntry(entry: { comment?: { content?: string } | null }): bo
   return comment.includes(IGNORE_MARKER);
 }
 
-/** A file that could not be parsed, reported by the CLI boundary. */
-export type ParseFailure = {
+/** A path the checker could not read or parse, reported by the CLI boundary. */
+export type LocaleFailure = {
   readonly filePath: string;
+  readonly kind: "read" | "parse";
   readonly reason: string;
 };
 
-/** Placeholders and parse failures read from one locale directory. */
+/** Placeholders and failures read from one locale directory. */
 export type LocaleReadResult = {
   readonly placeholders: Map<string, PlaceholderReport>;
-  readonly failures: readonly ParseFailure[];
+  readonly failures: readonly LocaleFailure[];
 };
 
 /**
  * Map each message id in one locale to the placeholders it references.
  *
  * The same message may be split across several files, so variables and the
- * ignore marker accumulate rather than overwrite. Unparseable files are
- * returned alongside the placeholders instead of being logged here, so the
- * caller can report every failure in one place.
+ * ignore marker accumulate rather than overwrite. Filesystem and syntax
+ * failures are returned alongside the placeholders instead of being thrown or
+ * logged here, so the caller can report every failure in one place and still
+ * validate the files it could read.
+ *
+ * @param locale - Locale directory name, e.g. `"cy-GB"`.
+ * @param fileSystem - Filesystem to read through; defaults to `node:fs`.
+ * @returns The accumulated placeholders and every failure encountered.
+ *
+ * @example
+ * ```ts
+ * const { placeholders, failures } = readLocalePlaceholders("cy-GB");
+ * if (failures.length > 0) console.error(failures[0]?.reason);
+ * ```
  */
-export function readLocalePlaceholders(locale: string): LocaleReadResult {
-  const files = listFtlFiles(locale);
+export function readLocalePlaceholders(
+  locale: string,
+  fileSystem: LocaleFileSystem = nodeFileSystem,
+): LocaleReadResult {
+  const { files, failures: walkFailures } = listFtlFiles(locale, fileSystem);
   const placeholders = new Map<string, PlaceholderReport>();
-  const failures: ParseFailure[] = [];
+  const failures: LocaleFailure[] = [...walkFailures];
 
   files.forEach((filePath) => {
-    const contents = fs.readFileSync(filePath, "utf8");
+    let contents: string;
+    try {
+      contents = fileSystem.readFile(filePath);
+    } catch (error) {
+      failures.push({ filePath, kind: "read", reason: describeError(error) });
+      return;
+    }
+
     const outcome = parseResource(contents);
     if (!outcome.ok) {
-      failures.push({ filePath, reason: outcome.reason });
+      failures.push({ filePath, kind: "parse", reason: outcome.reason });
       return;
     }
 
@@ -218,9 +291,10 @@ function findPlaceholderMismatches(
   return mismatches;
 }
 
-/** Print one unparseable file, naming the file and the parser's reason. */
-function reportParseFailure(failure: ParseFailure): void {
-  console.error(`[ftl-vars] Unable to parse ${failure.filePath}: ${failure.reason}`);
+/** Print one unreadable or unparseable file with its reason. */
+function reportFailure(failure: LocaleFailure): void {
+  const action = failure.kind === "parse" ? "parse" : "read";
+  console.error(`[ftl-vars] Unable to ${action} ${failure.filePath}: ${failure.reason}`);
 }
 
 /** Print one mismatch, naming the missing and extra placeholders. */
@@ -237,7 +311,7 @@ function reportMismatch(mismatch: PlaceholderMismatch): void {
 }
 
 /** Validate every locale against the base locale and exit non-zero on drift. */
-function main(): void {
+function runCheck(): void {
   if (!fs.existsSync(LOCALES_DIR)) {
     console.error(`[ftl-vars] No locales directory at ${LOCALES_DIR}`);
     process.exit(1);
@@ -258,7 +332,7 @@ function main(): void {
 
   const failures = [base.failures, ...comparison.map((entry) => entry.failures)].flat();
   for (const failure of failures) {
-    reportParseFailure(failure);
+    reportFailure(failure);
   }
 
   const mismatches = comparison.flatMap((entry) =>
@@ -273,6 +347,23 @@ function main(): void {
     process.exit(1);
   } else {
     console.log("[ftl-vars] All Fluent placeholders align across locales");
+  }
+}
+
+/**
+ * CLI boundary: report anything the checker did not anticipate as data.
+ *
+ * The walk and reads surface expected failures in their return values. This
+ * catch only covers the unforeseen, such as the locales directory becoming
+ * unreadable between the existence check and the listing, so the gate still
+ * fails with a diagnostic instead of a stack trace.
+ */
+function main(): void {
+  try {
+    runCheck();
+  } catch (error) {
+    console.error(`[ftl-vars] Unexpected failure: ${describeError(error)}`);
+    process.exitCode = 1;
   }
 }
 

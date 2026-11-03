@@ -7,11 +7,15 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { parseResource } from "../scripts/check-fluent-vars";
+import {
+  type LocaleFileSystem,
+  parseResource,
+  readLocalePlaceholders,
+} from "../scripts/check-fluent-vars";
 import type { ScriptResult } from "./support/script-result";
 
 const SCRIPT_PATH = path.resolve(import.meta.dir, "../scripts/check-fluent-vars.ts");
@@ -55,6 +59,19 @@ function runCheck(): ScriptResult {
     exitCode: result.exitCode,
     stdout: result.stdout.toString(),
     stderr: result.stderr.toString(),
+  };
+}
+
+/** A filesystem whose `.ftl` paths are files and everything else a directory. */
+function fakeFileSystem(overrides: Partial<LocaleFileSystem>): LocaleFileSystem {
+  return {
+    stat: (filePath) => ({
+      isDirectory: () => !filePath.endsWith(".ftl"),
+      isFile: () => filePath.endsWith(".ftl"),
+    }),
+    readdir: () => ["common.ftl"],
+    readFile: () => "",
+    ...overrides,
   };
 }
 
@@ -121,6 +138,67 @@ describe("check-fluent-vars", () => {
     const result = runCheck();
 
     expect(result.exitCode).toBe(0);
+  });
+
+  it("fails with a diagnostic when a locale file cannot be read", () => {
+    writeLocale("en-GB", NESTED_MESSAGES);
+    const localeDir = path.join(fixtureRoot, "public/locales", "cy-GB");
+    mkdirSync(localeDir, { recursive: true });
+    // A dangling symlink makes `stat` fail the way a deleted or unreadable
+    // file does, without depending on filesystem permissions.
+    symlinkSync("missing.ftl", path.join(localeDir, "common.ftl"));
+
+    const result = runCheck();
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Unable to read");
+    expect(result.stderr).toContain("cy-GB/common.ftl");
+    expect(result.stderr).not.toContain("All Fluent placeholders align");
+  });
+});
+
+describe("readLocalePlaceholders", () => {
+  it("returns an unreadable file as data instead of throwing", () => {
+    const fileSystem = fakeFileSystem({
+      readFile: () => {
+        throw new Error("EACCES: permission denied");
+      },
+    });
+
+    const result = readLocalePlaceholders("zz-ZZ", fileSystem);
+
+    expect(result.failures).toHaveLength(1);
+    expect(result.failures[0]?.kind).toBe("read");
+    expect(result.failures[0]?.reason).toContain("EACCES");
+    expect(result.failures[0]?.filePath).toEndWith("zz-ZZ/common.ftl");
+  });
+
+  it("returns a path that cannot be inspected as data instead of throwing", () => {
+    const fileSystem = fakeFileSystem({
+      stat: () => {
+        throw new Error("ENOENT: no such file or directory");
+      },
+    });
+
+    const result = readLocalePlaceholders("zz-ZZ", fileSystem);
+
+    expect(result.failures).toHaveLength(1);
+    expect(result.failures[0]?.kind).toBe("read");
+    expect(result.failures[0]?.reason).toContain("ENOENT");
+  });
+
+  it("returns a directory that cannot be listed as data instead of throwing", () => {
+    const fileSystem = fakeFileSystem({
+      readdir: () => {
+        throw new Error("EACCES: permission denied");
+      },
+    });
+
+    const result = readLocalePlaceholders("zz-ZZ", fileSystem);
+
+    expect(result.failures).toHaveLength(1);
+    expect(result.failures[0]?.kind).toBe("read");
+    expect(result.failures[0]?.filePath).toEndWith("zz-ZZ");
   });
 });
 
