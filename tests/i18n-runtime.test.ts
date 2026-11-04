@@ -107,6 +107,33 @@ describe("i18n runtime configuration", () => {
     }
   });
 
+  it("follows the selected language when i18next resolves a fallback bundle", () => {
+    const previousLanguage = i18n.language;
+    const previousResolved = i18n.resolvedLanguage;
+
+    try {
+      // A missing bundle leaves `resolvedLanguage` naming the default locale
+      // that supplied the messages, while the selected language is Arabic. The
+      // drawer derives its direction from the selected language, so the
+      // document must use it too or the two would disagree on first load.
+      i18n.language = "ar";
+      i18n.resolvedLanguage = DEFAULT_LOCALE;
+
+      i18n.emit("initialized", i18n.options);
+
+      expect(document.documentElement.lang).toBe("ar");
+      expect(document.documentElement.dir).toBe("rtl");
+      expect(readBodyDirection()).toBe("rtl");
+    } finally {
+      i18n.language = previousLanguage;
+      if (previousResolved === undefined) {
+        delete i18n.resolvedLanguage;
+      } else {
+        i18n.resolvedLanguage = previousResolved;
+      }
+    }
+  });
+
   it("updates direction metadata when applying an RTL locale", () => {
     applyDocumentLocale("ar");
 

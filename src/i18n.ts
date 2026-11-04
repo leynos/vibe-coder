@@ -5,7 +5,7 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import Fluent from "i18next-fluent";
 import FluentBackend from "i18next-fluent-backend";
 import { initReactI18next } from "react-i18next";
-import { getDocumentBody, getDocumentElement } from "./app/dom/document-body";
+import { getAmbientDocument, getDocumentBody, getDocumentElement } from "./app/dom/document-body";
 import {
   DEFAULT_LOCALE,
   DETECTION_ORDER,
@@ -192,7 +192,7 @@ export const applyDocumentLocale = (language?: string): void => {
   // parsed can still lack one. Leave the metadata untouched in that case, but
   // report it: without the root element every locale-dependent style and
   // assistive-technology hint silently keeps its previous value.
-  const htmlElement = getDocumentElement();
+  const htmlElement = getDocumentElement(getAmbientDocument());
   if (!htmlElement) {
     appLogger.warn("Cannot apply document locale without a root element", {
       operation: "i18n.applyDocumentLocale",
@@ -209,7 +209,7 @@ export const applyDocumentLocale = (language?: string): void => {
 
   // A module evaluated before `<body>` exists still gets the document-level
   // locale; only the mirrored body attributes are skipped.
-  const body = getDocumentBody();
+  const body = getDocumentBody(getAmbientDocument());
   if (!body) return;
 
   body.lang = resolvedLanguage;
@@ -225,10 +225,12 @@ export const applyDocumentLocale = (language?: string): void => {
 // i18next emits `initialized` even when the backend fails, with the error
 // already reported through `fetchAjax`.
 i18n.on("initialized", () => {
-  // A failed bundle load leaves `resolvedLanguage` unset even though i18next
-  // has already reported the attempted language, so fall back to it rather
-  // than resetting the document to the default locale metadata.
-  applyDocumentLocale(i18n.resolvedLanguage ?? i18n.language);
+  // Use the selected language, as `languageChanged` does. `resolvedLanguage`
+  // names the bundle that supplies the messages, and a failed bundle load makes
+  // it fall back to the default locale: deriving the document from it would
+  // leave the document left-to-right while the drawer, which follows the
+  // selected language, slides in from the right.
+  applyDocumentLocale(i18n.language);
 });
 
 i18n.on("languageChanged", (nextLanguage) => {

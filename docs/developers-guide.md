@@ -799,6 +799,16 @@ requiring a separate persistent Python environment. The same job runs
 `bun run docs:check` unconditionally, so the documentation gate fails CI in its
 own right rather than only through the `test:all` aggregate.
 
+That job also runs Oxlint as its own unconditional step after `bun semantic`.
+`bun semantic` covers Biome but not Oxlint, and no other CI job runs
+`make lint`, so without the separate step the Unicorn and Deslop rules in
+`.oxlintrc.json` would only ever run on a developer's machine. The step invokes
+the committed `bun run oxlint` script, so it applies the same rule set that
+`make lint` applies locally after Biome; ADR 012 records the decision.
+`tests/workflow-runners.config.test.ts` asserts the step exists and carries no
+`if:` condition, and `tests/oxlint.config.test.ts` asserts `make lint` runs
+Biome before Oxlint.
+
 The same workflow's `build-test` job builds the site and runs the test suite on
 every pull request and on pushes to `main`: `bun install --frozen-lockfile`,
 `bun run tokens:build`, `bun run build` and `bun run test`. It is not a matrix,

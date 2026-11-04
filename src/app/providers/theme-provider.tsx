@@ -3,7 +3,7 @@
 import type { JSX, ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import { getDocumentBody, getDocumentElement } from "../dom/document-body";
+import { getAmbientDocument, getDocumentBody, getDocumentElement } from "../dom/document-body";
 import { appLogger, toError } from "../observability/logger";
 
 const STORAGE_KEY = "vibe-coder.theme";
@@ -79,7 +79,7 @@ function applyTheme(theme: ThemeName): void {
   // module is evaluated early or in a partial document. Each available level
   // is updated on its own so a missing body does not block the document
   // attribute.
-  const root = getDocumentElement();
+  const root = getDocumentElement(getAmbientDocument());
   if (root) {
     root.setAttribute("data-theme", theme);
   } else {
@@ -93,7 +93,7 @@ function applyTheme(theme: ThemeName): void {
     });
   }
 
-  const body = getDocumentBody();
+  const body = getDocumentBody(getAmbientDocument());
   if (!body) return;
 
   body.setAttribute("data-theme", theme);
