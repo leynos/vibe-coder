@@ -75,11 +75,16 @@ function isSupportedTheme(value: unknown): value is ThemeName {
 function applyTheme(theme: ThemeName): void {
   if (!canUseDOM()) return;
 
+  // Read the ambient document once and reuse it: both element lookups must
+  // observe the same document, and a second read could disagree if the global
+  // changes between them.
+  const documentRef = getAmbientDocument();
+
   // The provider can mount before the document root or `<body>` exists when a
   // module is evaluated early or in a partial document. Each available level
   // is updated on its own so a missing body does not block the document
   // attribute.
-  const root = getDocumentElement(getAmbientDocument());
+  const root = getDocumentElement(documentRef);
   if (root) {
     root.setAttribute("data-theme", theme);
   } else {
@@ -93,7 +98,7 @@ function applyTheme(theme: ThemeName): void {
     });
   }
 
-  const body = getDocumentBody(getAmbientDocument());
+  const body = getDocumentBody(documentRef);
   if (!body) return;
 
   body.setAttribute("data-theme", theme);

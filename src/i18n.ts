@@ -193,7 +193,11 @@ const fetchAjax = (
  * ```
  */
 export const applyDocumentLocale = (messageLanguage?: string, directionLanguage?: string): void => {
-  if (typeof document === "undefined") return;
+  // Read the ambient document once and reuse it: the availability check and
+  // both element lookups must observe the same document, and a second read
+  // could disagree if the global changes between them.
+  const documentRef = getAmbientDocument();
+  if (!documentRef) return;
 
   const metadata = getLocaleMetadata(messageLanguage ?? DEFAULT_LOCALE);
   const resolvedLanguage = messageLanguage ?? metadata.code;
@@ -203,7 +207,7 @@ export const applyDocumentLocale = (messageLanguage?: string, directionLanguage?
   // parsed can still lack one. Leave the metadata untouched in that case, but
   // report it: without the root element every locale-dependent style and
   // assistive-technology hint silently keeps its previous value.
-  const htmlElement = getDocumentElement(getAmbientDocument());
+  const htmlElement = getDocumentElement(documentRef);
   if (!htmlElement) {
     appLogger.warn("Cannot apply document locale without a root element", {
       operation: "i18n.applyDocumentLocale",
@@ -220,7 +224,7 @@ export const applyDocumentLocale = (messageLanguage?: string, directionLanguage?
 
   // A module evaluated before `<body>` exists still gets the document-level
   // locale; only the mirrored body attributes are skipped.
-  const body = getDocumentBody(getAmbientDocument());
+  const body = getDocumentBody(documentRef);
   if (!body) return;
 
   body.lang = resolvedLanguage;
