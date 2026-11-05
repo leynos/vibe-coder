@@ -162,14 +162,23 @@ const fetchAjax = (
 };
 
 /**
- * Apply a resolved BCP 47 language tag and its text direction to the HTML
- * document, setting `lang`, `dir`, and `data-direction` on `<html>` and
- * mirroring them to `<body>` when it exists.
+ * Apply the language of the rendered messages and the text direction of the
+ * selected language to the HTML document, setting `lang`, `dir`, and
+ * `data-direction` on `<html>` and mirroring them to `<body>` when it exists.
+ *
+ * The two languages can differ. When a locale bundle fails to load, i18next
+ * renders the fallback bundle's messages while the user's selection stays
+ * unchanged. `lang` must then name the fallback language so assistive
+ * technology pronounces the text correctly, while `dir` must follow the
+ * selection so the layout matches the direction the user chose.
  *
  * Safe to call in non-browser environments — returns immediately when
  * `document` is undefined.
  *
- * @param language - BCP 47 language tag, e.g. `"en-GB"` or `"ar"`.
+ * @param messageLanguage - BCP 47 tag of the messages actually rendered, e.g.
+ *   `"en-GB"` when a missing bundle fell back to the default locale.
+ * @param directionLanguage - BCP 47 tag of the selected language, which
+ *   determines the text direction. Defaults to `messageLanguage`.
  *
  * @example
  * ```ts
@@ -177,16 +186,18 @@ const fetchAjax = (
  * // document.documentElement.lang === "en-GB"
  * // document.documentElement.dir === "ltr"
  *
- * applyDocumentLocale("ar");
+ * applyDocumentLocale("en-GB", "ar");
+ * // English messages laid out right-to-left
+ * // document.documentElement.lang === "en-GB"
  * // document.documentElement.dir === "rtl"
  * ```
  */
-export const applyDocumentLocale = (language?: string): void => {
+export const applyDocumentLocale = (messageLanguage?: string, directionLanguage?: string): void => {
   if (typeof document === "undefined") return;
 
-  const metadata = getLocaleMetadata(language ?? DEFAULT_LOCALE);
-  const resolvedLanguage = language ?? metadata.code;
-  const direction = getLocaleDirection(resolvedLanguage);
+  const metadata = getLocaleMetadata(messageLanguage ?? DEFAULT_LOCALE);
+  const resolvedLanguage = messageLanguage ?? metadata.code;
+  const direction = getLocaleDirection(directionLanguage ?? resolvedLanguage);
 
   // `lib.dom` declares `documentElement` as non-null, but a document being
   // parsed can still lack one. Leave the metadata untouched in that case, but
@@ -225,16 +236,18 @@ export const applyDocumentLocale = (language?: string): void => {
 // i18next emits `initialized` even when the backend fails, with the error
 // already reported through `fetchAjax`.
 i18n.on("initialized", () => {
-  // Use the selected language, as `languageChanged` does. `resolvedLanguage`
-  // names the bundle that supplies the messages, and a failed bundle load makes
-  // it fall back to the default locale: deriving the document from it would
-  // leave the document left-to-right while the drawer, which follows the
-  // selected language, slides in from the right.
-  applyDocumentLocale(i18n.language);
+  // `resolvedLanguage` names the bundle that supplied the messages, which is
+  // the default locale when the selected bundle failed to load. `lang` must
+  // follow it so assistive technology pronounces the rendered text correctly,
+  // while `dir` follows the selected language so the drawer, which derives its
+  // direction from that selection, agrees with the document.
+  applyDocumentLocale(i18n.resolvedLanguage ?? i18n.language, i18n.language);
 });
 
 i18n.on("languageChanged", (nextLanguage) => {
-  applyDocumentLocale(nextLanguage);
+  // i18next recomputes `resolvedLanguage` before emitting this event, so it
+  // already names the bundle that will render the new language.
+  applyDocumentLocale(i18n.resolvedLanguage ?? nextLanguage, nextLanguage);
 });
 
 /**

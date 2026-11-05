@@ -139,10 +139,12 @@ test.describe("locale direction", () => {
     await expect(drawerOf(page)).not.toHaveClass(/-translate-x-full/);
   });
 
-  test("follows the selected language when its bundle is missing", async ({ page }) => {
+  test("serves fallback messages while honouring the selected direction", async ({ page }) => {
     // A host without an Arabic bundle answers 404, so i18next serves the
-    // default locale's messages while the document still honours the selected
-    // language. The drawer must follow the language, not the fallback bundle.
+    // default locale's messages. The document must report the language of the
+    // rendered text so assistive technology pronounces it correctly, while
+    // still honouring the selected language's direction. The drawer must
+    // follow that direction, not the fallback bundle.
     await page.route("**/locales/ar/common.ftl", (route) =>
       route.fulfill({ status: 404, body: "" }),
     );
@@ -153,6 +155,7 @@ test.describe("locale direction", () => {
     await trigger.click();
     await page.locator("#global-controls-drawer select").selectOption("ar");
 
+    await expect(page.locator("html")).toHaveAttribute("lang", "en-GB");
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
 
     await trigger.click();
