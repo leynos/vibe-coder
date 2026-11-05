@@ -173,6 +173,34 @@ export const violationCases: ReadonlyArray<ImportBoundaryViolationCase> = [
     },
   },
   {
+    name: "rejects domain dynamic imports with no module specifier",
+    extraFile: {
+      path: "src/domain/services/lazy-load-save.ts",
+      sourceText: [
+        "export async function loadSaveAdapter() {",
+        "  return await import();",
+        "}",
+      ].join("\n"),
+    },
+    expected: {
+      importPath: "__NON_LITERAL_DYNAMIC_IMPORT__",
+      message: "domain files must not use non-literal dynamic imports",
+    },
+  },
+  {
+    name: "rejects application dynamic imports with no module specifier",
+    extraFile: {
+      path: "src/application/selectors/lazy-chart.ts",
+      sourceText: ["export async function loadChart() {", "  return await import();", "}"].join(
+        "\n",
+      ),
+    },
+    expected: {
+      importPath: "__NON_LITERAL_DYNAMIC_IMPORT__",
+      message: "application files must not use non-literal dynamic imports",
+    },
+  },
+  {
     name: "checks re-export declarations as imports",
     extraFile: {
       path: "src/domain/index.ts",

@@ -219,6 +219,39 @@ describe("main", () => {
     ]);
   });
 
+  it("categorizes non-Error failures by their built-in type tag", () => {
+    const cases = [
+      { thrown: "scan failed", category: "String", message: "scan failed" },
+      { thrown: { reason: "scan failed" }, category: "Object", message: "[object Object]" },
+    ];
+
+    for (const { thrown, category, message } of cases) {
+      const messages: string[] = [];
+      let caught: unknown;
+
+      try {
+        main({
+          sourceFiles: [buildSourceFile()],
+          findViolations: () => {
+            throw thrown;
+          },
+          projectRoot: "/project",
+          writeError: (logged) => messages.push(logged),
+          writeInfo: () => {},
+        });
+      } catch (error) {
+        caught = error;
+      }
+
+      // The wrapper must rethrow the original value untouched: callers rely on
+      // identity to handle their own failure types.
+      expect(caught).toBe(thrown);
+      expect(messages).toEqual([
+        `lint-import-boundaries failed: category="${category}" message="${message}"`,
+      ]);
+    }
+  });
+
   it("reports every violation when multiple exist", () => {
     const messages: string[] = [];
     const exitCode = main({

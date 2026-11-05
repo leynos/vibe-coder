@@ -49,8 +49,12 @@ hosted mode they appear as a floating stack of controls; in full-browser mode a
 - **Language.** The language selector lists every supported locale, each shown
   in its own script. Selecting a language applies it immediately and sets the
   page language and text direction: Arabic and Hebrew read right to left, and
-  every other locale reads left to right. If a locale fails to load, the
-  selector reverts to the previous language.
+  every other locale reads left to right. When the selected locale's messages
+  cannot be loaded, the game shows the fallback locale's text, usually English
+  (UK): the page language then names the language actually displayed, while the
+  text direction still follows the selected locale, so English fallback text
+  under Arabic can be laid out right to left. If the language change itself
+  fails, the selector restores the previous choice.
 
 When browser storage is unavailable, for example in private browsing or when
 the quota is full, changes still apply for the current session, but the game

@@ -565,15 +565,31 @@ returns `ltr`.
 
 ### Applying locale metadata to the document
 
-`applyDocumentLocale(language?)` in `src/i18n.ts` writes `lang`, `dir`, and
-`data-direction` to `<html>` and mirrors them to `<body>` when the body element
-exists. It is registered on two i18next events:
+`applyDocumentLocale(messageLanguage?, directionLanguage?)` in `src/i18n.ts`
+writes `lang`, `dir`, and `data-direction` to `<html>` and mirrors them to
+`<body>` when the body element exists. The two arguments can name different
+languages:
 
-- `initialized` applies `i18n.resolvedLanguage`, falling back to
-  `i18n.language` when a failed bundle load left the resolved value unset. The
-  fallback avoids resetting the document to the default locale metadata after
-  an attempted language.
-- `languageChanged` applies the newly selected language.
+- `lang` is the language of the messages actually rendered, taken from
+  `messageLanguage` and defaulting to `DEFAULT_LOCALE`.
+- `dir` and `data-direction` come from `directionLanguage`, the language the
+  user selected, and default to `messageLanguage`.
+
+The split matters when a selected bundle fails to load. i18next then renders
+the fallback locale's messages while `i18n.language` still names the selection,
+so the page language must identify the text on screen while the direction still
+follows the user's choice: English fallback text under Arabic is `lang="en-GB"`
+with `dir="rtl"`. The function is registered on two i18next events, and both
+pass the two values separately:
+
+- `initialized` applies `i18n.resolvedLanguage ?? i18n.language` as the
+  message language and `i18n.language` as the direction language. i18next
+  resolves `resolvedLanguage` before this event, so it already names the bundle
+  that supplied the messages; the fallback covers the state where nothing has
+  resolved.
+- `languageChanged` applies `i18n.resolvedLanguage ?? nextLanguage` and
+  `nextLanguage`. i18next recomputes `resolvedLanguage` before emitting the
+  event, so the handler sees the bundle that will render the new language.
 
 Both listeners are registered before `i18nReady` is created, so an
 `initialized` event emitted during a synchronous init is not missed. The
@@ -637,11 +653,20 @@ opaque `TypeError` from a property assignment. Import the accessors in
 `src/app/dom/document-body.ts` instead of touching `document.body` or
 `document.documentElement` directly:
 
-| Helper               | Returns               | Use when                                   |
-| :------------------- | :-------------------- | :----------------------------------------- |
-| `getDocumentBody`    | `HTMLElement \| null` | Writing body-level attributes or mounting. |
-| `getDocumentElement` | `HTMLElement \| null` | Writing document-level `lang` or `dir`.    |
-| `isTestEnvironment`  | `boolean`             | Skipping browser bootstrap under tests.    |
+| Helper               | Returns                 | Use when                                        |
+| :------------------- | :---------------------- | :---------------------------------------------- |
+| `getAmbientDocument` | `Document \| undefined` | Reading the global once at an application edge. |
+| `getDocumentBody`    | `HTMLElement \| null`   | Writing body-level attributes or mounting.      |
+| `getDocumentElement` | `HTMLElement \| null`   | Writing document-level `lang` or `dir`.         |
+| `isTestEnvironment`  | `boolean`               | Skipping browser bootstrap under tests.         |
+
+`getAmbientDocument` is the sole ambient-document boundary: it is the only
+place in the module tree that reads the global `document`. Every other consumer
+takes a `Document | undefined` argument, so it stays testable with a stub and
+the absent-document case is visible in the type. Application edges such as
+`src/main.tsx`, `src/i18n.ts`, and the theme provider call the accessor once
+per operation and pass its result to `getDocumentBody` or `getDocumentElement`,
+which return `null` for a missing document, root element, or body.
 
 `src/app/dom/runtime-environment.ts` exposes `isTestEnvironment`, which probes
 both `process` and `process.env` before reading `NODE_ENV`. The browser bundle
