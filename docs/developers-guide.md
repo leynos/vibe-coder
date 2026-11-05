@@ -60,12 +60,18 @@ build caching that benefits from sequential execution.
 
 ```sh
 make check-fmt   # Format check (Biome formatter)
-make lint        # Biome lint + stylelint
+make lint        # Biome lint + Oxlint (Unicorn and Deslop plugins)
 make typecheck   # tsc --noEmit
 make docs-check  # TypeDoc documentation gate
 make test        # bun test (unit + component tests)
 bun semantic     # Full semantic lint pass
 ```
+
+`make lint` runs Biome's CI check followed by Oxlint. Oxlint applies the pinned
+Unicorn and Deslop plugins configured in `.oxlintrc.json`; ADR 012 records the
+rule set and the decisions taken where a rule does not fit this repository. A
+type assertion must carry a `SAFETY:` comment explaining the invariant that
+makes it sound, and code should use `globalThis` rather than `window`.
 
 ### The documentation gate
 
@@ -162,7 +168,73 @@ it, switching off `notDocumented`, `notExported`, `invalidLink` or
    be internationalized via the i18n pipeline.
 5. **Semgrep** — runs the custom rule set in `tools/semgrep-semantic.yml`
    against TypeScript source and test files. Requires `uvx` (provided by `uv`).
-6. **Stylelint** — validates CSS files against `tools/stylelint.config.cjs`.
+6. **Stylelint** — validates CSS files against `tools/stylelint.config.js`.
+
+The three repository-specific checks (class-list length, near-duplicate class
+lists, and hardcoded strings) share one configuration file,
+`tools/semantic-lint.config.json`, loaded through
+`scripts/semantic-lint-config.ts`. Each check reads only its own section, so a
+threshold changes in one place and applies wherever the rule runs. Add narrow
+project prefixes and suppression lists there rather than in the scripts.
+
+______________________________________________________________________
+
+## Structured logging
+
+`src/app/observability/logger.ts` is the single entry point for application
+logging. It exposes a closed data contract rather than a thin `console`
+wrapper, so log payloads stay serializable and greppable.
+
+### Value and context contracts
+
+`LogValue` is the closed union of values a log entry may carry: `string`,
+`number`, `boolean`, `null`, `Error`, arrays of `LogValue`, and plain objects
+whose properties are `LogValue`. `undefined`, functions, class instances other
+than `Error`, and `Date` are not assignable, which keeps every payload
+representable in JSON and in a remote sink.
+
+`LogContext` is `Readonly<Record<string, LogValue>>` — the per-entry detail
+object. An empty context counts as absent and is omitted from the formatted
+line.
+
+### Normalizing caught values
+
+`toError(cause: unknown): Error` returns the value unchanged when it is already
+an `Error`. Values that fail `instanceof Error` but expose string `name` and
+`message` fields — cross-realm errors, or plain objects thrown by third-party
+code — are wrapped in a new `Error` that copies those fields, so callers can
+still branch on names such as `AbortError`. Every other value is wrapped in
+`new Error("Non-Error value thrown", { cause })`. Every `catch` binding is
+`unknown` under the project's TypeScript settings, so callers must normalize
+before logging or reporting:
+
+```ts
+try {
+  await persist();
+} catch (cause) {
+  reportError(toError(cause), { operation: "persist" });
+}
+```
+
+### Logging and reporting
+
+`appLogger` provides four methods, each of which writes one formatted,
+timestamped line to the matching console method:
+
+- `appLogger.debug(message, context?)`
+- `appLogger.info(message, context?)`
+- `appLogger.warn(message, context?)`
+- `appLogger.error(message, context?, error?)`
+
+`reportError(error, context?)` is the reporting seam: it logs at error level
+with the message `"Error reported"` and the error attached. Production code
+should call `reportError` rather than `appLogger.error` when the intent is
+error reporting, so that a remote telemetry sink can be added behind this one
+function without touching call sites.
+
+A context containing `Error` values serializes each one as
+`{ name, message, stack }`, and circular references serialize to `"[Circular]"`
+instead of throwing.
 
 ______________________________________________________________________
 
@@ -416,9 +488,35 @@ intentional DOM change.
 Playwright tests live in `tests/e2e/`. Run them with:
 
 ```sh
-bun test:e2e          # requires a running dev server
-bun test:e2e:container  # headless, no network
+bun test:e2e            # launches or reuses a dev server on supported hosts
+bun test:e2e:container  # requires a dev server that is already running
 ```
+
+`scripts/e2e.sh` dispatches on the host identifier: `ubuntu`, `debian`,
+`linuxmint`, and `pop` run Playwright directly, so `bun test:e2e` launches or
+reuses the dev server through the configuration described below. Other hosts
+delegate to `scripts/e2e-container.sh`, which runs Playwright inside the
+container image and expects a dev server to be reachable already; it performs a
+pre-flight check and exits rather than starting one. Start a server before
+using the container route, or point `PLAYWRIGHT_BASE_URL` at an existing one.
+
+`playwright.config.ts` derives the base URL from `PLAYWRIGHT_BASE_URL`, which
+defaults to `http://localhost:5173`. `resolvePort` fills in the protocol
+default when the URL omits a port, and the tests pin that behaviour, so an
+explicit port is never silently replaced.
+
+Configuration probes the base URL before launching anything. If something
+already accepts connections there, Playwright reuses it (`reuseExistingServer`)
+and does not spawn a second dev server; a dev server started from another
+checkout on port 5173 answers that probe, so the suite would run against that
+checkout instead of this one. The fallback applies to the other failure mode:
+when nothing answers the probe, but the preferred port still cannot be bound
+because another process holds it on a specific address, `findAvailablePort`
+binds an OS-assigned port and writes it back into the base URL. Set
+`PLAYWRIGHT_SKIP_WEBSERVER=1` to skip both the probe and the launch when a
+server is managed outside Playwright; the flag is read from the environment,
+and tests that evaluate the configuration in a child process strip inherited
+values first, so each case controls its own settings.
 
 ### Accessibility tests
 
@@ -445,8 +543,138 @@ t("homeTitle");    // avoid camelCase keys
 ```
 
 Locale files are Fluent (`.ftl`) files in `public/locales/<locale>/`. The
-default locale is `en`. Add new locales by adding a directory and registering
-the locale in `src/app/i18n/supported-locales.ts`.
+default locale is `en-GB`. Add new locales by adding a directory and
+registering the locale in `src/app/i18n/supported-locales.ts`.
+
+### Locale metadata lookups
+
+`src/app/i18n/supported-locales.ts` exposes three query helpers. Each accepts
+an optional BCP 47 code and never throws for an unknown input:
+
+| Helper               | Returns           | Behaviour                                        |
+| :------------------- | :---------------- | :----------------------------------------------- |
+| `getLocaleMetadata`  | `SupportedLocale` | Full code, then language-only, then the default. |
+| `getLocaleDirection` | `TextDirection`   | The metadata direction, defaulting to `ltr`.     |
+| `isRtlLocale`        | `boolean`         | `true` when the resolved direction is `rtl`.     |
+
+The fallback ladder for `getLocaleMetadata("en")` is: no exact `en` entry, so
+the language-only prefix resolves to the first English variant (`en-GB`). A
+code with no language match (`"zz"`) or no argument at all resolves to
+`DEFAULT_LOCALE`. `getLocaleDirection("ar")` returns `rtl`; an unknown code
+returns `ltr`.
+
+### Applying locale metadata to the document
+
+`applyDocumentLocale(messageLanguage?, directionLanguage?)` in `src/i18n.ts`
+writes `lang`, `dir`, and `data-direction` to `<html>` and mirrors them to
+`<body>` when the body element exists. The two arguments can name different
+languages:
+
+- `lang` is the language of the messages actually rendered, taken from
+  `messageLanguage` and defaulting to `DEFAULT_LOCALE`.
+- `dir` and `data-direction` come from `directionLanguage`, the language the
+  user selected, and default to `messageLanguage`.
+
+The split matters when a selected bundle fails to load. i18next then renders
+the fallback locale's messages while `i18n.language` still names the selection,
+so the page language must identify the text on screen while the direction still
+follows the user's choice: English fallback text under Arabic is `lang="en-GB"`
+with `dir="rtl"`. The function is registered on two i18next events, and both
+pass the two values separately:
+
+- `initialized` applies `i18n.resolvedLanguage ?? i18n.language` as the
+  message language and `i18n.language` as the direction language. i18next
+  resolves `resolvedLanguage` before this event, so it already names the bundle
+  that supplied the messages; the fallback covers the state where nothing has
+  resolved.
+- `languageChanged` applies `i18n.resolvedLanguage ?? nextLanguage` and
+  `nextLanguage`. i18next recomputes `resolvedLanguage` before emitting the
+  event, so the handler sees the bundle that will render the new language.
+
+Both listeners are registered before `i18nReady` is created, so an
+`initialized` event emitted during a synchronous init is not missed. The
+handlers run instead of awaiting `i18nReady` at module scope, which keeps
+module evaluation non-blocking while the first locale bundle is fetched.
+
+`i18nReady` is the promise returned by the i18next `init` chain. React
+components await it indirectly through `useTranslation` and Suspense; direct
+consumers can `await i18nReady` before reading locale-dependent state outside
+React:
+
+```typescript
+import { i18nReady } from "./i18n";
+
+await i18nReady;
+// i18n.hasLoadedNamespace("common") === true when the fetch succeeded
+```
+
+`applyDocumentLocale` is safe to call where there is no `document`. It also
+tolerates a document that is still being parsed: when the root element is
+missing it reports `operation: "i18n.applyDocumentLocale"` and
+`reason: "missing-document-element"` through `appLogger` and returns without
+throwing, and when only `<body>` is missing it updates `<html>` and skips the
+mirrored body attributes. See
+[DOM access at module scope](#dom-access-at-module-scope).
+
+### Validating Fluent placeholders
+
+`bun run lint:ftl-vars` runs `scripts/check-fluent-vars.ts`, which compares
+every locale against the base locale named by `FTL_BASE_LOCALE` (default
+`en-GB`). It fails when:
+
+- a translation is missing a `$variable` the base locale uses, or adds one the
+  base locale does not;
+- a `.ftl` file cannot be parsed, reporting the parser message and line;
+- a locale path cannot be read, reporting the path and the operating-system
+  error.
+
+The walk covers `public/locales/<locale>/` recursively, so nested namespaces
+are included. A message or term that legitimately diverges from the base locale
+opts out with a `# vars: ignore-mismatch` comment. The checker runs as part of
+`bun run test:all`.
+
+The module splits queries from the CLI boundary. `parseResource` takes the
+contents of one `.ftl` file and returns a `ParseOutcome`;
+`readLocalePlaceholders` takes a locale and returns a `LocaleReadResult`
+holding both the placeholders and any `LocaleFailure` entries, so neither
+function logs, throws, or changes the exit status. Only
+`readLocalePlaceholders` accepts an optional `LocaleFileSystem`, which the unit
+tests replace to exercise the unreadable-path branches without depending on
+real permissions. The CLI boundary alone reports the collected failures and
+sets the exit status.
+
+______________________________________________________________________
+
+## DOM access at module scope
+
+Module evaluation can run before the parser has created `<body>` or `<html>`.
+`lib.dom` types both as non-null, so code that trusts the types can throw an
+opaque `TypeError` from a property assignment. Import the accessors in
+`src/app/dom/document-body.ts` instead of touching `document.body` or
+`document.documentElement` directly:
+
+| Helper               | Returns                 | Use when                                        |
+| :------------------- | :---------------------- | :---------------------------------------------- |
+| `getAmbientDocument` | `Document \| undefined` | Reading the global once at an application edge. |
+| `getDocumentBody`    | `HTMLElement \| null`   | Writing body-level attributes or mounting.      |
+| `getDocumentElement` | `HTMLElement \| null`   | Writing document-level `lang` or `dir`.         |
+| `isTestEnvironment`  | `boolean`               | Skipping browser bootstrap under tests.         |
+
+`getAmbientDocument` is the sole ambient-document boundary: it is the only
+place in the module tree that reads the global `document`. Every other consumer
+takes a `Document | undefined` argument, so it stays testable with a stub and
+the absent-document case is visible in the type. Application edges such as
+`src/main.tsx`, `src/i18n.ts`, and the theme provider call the accessor once
+per operation and pass its result to `getDocumentBody` or `getDocumentElement`,
+which return `null` for a missing document, root element, or body.
+
+`src/app/dom/runtime-environment.ts` exposes `isTestEnvironment`, which probes
+both `process` and `process.env` before reading `NODE_ENV`. The browser bundle
+has no `process` at all, and some bundlers install a shim without `env`, so the
+probe takes an injectable host object and never mutates the global one. A
+missing document root is reported through `appLogger` with a stable `operation`
+and `reason`; it is not silently ignored, because the user-visible effect is
+that locale or theme attributes keep their previous values.
 
 ______________________________________________________________________
 
@@ -514,6 +742,28 @@ bun tokens:build
 This generates CSS custom properties and TypeScript token exports in
 `tokens/dist/`. The output directory is not tracked in git.
 
+The build runs two stages. Style Dictionary reads `tokens/src/tokens.json` and
+emits `dist/css/variables.css`; then `tokens/build/style-dictionary.js`
+resolves every `{path.to.token}` reference, derives per-theme core and alias
+custom properties, and writes the Tailwind preset, daisyUI theme plugin blocks,
+and TypeScript exports beside it. The pure transformers live in
+`tokens/build/token-resolve.js`, which sorts keys with a numeric-aware collator
+so the generated artefacts are byte-for-byte stable across machines.
+
+A reference is resolved only when it occupies the whole value:
+`{path.to.token}` is replaced, while an embedded reference such as
+`solid {missing}` is copied through unchanged and is not validated during the
+build. A circular or unknown whole-value reference fails the build rather than
+emitting an empty value.
+
+### Tailwind and PostCSS
+
+`postcss.config.js` runs Tailwind CSS v4 and then Autoprefixer. A small local
+plugin then removes daisyUI's `@property --radialprogress` declaration, which
+Lightning CSS otherwise warns about on every production build. The property is
+no longer load-bearing once Tailwind has inlined the utilities that use it, so
+removing it keeps builds quiet without changing rendered output.
+
 ### Visual design references
 
 The [in-game design system](in-game-design-system.html) documents the component
@@ -574,6 +824,16 @@ requiring a separate persistent Python environment. The same job runs
 `bun run docs:check` unconditionally, so the documentation gate fails CI in its
 own right rather than only through the `test:all` aggregate.
 
+That job also runs Oxlint as its own unconditional step after `bun semantic`.
+`bun semantic` covers Biome but not Oxlint, and no other CI job runs
+`make lint`, so without the separate step the Unicorn and Deslop rules in
+`.oxlintrc.json` would only ever run on a developer's machine. The step invokes
+the committed `bun run oxlint` script, so it applies the same rule set that
+`make lint` applies locally after Biome; ADR 012 records the decision.
+`tests/workflow-runners.config.test.ts` asserts the step exists and carries no
+`if:` condition, and `tests/oxlint.config.test.ts` asserts `make lint` runs
+Biome before Oxlint.
+
 The same workflow's `build-test` job builds the site and runs the test suite on
 every pull request and on pushes to `main`: `bun install --frozen-lockfile`,
 `bun run tokens:build`, `bun run build` and `bun run test`. It is not a matrix,
@@ -607,6 +867,7 @@ ______________________________________________________________________
 | 009 | Use semantic audio events for reactive sound.               |
 | 010 | Run fixed-tick simulation outside React rendering.          |
 | 011 | Use TLA+ for self-play promotion safety.                    |
+| 012 | Adopt Oxlint with the Unicorn and Deslop plugins.           |
 
 ______________________________________________________________________
 

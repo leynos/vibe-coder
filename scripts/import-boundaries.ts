@@ -1,6 +1,6 @@
 /** @file Pure import-boundary checks for Vibe Coder's hexagonal layers. */
 
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import path from "node:path";
 
 import ts from "typescript";
 
@@ -300,6 +300,14 @@ function classifyImportTarget(
   return "other";
 }
 
+/** Resolve the directory that relative imports are resolved against. */
+function resolveSourceDirectory(sourcePath: string, basePath: string | undefined): string {
+  if (!path.isAbsolute(sourcePath) && basePath !== undefined) {
+    return path.resolve(basePath, path.dirname(sourcePath));
+  }
+  return path.dirname(sourcePath);
+}
+
 /** Resolve a relative import to a repository-normalized source path. */
 function resolveRelativeImport(
   sourcePath: string,
@@ -307,12 +315,8 @@ function resolveRelativeImport(
   sourcePathSet: ReadonlySet<string>,
   basePath: string | undefined,
 ): string {
-  const sourceDirectory = isAbsolute(sourcePath)
-    ? dirname(sourcePath)
-    : basePath
-      ? resolve(basePath, dirname(sourcePath))
-      : dirname(sourcePath);
-  const candidate = normalizeForComparison(join(sourceDirectory, importPath), basePath);
+  const sourceDirectory = resolveSourceDirectory(sourcePath, basePath);
+  const candidate = normalizeForComparison(path.join(sourceDirectory, importPath), basePath);
 
   if (sourcePathSet.has(candidate)) {
     return candidate;
@@ -387,9 +391,11 @@ function getImportPath(node: ts.Node): string | null {
   }
 
   if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
-    const [moduleSpecifier] = node.arguments;
-    const importPath = moduleSpecifier ? getLiteralModuleSpecifier(moduleSpecifier) : null;
-    return importPath ?? NON_LITERAL_DYNAMIC_IMPORT;
+    const moduleSpecifier = node.arguments.at(0);
+    if (moduleSpecifier === undefined) {
+      return NON_LITERAL_DYNAMIC_IMPORT;
+    }
+    return getLiteralModuleSpecifier(moduleSpecifier) ?? NON_LITERAL_DYNAMIC_IMPORT;
   }
 
   return null;

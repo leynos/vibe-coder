@@ -9,7 +9,7 @@ another horizontal layer.
 
 The primary design document is `docs/vibe-coder-high-level-design.md`
 (hereafter "HLD"). Architecture decision records live in `docs/adr-001-*.md`
-through `docs/adr-011-*.md`. Tasks cite both sources using the `§` notation
+through `docs/adr-012-*.md`. Tasks cite both sources using the `§` notation
 from this roadmap's conventions.
 
 The GIST hierarchy used here is: phase = idea (testable hypothesis), step =

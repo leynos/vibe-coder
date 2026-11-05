@@ -59,15 +59,20 @@ export type AppMachineAction =
       readonly type: "recordBootSucceeded";
     };
 
+/** Action and event unions supplied to the XState machine. */
+interface AppMachineTypes {
+  actions: AppMachineAction;
+  events: AppMachineEvent;
+}
+
 /**
  * XState machine that models boot success, boot failure, and retry reachability.
  */
 export const appMachine = createMachine({
   id: "app",
-  types: {} as {
-    actions: AppMachineAction;
-    events: AppMachineEvent;
-  },
+  // SAFETY: XState accepts a type-only `types` field; `{}` carries no runtime
+  // data, and the assertion supplies the action and event unions declared above.
+  types: {} as AppMachineTypes,
   initial: "booting",
   states: {
     booting: {

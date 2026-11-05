@@ -1,7 +1,19 @@
+/**
+ * @file Semantic lint: report near-duplicate Tailwind class lists.
+ *
+ * Groups `className` strings across the codebase by Jaccard similarity on
+ * their whitespace-separated tokens, and reports groups whose members are
+ * similar enough to suggest a shared utility or component variant. Thresholds
+ * and suppression prefixes come from `tools/semantic-lint.config.json`.
+ */
+
 import { readFileSync } from "node:fs";
-import { relative } from "node:path";
+import path from "node:path";
 
 import ts from "typescript";
+import * as v from "valibot";
+
+import { SEMANTIC_LINT_CONFIG_PATH } from "./semantic-lint-config";
 
 type Occurrence = {
   file: string;
@@ -20,9 +32,22 @@ type NearDuplicateOptions = {
   failOnViolation: boolean;
 };
 
-type SemanticConfig = {
-  nearDuplicateClasses?: Partial<NearDuplicateOptions>;
-};
+const MIN_TOKEN_COUNT = v.pipe(v.number(), v.finite(), v.minValue(1));
+const MAX_JACCARD_DISTANCE = v.pipe(v.number(), v.finite(), v.minValue(0), v.maxValue(1));
+const MIN_OCCURRENCES = v.pipe(v.number(), v.finite(), v.minValue(1));
+const STRING_ARRAY = v.array(v.string());
+
+const NearDuplicateOptionsSchema = v.object({
+  minTokenCount: v.optional(MIN_TOKEN_COUNT),
+  maxJaccardDistance: v.optional(MAX_JACCARD_DISTANCE),
+  minOccurrences: v.optional(MIN_OCCURRENCES),
+  suppressPrefixes: v.optional(STRING_ARRAY),
+  failOnViolation: v.optional(v.boolean()),
+});
+
+const SemanticConfigSchema = v.object({
+  nearDuplicateClasses: v.optional(NearDuplicateOptionsSchema),
+});
 
 type ConceptHint = {
   id: string;
@@ -32,7 +57,6 @@ type ConceptHint = {
 };
 
 const PROJECT_ROOT = process.cwd();
-const CONFIG_PATH = "tools/semantic-lint.config.json";
 const DEFAULT_OPTIONS: NearDuplicateOptions = {
   minTokenCount: 4,
   maxJaccardDistance: 0.2,
@@ -69,14 +93,14 @@ const CONCEPT_HINTS: ConceptHint[] = [
 ];
 
 function loadOptions(): NearDuplicateOptions {
-  const raw = readFileSync(CONFIG_PATH, "utf8");
-  const config = JSON.parse(raw) as SemanticConfig;
-  return { ...DEFAULT_OPTIONS, ...(config.nearDuplicateClasses ?? {}) };
+  const raw = readFileSync(SEMANTIC_LINT_CONFIG_PATH, "utf8");
+  const config = v.parse(SemanticConfigSchema, JSON.parse(raw));
+  return { ...DEFAULT_OPTIONS, ...config.nearDuplicateClasses };
 }
 
 function getTsxFiles(): string[] {
   const glob = new Bun.Glob("src/**/*.tsx");
-  return Array.from(glob.scanSync(PROJECT_ROOT));
+  return [...glob.scanSync(PROJECT_ROOT)];
 }
 
 function tokenMatches(pattern: string, token: string): boolean {
@@ -115,15 +139,15 @@ function extractStringLiteral(initializer: ts.JsxAttributeValue): string | null 
 }
 
 function normalizeTokens(raw: string): string[] {
-  return Array.from(
-    new Set(
+  return [
+    ...new Set(
       raw
         .trim()
         .split(/\s+/u)
         .map((token) => token.trim().toLowerCase())
         .filter(Boolean),
     ),
-  ).sort();
+  ].toSorted();
 }
 
 function shouldSuppress(tokens: string[], prefixes: readonly string[]): boolean {
@@ -207,7 +231,7 @@ function reportExactDuplicates(
     findings += 1;
     const hint = findConceptHint(group[0]?.tokens ?? []);
     const locations = group
-      .map((entry) => `${relative(PROJECT_ROOT, entry.file)}:${entry.line}:${entry.column}`)
+      .map((entry) => `${path.relative(PROJECT_ROOT, entry.file)}:${entry.line}:${entry.column}`)
       .join(", ");
     console.error(`Repeated class stack found at ${locations}.`);
     if (hint) {
@@ -217,46 +241,45 @@ function reportExactDuplicates(
   return findings;
 }
 
+function findUniqueOccurrences(
+  occurrences: readonly Occurrence[],
+  options: NearDuplicateOptions,
+): Occurrence[] {
+  // Later occurrences with the same signature replace earlier ones, matching
+  // the `Map` construction this replaces.
+  const unique = new Map<string, Occurrence>();
+  for (const occurrence of occurrences) {
+    if (occurrence.tokens.length < options.minTokenCount) continue;
+    if (shouldSuppress(occurrence.tokens, options.suppressPrefixes)) continue;
+    unique.set(occurrence.signature, occurrence);
+  }
+  return [...unique.values()];
+}
+
 function reportNearDuplicates(
   occurrences: readonly Occurrence[],
   options: NearDuplicateOptions,
 ): number {
-  const unique = Array.from(
-    new Map(
-      occurrences
-        .filter(
-          (occurrence) =>
-            occurrence.tokens.length >= options.minTokenCount &&
-            !shouldSuppress(occurrence.tokens, options.suppressPrefixes),
-        )
-        .map((occurrence) => [occurrence.signature, occurrence]),
-    ).values(),
-  );
+  const unique = findUniqueOccurrences(occurrences, options);
 
   let findings = 0;
   const seen = new Set<string>();
   for (let index = 0; index < unique.length; index += 1) {
     const current = unique[index];
-    if (!current) {
-      continue;
-    }
     for (let nextIndex = index + 1; nextIndex < unique.length; nextIndex += 1) {
       const next = unique[nextIndex];
-      if (!next) {
-        continue;
-      }
       const distance = jaccardDistance(current.tokens, next.tokens);
       if (distance > options.maxJaccardDistance) {
         continue;
       }
-      const key = [current.signature, next.signature].sort().join("::");
+      const key = [current.signature, next.signature].toSorted().join("::");
       if (seen.has(key)) {
         continue;
       }
       seen.add(key);
       findings += 1;
       console.error(
-        `Near-duplicate class stacks found at ${relative(PROJECT_ROOT, current.file)}:${current.line}:${current.column} and ${relative(PROJECT_ROOT, next.file)}:${next.line}:${next.column}.`,
+        `Near-duplicate class stacks found at ${path.relative(PROJECT_ROOT, current.file)}:${current.line}:${current.column} and ${path.relative(PROJECT_ROOT, next.file)}:${next.line}:${next.column}.`,
       );
     }
   }

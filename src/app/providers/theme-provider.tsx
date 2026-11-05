@@ -3,7 +3,8 @@
 import type { JSX, ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import { appLogger } from "../observability/logger";
+import { getAmbientDocument, getDocumentBody, getDocumentElement } from "../dom/document-body";
+import { appLogger, toError } from "../observability/logger";
 
 const STORAGE_KEY = "vibe-coder.theme";
 const LEGACY_STORAGE_KEY = "vibecoder.theme";
@@ -11,13 +12,20 @@ const DEFAULT_THEME = "vibe-coder-night";
 /** Every DaisyUI theme this application ships, in selection order. */
 export const AVAILABLE_THEMES = ["vibe-coder-night", "vibe-coder-day"] as const;
 
-const THEME_MIGRATION: Record<string, string> = {
+/** Maps legacy theme identifiers to the names this application ships. */
+interface ThemeMigration {
+  readonly [legacyTheme: string]: ThemeName;
+}
+
+const THEME_MIGRATION: ThemeMigration = {
   "vibecoder-night": "vibe-coder-night",
   "vibecoder-day": "vibe-coder-day",
 };
 
 /** Name of a DaisyUI theme this application ships. */
 export type ThemeName = (typeof AVAILABLE_THEMES)[number];
+
+const SUPPORTED_THEME_NAMES: ReadonlySet<string> = new Set(AVAILABLE_THEMES);
 
 /**
  * Theme state and controls published by {@link ThemeProvider} and returned by
@@ -41,7 +49,7 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
  * @returns `true` if both `window` and `document` are defined.
  */
 function canUseDOM(): boolean {
-  return typeof window !== "undefined" && typeof document !== "undefined";
+  return "window" in globalThis && "document" in globalThis;
 }
 
 /**
@@ -54,7 +62,7 @@ function canUseDOM(): boolean {
  * @returns `true` when `value` is a supported theme identifier.
  */
 function isSupportedTheme(value: unknown): value is ThemeName {
-  return AVAILABLE_THEMES.includes(value as ThemeName);
+  return SUPPORTED_THEME_NAMES.has(String(value));
 }
 
 /**
@@ -66,8 +74,34 @@ function isSupportedTheme(value: unknown): value is ThemeName {
  */
 function applyTheme(theme: ThemeName): void {
   if (!canUseDOM()) return;
-  document.documentElement.setAttribute("data-theme", theme);
-  document.body?.setAttribute("data-theme", theme);
+
+  // Read the ambient document once and reuse it: both element lookups must
+  // observe the same document, and a second read could disagree if the global
+  // changes between them.
+  const documentRef = getAmbientDocument();
+
+  // The provider can mount before the document root or `<body>` exists when a
+  // module is evaluated early or in a partial document. Each available level
+  // is updated on its own so a missing body does not block the document
+  // attribute.
+  const root = getDocumentElement(documentRef);
+  if (root) {
+    root.setAttribute("data-theme", theme);
+  } else {
+    // A missing root is a degraded state: the theme silently keeps its
+    // previous value, so report it with stable fields an operator can search
+    // for rather than swallowing it.
+    appLogger.warn("Cannot apply theme without a document root", {
+      operation: "theme.apply",
+      reason: "missing-document-element",
+      theme,
+    });
+  }
+
+  const body = getDocumentBody(documentRef);
+  if (!body) return;
+
+  body.setAttribute("data-theme", theme);
 }
 
 // localStorage is accessed synchronously on the single JavaScript thread.
@@ -89,8 +123,8 @@ function migrateThemeStorage(): void {
   if (!canUseDOM()) return;
   try {
     // If the new key already holds a value, no migration is needed.
-    if (window.localStorage.getItem(STORAGE_KEY)) return;
-    const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (globalThis.localStorage.getItem(STORAGE_KEY)) return;
+    const legacy = globalThis.localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!legacy) return;
     const migrated = THEME_MIGRATION[legacy] ?? legacy;
     if (isSupportedTheme(migrated)) {
@@ -99,7 +133,7 @@ function migrateThemeStorage(): void {
         legacyValue: legacy,
         migratedValue: migrated,
       });
-      window.localStorage.setItem(STORAGE_KEY, migrated);
+      globalThis.localStorage.setItem(STORAGE_KEY, migrated);
     } else {
       appLogger.warn("Unsupported theme value discarded; falling back to default", {
         key: LEGACY_STORAGE_KEY,
@@ -107,9 +141,12 @@ function migrateThemeStorage(): void {
         fallback: DEFAULT_THEME,
       });
     }
-    window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    globalThis.localStorage.removeItem(LEGACY_STORAGE_KEY);
   } catch (error) {
-    appLogger.warn("Failed to migrate legacy theme storage", { key: LEGACY_STORAGE_KEY, error });
+    appLogger.warn("Failed to migrate legacy theme storage", {
+      key: LEGACY_STORAGE_KEY,
+      error: toError(error),
+    });
   }
 }
 
@@ -126,7 +163,7 @@ function migrateThemeStorage(): void {
 function readStoredTheme(): ThemeName | null {
   if (!canUseDOM()) return null;
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
+    const stored = globalThis.localStorage.getItem(STORAGE_KEY);
     if (stored) {
       if (isSupportedTheme(stored)) return stored;
       appLogger.warn("Unsupported theme value discarded; falling back to default", {
@@ -137,7 +174,7 @@ function readStoredTheme(): ThemeName | null {
     }
     return null;
   } catch (error) {
-    appLogger.warn("Failed to read stored theme", { key: STORAGE_KEY, error });
+    appLogger.warn("Failed to read stored theme", { key: STORAGE_KEY, error: toError(error) });
     return null;
   }
 }
@@ -145,25 +182,18 @@ function readStoredTheme(): ThemeName | null {
 /**
  * Persist the active theme to {@link STORAGE_KEY}.
  *
- * Side-effect: writes to `localStorage`. Discards and logs values that
- * are not members of {@link AVAILABLE_THEMES} as a runtime
- * defence-in-depth measure, even though the TypeScript type prevents
- * unsupported values from being passed at compile time.
+ * Side-effect: writes to `localStorage`.
  */
 function persistTheme(theme: ThemeName): void {
   if (!canUseDOM()) return;
-  if (!isSupportedTheme(theme)) {
-    appLogger.warn("Unsupported theme value discarded; falling back to default", {
-      key: STORAGE_KEY,
-      stored: theme,
-      fallback: DEFAULT_THEME,
-    });
-    return;
-  }
   try {
-    window.localStorage.setItem(STORAGE_KEY, theme);
+    globalThis.localStorage.setItem(STORAGE_KEY, theme);
   } catch (error) {
-    appLogger.warn("Failed to persist theme preference", { key: STORAGE_KEY, theme, error });
+    appLogger.warn("Failed to persist theme preference", {
+      key: STORAGE_KEY,
+      theme,
+      error: toError(error),
+    });
   }
 }
 

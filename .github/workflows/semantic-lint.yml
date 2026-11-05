@@ -41,6 +41,11 @@ jobs:
       - name: Validate the TypeDoc documentation gate
         run: bun run docs:check
       - run: bun semantic
+      # `bun semantic` covers Biome but not Oxlint, and nothing else in CI
+      # runs `make lint`, so without this step the Unicorn and Deslop rules
+      # would only ever run on a developer's machine.
+      - name: Lint with Oxlint
+        run: bun run oxlint
 
   # Builds the site and runs the test suite on every pull request, so a
   # change that breaks either (including a Dependabot bump that automerge

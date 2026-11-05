@@ -146,21 +146,24 @@ describe("findBoundaryViolations", () => {
 });
 
 describe("layer matrix", () => {
-  const layerFiles = {
+  const LAYER_NAMES = ["domain", "application", "adapters", "app", "other"] as const;
+  type LayerName = (typeof LAYER_NAMES)[number];
+
+  const layerFiles: Record<LayerName, string> = {
     domain: "src/domain/model/run-state.ts",
     application: "src/application/selectors/dashboard-selectors.ts",
     adapters: "src/adapters/persistence/dexie-game-state-repository.ts",
     app: "src/app/routes/title.tsx",
     other: "src/main.tsx",
-  } as const;
-  const layerImports = {
+  };
+  const layerImports: Record<LayerName, string> = {
     domain: "src/domain/model/run-state",
     application: "src/application/selectors/dashboard-selectors",
     adapters: "src/adapters/persistence/dexie-game-state-repository",
     app: "src/app/routes/title",
     other: "src/main",
-  } as const;
-  const layers = Object.keys(layerFiles) as ReadonlyArray<keyof typeof layerFiles>;
+  };
+  const layers = LAYER_NAMES;
 
   it("exhaustively enforces every source and target layer pair", () => {
     for (const sourceLayer of layers) {
@@ -266,14 +269,14 @@ function expectViolation(
  * ```
  */
 function expectedLayerMessages(sourceLayer: string, targetLayer: string): string[] {
-  const messagesByLayerPair: Record<string, string[]> = {
-    "domain->application": ["domain files must not import application files"],
-    "domain->adapters": ["domain files must not import adapter files"],
-    "domain->app": ["domain files must not import app shell files"],
-    "application->adapters": ["application files must not import adapter files"],
-    "application->app": ["application files must not import app shell files"],
-    "adapters->app": ["adapter files must not import app shell files"],
-  };
+  const messagesByLayerPair = new Map<string, readonly string[]>([
+    ["domain->application", ["domain files must not import application files"]],
+    ["domain->adapters", ["domain files must not import adapter files"]],
+    ["domain->app", ["domain files must not import app shell files"]],
+    ["application->adapters", ["application files must not import adapter files"]],
+    ["application->app", ["application files must not import app shell files"]],
+    ["adapters->app", ["adapter files must not import app shell files"]],
+  ]);
 
-  return messagesByLayerPair[`${sourceLayer}->${targetLayer}`] ?? [];
+  return [...(messagesByLayerPair.get(`${sourceLayer}->${targetLayer}`) ?? [])];
 }

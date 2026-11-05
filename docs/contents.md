@@ -40,6 +40,10 @@ architecture decision pack.
   safety](adr-011-use-tla-plus-for-self-play-promotion-safety.md) - records the
   formal model boundary for self-play orchestration, trial evidence, and
   default-parameter-pack promotion.
+- [ADR 012: Adopt Oxlint with the Unicorn and Deslop
+  plugins](adr-012-adopt-oxlint-with-unicorn-and-deslop.md) - records the
+  second JavaScript linter, its pinned versions, and the rule-conflict
+  decisions.
 
 ## Guides
 

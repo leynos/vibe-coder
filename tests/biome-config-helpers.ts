@@ -2,6 +2,8 @@
  * @file Helpers for reading Biome JSONC configuration in tests.
  */
 
+import * as v from "valibot";
+
 export interface RestrictedImportPattern {
   readonly group: readonly string[];
   readonly message: string;
@@ -13,8 +15,8 @@ export interface RestrictedImportPattern {
 export interface NoRestrictedImportsRule {
   readonly level: "error" | "warn" | "info";
   readonly options: {
-    readonly patterns?: readonly RestrictedImportPattern[];
-    readonly paths?: Record<string, string>;
+    readonly patterns?: readonly RestrictedImportPattern[] | undefined;
+    readonly paths?: Record<string, string> | undefined;
   };
 }
 
@@ -22,33 +24,86 @@ export interface NoRestrictedImportsRule {
  * A single Biome override entry with include globs and optional linter rules.
  */
 export interface BiomeOverride {
-  readonly includes?: readonly string[];
-  readonly linter?: {
-    readonly rules?: {
-      readonly style?: {
-        readonly noRestrictedImports?: NoRestrictedImportsRule;
-      };
-    };
-  };
+  readonly includes?: readonly string[] | undefined;
+  readonly linter?:
+    | {
+        readonly rules?:
+          | {
+              readonly style?:
+                | {
+                    readonly noRestrictedImports?: NoRestrictedImportsRule | undefined;
+                  }
+                | undefined;
+            }
+          | undefined;
+      }
+    | undefined;
 }
 
 /**
  * Top-level Biome configuration subset read by boundary tests.
  */
 export interface BiomeConfig {
-  readonly overrides?: readonly BiomeOverride[];
+  readonly $schema?: string | undefined;
+  readonly overrides?: readonly BiomeOverride[] | undefined;
 }
 
+const STRING_ARRAY = v.array(v.string());
+const STRING_RECORD = v.record(v.string(), v.string());
+
+const RestrictedImportPatternSchema = v.object({
+  group: STRING_ARRAY,
+  message: v.string(),
+});
+
+const RESTRICTED_IMPORT_PATTERNS = v.array(RestrictedImportPatternSchema);
+
+const NoRestrictedImportsRuleSchema = v.object({
+  level: v.picklist(["error", "warn", "info"]),
+  options: v.object({
+    patterns: v.optional(RESTRICTED_IMPORT_PATTERNS),
+    paths: v.optional(STRING_RECORD),
+  }),
+});
+
+const StyleRulesSchema = v.object({
+  noRestrictedImports: v.optional(NoRestrictedImportsRuleSchema),
+});
+
+const LinterRulesSchema = v.object({
+  style: v.optional(StyleRulesSchema),
+});
+
+const LinterSchema = v.object({
+  rules: v.optional(LinterRulesSchema),
+});
+
+const BiomeOverrideSchema = v.object({
+  includes: v.optional(STRING_ARRAY),
+  linter: v.optional(LinterSchema),
+});
+
+const BIOME_OVERRIDES = v.array(BiomeOverrideSchema);
+
+const BiomeConfigSchema = v.object({
+  $schema: v.optional(v.string()),
+  overrides: v.optional(BIOME_OVERRIDES),
+});
+
 /**
- * Parse JSONC by removing comments outside strings before passing JSON.parse.
+ * Remove JSONC line and block comments while preserving string contents.
+ *
+ * @param text - JSONC source, possibly containing `//` and block comments.
+ * @returns JSON text with comments removed.
+ * @throws {SyntaxError} If a block comment is not terminated.
  *
  * @example
  * ```ts
- * parseJsonc("{ // comment\n \"value\": true }");
- * // { value: true }
+ * stripJsonComments('{ "value": true } // trailing');
+ * // '{ "value": true } '
  * ```
  */
-export function parseJsonc(text: string): unknown {
+export function stripJsonComments(text: string): string {
   let output = "";
   let isInString = false;
   let isEscaped = false;
@@ -89,7 +144,25 @@ export function parseJsonc(text: string): unknown {
     output += character;
   }
 
-  return JSON.parse(output);
+  return output;
+}
+
+/**
+ * Parse a Biome JSONC configuration string into the inspected shape.
+ *
+ * @param text - JSONC source for a Biome configuration file.
+ * @returns The validated subset of the Biome configuration these tests use.
+ * @throws {valibot.ValiError} If the parsed configuration has an unexpected
+ *   shape.
+ *
+ * @example
+ * ```ts
+ * parseJsonc('{ "overrides": [] }');
+ * // { overrides: [] }
+ * ```
+ */
+export function parseJsonc(text: string): BiomeConfig {
+  return v.parse(BiomeConfigSchema, JSON.parse(stripJsonComments(text)));
 }
 
 /**
@@ -112,7 +185,7 @@ export function parseJsonc(text: string): unknown {
  * ```
  */
 export async function readBiomeConfig(path = "biome.jsonc"): Promise<BiomeConfig> {
-  return parseJsonc(await Bun.file(path).text()) as BiomeConfig;
+  return parseJsonc(await Bun.file(path).text());
 }
 
 /**
@@ -149,7 +222,7 @@ export function getNoRestrictedImportsOverride(
 /**
  * Skip a `//` JSONC comment and return the newline or EOF index.
  *
- * @param text - Source text being parsed by {@link parseJsonc}.
+ * @param text - Source text being parsed by {@link stripJsonComments}.
  * @param startIndex - Index immediately after the opening `//`.
  * @returns The index of the newline that ended the comment, or EOF.
  */
@@ -164,7 +237,7 @@ function skipLineComment(text: string, startIndex: number): number {
 /**
  * Skip a `/* ... *\/` JSONC comment, rejecting comments that run to EOF.
  *
- * @param text - Source text being parsed by {@link parseJsonc}.
+ * @param text - Source text being parsed by {@link stripJsonComments}.
  * @param startIndex - Index immediately after the opening `/*`.
  * @returns The index of the closing `/` in the block-comment terminator.
  * @throws {SyntaxError} If no closing block-comment terminator is found.

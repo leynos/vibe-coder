@@ -5,6 +5,7 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import Fluent from "i18next-fluent";
 import FluentBackend from "i18next-fluent-backend";
 import { initReactI18next } from "react-i18next";
+import { getAmbientDocument, getDocumentBody, getDocumentElement } from "./app/dom/document-body";
 import {
   DEFAULT_LOCALE,
   DETECTION_ORDER,
@@ -12,7 +13,7 @@ import {
   getLocaleMetadata,
   SUPPORTED_LOCALES,
 } from "./app/i18n/supported-locales";
-import { appLogger, reportError } from "./app/observability/logger";
+import { appLogger, reportError, toError } from "./app/observability/logger";
 
 const supportedLngs = SUPPORTED_LOCALES.map((locale) => locale.code);
 
@@ -25,12 +26,12 @@ const supportedLngs = SUPPORTED_LOCALES.map((locale) => locale.code);
  *
  * @example
  * ```ts
- * normalizeBasePath(undefined)    // "/"
+ * normalizeBasePath()             // "/"
  * normalizeBasePath("app")        // "/app/"
  * normalizeBasePath("/game/")     // "/game/"
  * ```
  */
-export const normalizeBasePath = (rawBase: string | undefined): string => {
+export const normalizeBasePath = (rawBase?: string): string => {
   const candidate = rawBase && rawBase.length > 0 ? rawBase : "/";
   const withLeading = candidate.startsWith("/") ? candidate : `/${candidate}`;
   return withLeading.endsWith("/") ? withLeading : `${withLeading}/`;
@@ -102,9 +103,10 @@ const fetchAjax = (
   const controller = new AbortController();
   activeI18nControllers.add(controller);
 
+  const requestMethod = method ?? "GET";
   const request: RequestInit = {
     credentials: withCredentials ? "include" : "same-origin",
-    method: method ?? "GET",
+    method: requestMethod,
     signal: controller.signal,
   };
 
@@ -128,9 +130,9 @@ const fetchAjax = (
       callback(text, { status, statusText });
     })
     .catch((error) => {
-      const typedError = error as Error;
-      const message = typedError?.message ?? "Unexpected i18n network failure";
-      const name = typedError?.name ?? "Error";
+      const typedError = toError(error);
+      const message = typedError.message || "Unexpected i18n network failure";
+      const { name } = typedError;
 
       if (name === "AbortError") {
         callback(typedError, { status: 408, statusText: message });
@@ -144,7 +146,7 @@ const fetchAjax = (
 
       const context = {
         url,
-        method: request.method,
+        method: requestMethod,
         withCredentials: Boolean(withCredentials),
         status,
         statusText: message,
@@ -160,14 +162,23 @@ const fetchAjax = (
 };
 
 /**
- * Apply a resolved BCP 47 language tag and its text direction to the HTML
- * document, setting `lang`, `dir`, and `data-direction` on both `<html>` and
- * `<body>`.
+ * Apply the language of the rendered messages and the text direction of the
+ * selected language to the HTML document, setting `lang`, `dir`, and
+ * `data-direction` on `<html>` and mirroring them to `<body>` when it exists.
+ *
+ * The two languages can differ. When a locale bundle fails to load, i18next
+ * renders the fallback bundle's messages while the user's selection stays
+ * unchanged. `lang` must then name the fallback language so assistive
+ * technology pronounces the text correctly, while `dir` must follow the
+ * selection so the layout matches the direction the user chose.
  *
  * Safe to call in non-browser environments — returns immediately when
  * `document` is undefined.
  *
- * @param language - BCP 47 language tag, e.g. `"en-GB"` or `"ar"`.
+ * @param messageLanguage - BCP 47 tag of the messages actually rendered, e.g.
+ *   `"en-GB"` when a missing bundle fell back to the default locale.
+ * @param directionLanguage - BCP 47 tag of the selected language, which
+ *   determines the text direction. Defaults to `messageLanguage`.
  *
  * @example
  * ```ts
@@ -175,30 +186,73 @@ const fetchAjax = (
  * // document.documentElement.lang === "en-GB"
  * // document.documentElement.dir === "ltr"
  *
- * applyDocumentLocale("ar");
+ * applyDocumentLocale("en-GB", "ar");
+ * // English messages laid out right-to-left
+ * // document.documentElement.lang === "en-GB"
  * // document.documentElement.dir === "rtl"
  * ```
  */
-export const applyDocumentLocale = (language: string | undefined): void => {
-  if (typeof document === "undefined") return;
+export const applyDocumentLocale = (messageLanguage?: string, directionLanguage?: string): void => {
+  // Read the ambient document once and reuse it: the availability check and
+  // both element lookups must observe the same document, and a second read
+  // could disagree if the global changes between them.
+  const documentRef = getAmbientDocument();
+  if (!documentRef) return;
 
-  const metadata = getLocaleMetadata(language ?? DEFAULT_LOCALE);
-  const resolvedLanguage = language ?? metadata.code;
-  const direction = getLocaleDirection(resolvedLanguage);
+  const metadata = getLocaleMetadata(messageLanguage ?? DEFAULT_LOCALE);
+  const resolvedLanguage = messageLanguage ?? metadata.code;
+  const direction = getLocaleDirection(directionLanguage ?? resolvedLanguage);
 
-  const htmlElement = document.documentElement;
-  if (htmlElement) {
-    htmlElement.lang = resolvedLanguage;
-    htmlElement.dir = direction;
-    htmlElement.setAttribute("data-direction", direction);
+  // `lib.dom` declares `documentElement` as non-null, but a document being
+  // parsed can still lack one. Leave the metadata untouched in that case, but
+  // report it: without the root element every locale-dependent style and
+  // assistive-technology hint silently keeps its previous value.
+  const htmlElement = getDocumentElement(documentRef);
+  if (!htmlElement) {
+    appLogger.warn("Cannot apply document locale without a root element", {
+      operation: "i18n.applyDocumentLocale",
+      reason: "missing-document-element",
+      language: resolvedLanguage,
+      direction,
+    });
+    return;
   }
 
-  if (document.body) {
-    document.body.lang = resolvedLanguage;
-    document.body.dir = direction;
-    document.body.setAttribute("data-direction", direction);
-  }
+  htmlElement.lang = resolvedLanguage;
+  htmlElement.dir = direction;
+  htmlElement.setAttribute("data-direction", direction);
+
+  // A module evaluated before `<body>` exists still gets the document-level
+  // locale; only the mirrored body attributes are skipped.
+  const body = getDocumentBody(documentRef);
+  if (!body) return;
+
+  body.lang = resolvedLanguage;
+  body.dir = direction;
+  body.setAttribute("data-direction", direction);
 };
+
+// Register the listeners before `i18nReady` is created so an `initialized`
+// emit during a synchronous init cannot be missed. Reacting to the event
+// instead of awaiting `i18nReady` at module scope keeps module evaluation
+// non-blocking: the locale bundle is fetched over the network, and the
+// application entry point must not wait for it before its exports exist.
+// i18next emits `initialized` even when the backend fails, with the error
+// already reported through `fetchAjax`.
+i18n.on("initialized", () => {
+  // `resolvedLanguage` names the bundle that supplied the messages, which is
+  // the default locale when the selected bundle failed to load. `lang` must
+  // follow it so assistive technology pronounces the rendered text correctly,
+  // while `dir` follows the selected language so the drawer, which derives its
+  // direction from that selection, agrees with the document.
+  applyDocumentLocale(i18n.resolvedLanguage ?? i18n.language, i18n.language);
+});
+
+i18n.on("languageChanged", (nextLanguage) => {
+  // i18next recomputes `resolvedLanguage` before emitting this event, so it
+  // already names the bundle that will render the new language.
+  applyDocumentLocale(i18n.resolvedLanguage ?? nextLanguage, nextLanguage);
+});
 
 /**
  * Promise that resolves when i18next has finished initializing and the first
@@ -222,7 +276,7 @@ export const i18nReady = i18n
   .use(initReactI18next)
   .init({
     backend: {
-      loadPath: buildFluentLoadPath(import.meta.env.BASE_URL as string | undefined),
+      loadPath: buildFluentLoadPath(import.meta.env.BASE_URL),
       ajax: fetchAjax,
     },
     fallbackLng: DEFAULT_LOCALE,
@@ -245,12 +299,4 @@ export const i18nReady = i18n
     },
   });
 
-void i18nReady.then(() => {
-  applyDocumentLocale(i18n.resolvedLanguage ?? i18n.language ?? DEFAULT_LOCALE);
-});
-
-i18n.on("languageChanged", (nextLanguage) => {
-  applyDocumentLocale(nextLanguage);
-});
-
-export default i18n;
+export { default } from "i18next";

@@ -7,6 +7,9 @@ import { useTranslation } from "react-i18next";
 import "./i18n";
 
 import App from "./app/app";
+import { getAmbientDocument, getDocumentBody } from "./app/dom/document-body";
+import { isTestEnvironment } from "./app/dom/runtime-environment";
+import { appLogger } from "./app/observability/logger";
 import "./index.css";
 
 /**
@@ -87,10 +90,19 @@ export function renderApp(target: HTMLElement, props?: AppRootProps): Root {
   return root;
 }
 
-const isTestEnvironment = typeof process !== "undefined" && process.env?.NODE_ENV === "test";
+if (!isTestEnvironment()) {
+  // A module loaded before `<body>` exists would otherwise fail with an
+  // opaque TypeError from the property access below.
+  const body = getDocumentBody(getAmbientDocument());
+  if (!body) {
+    appLogger.error("A document body is required to render the SPA.", {
+      operation: "bootstrap.mount",
+      reason: "missing-document-body",
+    });
+    throw new Error("A document body is required to render the SPA.");
+  }
 
-if (!isTestEnvironment) {
-  const mount = document.body?.children.namedItem("root");
+  const mount = body.children.namedItem("root");
 
   if (!(mount instanceof HTMLElement)) {
     throw new Error("Mount point '#root' is required to render the SPA.");
