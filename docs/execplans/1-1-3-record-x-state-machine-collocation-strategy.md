@@ -151,19 +151,19 @@ and build spine", step 1.1, "Ratify outstanding decisions recorded in the
 ADRs". Its success text requires one accepted document confirming placement and
 the first machine test compiling and passing.
 
-ADR 003 is `docs/adr-003-use-xstate-for-workflow-orchestration.md`. It says
-XState machines orchestrate workflow state, while simulation ticks call pure
-domain services and return events consumed by machines and adapters. Its
+ADR 003 is `docs/adrs/adr-0003-use-xstate-for-workflow-orchestration.md`. It
+says XState machines orchestrate workflow state, while simulation ticks call
+pure domain services and return events consumed by machines and adapters. Its
 outstanding decisions currently name central placement under
 `application/machines/`, `@xstate/test` with Bun, graph export through the
 XState inspector, and autopilot as a parallel region of `run.machine`.
 
 ADR 002 is
-`docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`. It records
-`src/domain/`, `src/application/`, and `src/adapters/` as the accepted source
-boundaries. It also explains that application services and domain rules form
-the core, while React, Dexie, Web Audio, Canvas, workers, assets, and tooling
-interact through ports and adapters.
+`docs/adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`. It
+records `src/domain/`, `src/application/`, and `src/adapters/` as the accepted
+source boundaries. It also explains that application services and domain rules
+form the core, while React, Dexie, Web Audio, Canvas, workers, assets, and
+tooling interact through ports and adapters.
 
 The developer guide already says that XState machines live in
 `application/machines/`, and lists `app.machine`, `run.machine`,
@@ -201,8 +201,8 @@ Relevant local documents:
 
 - `AGENTS.md`
 - `docs/roadmap.md`
-- `docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`
-- `docs/adr-003-use-xstate-for-workflow-orchestration.md`
+- `docs/adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`
+- `docs/adrs/adr-0003-use-xstate-for-workflow-orchestration.md`
 - `docs/vibe-coder-high-level-design.md`
 - `docs/developers-guide.md`
 - `docs/users-guide.md`
@@ -298,7 +298,7 @@ bun check:types 2>&1 | tee /tmp/typecheck-vibe-coder-1-1-3-record-x-state-machin
 bun test tests/app-machine.test.ts 2>&1 \
   | tee /tmp/test-app-machine-vibe-coder-1-1-3-record-x-state-machine-collocation-strategy.out
 bunx markdownlint-cli \
-  docs/adr-003-use-xstate-for-workflow-orchestration.md \
+  docs/adrs/adr-0003-use-xstate-for-workflow-orchestration.md \
   docs/developers-guide.md \
   docs/execplans/1-1-3-record-x-state-machine-collocation-strategy.md \
   2>&1 | tee /tmp/markdownlint-vibe-coder-1-1-3-record-x-state-machine-collocation-strategy.out
@@ -349,9 +349,9 @@ title includes `(1.1.3)`.
 
 The implementation is accepted when all of the following are true:
 
-- `docs/adr-003-use-xstate-for-workflow-orchestration.md` contains an accepted
-  decision for centralized `src/application/machines/` placement or another
-  explicitly approved placement.
+- `docs/adrs/adr-0003-use-xstate-for-workflow-orchestration.md` contains an
+  accepted decision for centralized `src/application/machines/` placement or
+  another explicitly approved placement.
 - ADR 003 records the first model-test harness choice and no longer leaves that
   choice open.
 - `src/application/machines/` contains the first minimal machine definition.

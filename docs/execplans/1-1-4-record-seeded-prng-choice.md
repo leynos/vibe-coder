@@ -12,8 +12,8 @@ Roadmap item 1.1.4 closes the two remaining choices that hold up the
 deterministic simulation contract: the seeded pseudo-random number generator
 (PRNG) and the version migration policy for runs created under older parameter
 packs. After this change a developer can open
-`docs/adr-005-use-deterministic-simulation-and-parameter-packs.md` and see
-which PRNG the engine uses, how seeds expand into PRNG state, which fields
+`docs/adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md` and
+see which PRNG the engine uses, how seeds expand into PRNG state, which fields
 identify a saved run's PRNG and parameter pack, what kinds of pack version
 bumps are allowed, and what happens when a saved run meets a different
 parameter pack on load.
@@ -28,10 +28,10 @@ change runtime behaviour, and must not edit code under `src/` or `tests/`.
 
 The observable success conditions are:
 
-1. `docs/adr-005-use-deterministic-simulation-and-parameter-packs.md` names
-   the accepted PRNG, names the accepted seeding strategy, declares the save
-   identity fields for that PRNG, and removes the PRNG bullet from "Outstanding
-   decisions".
+1. `docs/adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md`
+   names the accepted PRNG, names the accepted seeding strategy, declares the
+   save identity fields for that PRNG, and removes the PRNG bullet from
+   "Outstanding decisions".
 2. The same ADR records the parameter-pack version migration policy in enough
    detail that later implementation tasks can build to it without re-deciding
    it, and removes the migration-policy bullet from "Outstanding decisions".
@@ -117,7 +117,7 @@ Do not begin implementation until the user has explicitly approved this plan.
 ## Tolerances (exception triggers)
 
 - Scope: if implementation requires changes outside
-  `docs/adr-005-use-deterministic-simulation-and-parameter-packs.md`,
+  `docs/adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md`,
   `docs/roadmap.md`, `docs/developers-guide.md`, `docs/users-guide.md`,
   `docs/contents.md`, or this ExecPlan, stop and ask for approval.
 - Size: if the documentation patch exceeds 400 net lines across all touched
@@ -233,15 +233,16 @@ ADRs". Its current text is:
 ```plaintext
 - [ ] 1.1.4. Record the seeded pseudo-random number generator choice and the
   version migration policy for runs created under older parameter packs.
-  - See `adr-005-use-deterministic-simulation-and-parameter-packs.md`
+  - See `adr-0005-use-deterministic-simulation-and-parameter-packs.md`
     §Outstanding decisions.
   - Success: one accepted document names the PRNG (e.g. Mulberry32 or
     Xoshiro128+); the migration policy is documented.
 ```
 
-ADR 005 is `docs/adr-005-use-deterministic-simulation-and-parameter-packs.md`.
-It records the deterministic simulation contract and the parameter-pack
-strategy. Its "Outstanding decisions" section currently reads:
+ADR 005 is
+`docs/adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md`. It
+records the deterministic simulation contract and the parameter-pack strategy.
+Its "Outstanding decisions" section currently reads:
 
 ```plaintext
 - Choose the seeded pseudo-random number generator.
@@ -252,7 +253,8 @@ strategy. Its "Outstanding decisions" section currently reads:
 Item 1.1.4 closes the first and third bullets. The middle bullet, fixed-point
 arithmetic, is left untouched.
 
-ADR 004 (`docs/adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md`)
+ADR 004
+(`docs/adrs/adr-0004-persist-runs-with-dexie-snapshots-and-event-logs.md`)
 already records the run/snapshot/event-log persistence direction and includes a
 `parameterPacks` table in its illustrative Dexie schema. ADR 004 also lists
 "Define whether imported saves can include custom parameter packs" and "Define
@@ -261,21 +263,23 @@ decisions. Item 1.1.4 should not silently decide ADR 004's open questions, but
 it can and should constrain them by recording the parameter-pack identity that
 imports and exports must carry.
 
-ADR 002 (`docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`)
+ADR 002
+(`docs/adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`)
 records `src/domain/`, `src/application/`, and `src/adapters/` as the accepted
 source boundaries. ADR 002 anticipates a `RandomSource` driven port but does
 not implement one.
 
-ADR 003 (`docs/adr-003-use-xstate-for-workflow-orchestration.md`) is Accepted
-for item 1.1.3 and places workflow machines under `src/application/machines/`.
-The first machine, `app.machine.ts`, is the only file in that directory and is
-unrelated to PRNG choice.
+ADR 003 (`docs/adrs/adr-0003-use-xstate-for-workflow-orchestration.md`) is
+Accepted for item 1.1.3 and places workflow machines under
+`src/application/machines/`. The first machine, `app.machine.ts`, is the only
+file in that directory and is unrelated to PRNG choice.
 
-ADR 011 (`docs/adr-011-use-tla-plus-for-self-play-promotion-safety.md`) records
-the formal model for default-parameter-pack promotion safety. The migration
-policy chosen here must remain compatible with that model: specifically, every
-promoted pack must be content-addressable so that ADR 011's `canPromote`
-predicate can reject trial evidence that pinned a different pack hash.
+ADR 011 (`docs/adrs/adr-0011-use-tla-plus-for-self-play-promotion-safety.md`)
+records the formal model for default-parameter-pack promotion safety. The
+migration policy chosen here must remain compatible with that model:
+specifically, every promoted pack must be content-addressable so that ADR 011's
+`canPromote` predicate can reject trial evidence that pinned a different pack
+hash.
 
 The high-level design `docs/vibe-coder-high-level-design.md` includes:
 
@@ -324,12 +328,12 @@ Relevant local documents:
 
 - `AGENTS.md`
 - `docs/roadmap.md`
-- `docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`
-- `docs/adr-003-use-xstate-for-workflow-orchestration.md`
-- `docs/adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md`
-- `docs/adr-005-use-deterministic-simulation-and-parameter-packs.md`
-- `docs/adr-006-use-adversarial-self-play-for-parameter-tuning.md`
-- `docs/adr-011-use-tla-plus-for-self-play-promotion-safety.md`
+- `docs/adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`
+- `docs/adrs/adr-0003-use-xstate-for-workflow-orchestration.md`
+- `docs/adrs/adr-0004-persist-runs-with-dexie-snapshots-and-event-logs.md`
+- `docs/adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md`
+- `docs/adrs/adr-0006-use-adversarial-self-play-for-parameter-tuning.md`
+- `docs/adrs/adr-0011-use-tla-plus-for-self-play-promotion-safety.md`
 - `docs/vibe-coder-high-level-design.md`
 - `docs/developers-guide.md`
 - `docs/users-guide.md`
@@ -549,8 +553,8 @@ Use GitHub's branch rename flow instead so the PR follows the rename. If the
 branch is `main`, stop.
 
 Second, edit
-`docs/adr-005-use-deterministic-simulation-and-parameter-packs.md`. Add an
-"Accepted decisions" section near the existing "Decision outcome" section
+`docs/adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md`. Add
+an "Accepted decisions" section near the existing "Decision outcome" section
 recording, in en-GB Oxford voice, the PRNG choice, the seeding strategy, the
 save-identity fields, the runner-up, and the property-test/pure-rand
 separation, as detailed in "Planned decisions to record" above. Then add an
@@ -632,7 +636,7 @@ Ninth, run focused checks first:
 
 ```sh
 bunx markdownlint-cli \
-  docs/adr-005-use-deterministic-simulation-and-parameter-packs.md \
+  docs/adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md \
   docs/developers-guide.md \
   docs/roadmap.md \
   docs/execplans/1-1-4-record-seeded-prng-choice.md \
@@ -694,7 +698,7 @@ title includes `(1.1.4)`.
 
 The implementation is accepted when all of the following are true:
 
-- `docs/adr-005-use-deterministic-simulation-and-parameter-packs.md`
+- `docs/adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md`
   contains an accepted PRNG decision naming sfc32 in the bryc-2022 port (or
   another explicitly approved algorithm), the seeding strategy, the
   substream-derivation pattern, the runner-up algorithm, the property-test

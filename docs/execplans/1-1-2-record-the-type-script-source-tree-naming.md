@@ -281,10 +281,10 @@ success text requires the chosen layout to match the HLD module map and a Biome
 or custom lint rule to guard the boundary.
 
 ADR 002 is
-`docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`. It adopts
-hexagonal architecture for Vibe Coder and already says the source tree uses
-`domain/`, `application/`, and `adapters/`, with `core/` set aside. It also
-says import-boundary lint rules will be enforced via Biome or a custom
+`docs/adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`. It
+adopts hexagonal architecture for Vibe Coder and already says the source tree
+uses `domain/`, `application/`, and `adapters/`, with `core/` set aside. It
+also says import-boundary lint rules will be enforced via Biome or a custom
 TypeScript rule once the scaffold exists.
 
 The HLD is `docs/vibe-coder-high-level-design.md`. Its "Module layout" section
@@ -332,7 +332,7 @@ Relevant skills and documents for implementation:
 - `pr-creation` and `en-gb-oxendict-style`, if a pull request is requested.
 - `AGENTS.md`.
 - `docs/roadmap.md`.
-- `docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`.
+- `docs/adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`.
 - `docs/vibe-coder-high-level-design.md`.
 - `docs/developers-guide.md`.
 - `docs/users-guide.md`.
@@ -347,9 +347,9 @@ pre-existing changes in this ExecPlan before editing. If unrelated dirty files
 exist, leave them alone.
 
 Stage B records the decision. Edit
-`docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md` to add an
-accepted amendment or decision-log entry near "Decision outcome / proposed
-direction" or before "Outstanding decisions". The entry must state:
+`docs/adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md` to
+add an accepted amendment or decision-log entry near "Decision outcome /
+proposed direction" or before "Outstanding decisions". The entry must state:
 
 ```plaintext
 TypeScript source-tree naming: use `src/domain/`, `src/application/`, and
