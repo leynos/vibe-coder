@@ -6,8 +6,8 @@
  * exposes application services that inbound adapters call. Modules here may
  * import from the domain layer but must not import adapter implementations.
  *
- * See `docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`
- * and `docs/adr-003-use-xstate-for-workflow-orchestration.md` for rationale.
+ * See `docs/adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`
+ * and `docs/adrs/adr-0003-use-xstate-for-workflow-orchestration.md` for rationale.
  *
  * @file Application layer barrel.
  * @module

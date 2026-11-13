@@ -7,6 +7,6 @@
  * components, service workers, self-play runners). Adapters may import from
  * the domain and application layers but must not contain business rules.
  *
- * See `docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`
+ * See `docs/adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`
  * for the full boundary rules.
  */

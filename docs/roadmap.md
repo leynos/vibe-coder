@@ -37,37 +37,39 @@ any simulation equations; equations arrive in phase 2.
 
 This step answers what contracts must be settled before the first simulation
 line is written. Its outcome unblocks source-tree layout, import-boundary
-rules, and adapter shapes. See `adr-001-build-an-offline-first-react-pwa.md`
+rules, and adapter shapes. See
+`adrs/adr-0001-build-an-offline-first-react-pwa.md` §Outstanding decisions,
+`adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`
 §Outstanding decisions,
-`adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md` §Outstanding
-decisions, `adr-003-use-xstate-for-workflow-orchestration.md` §Outstanding
-decisions, `adr-005-use-deterministic-simulation-and-parameter-packs.md`
+`adrs/adr-0003-use-xstate-for-workflow-orchestration.md` §Outstanding decisions,
+`adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md`
 §Outstanding decisions.
 
 - [x] 1.1.1. Record the package runner choice (Bun) and confirm the service
   worker strategy (Vite PWA plugin or custom worker) as a short ADR amendment
   or decision log entry.
-  - See `adr-001-build-an-offline-first-react-pwa.md` §Outstanding decisions.
+  - See `adrs/adr-0001-build-an-offline-first-react-pwa.md` §Outstanding
+    decisions.
   - Success: one accepted document records both choices; no open question
     remains in ADR 001.
 
 - [x] 1.1.2. Record the TypeScript source-tree naming (`domain/` vs `core/`)
   and import-boundary lint rule strategy as a decision log entry.
-  - See `adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`
+  - See `adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`
     §Outstanding decisions.
   - Success: the chosen layout matches the module map in HLD §"Module layout"
     and a lint rule (Biome or custom) guards the boundary.
 
 - [x] 1.1.3. Record the XState machine collocation strategy (feature-colocated
   vs `application/machines/`) and the first model-test harness choice.
-  - See `adr-003-use-xstate-for-workflow-orchestration.md` §Outstanding
+  - See `adrs/adr-0003-use-xstate-for-workflow-orchestration.md` §Outstanding
     decisions.
   - Success: one accepted document confirms placement; the first machine test
     compiles and passes.
 
 - [x] 1.1.4. Record the seeded pseudo-random number generator choice and the
   version migration policy for runs created under older parameter packs.
-  - See `adr-005-use-deterministic-simulation-and-parameter-packs.md`
+  - See `adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md`
     §Outstanding decisions.
   - Success: one accepted document names the PRNG (e.g. Mulberry32 or
     Xoshiro128+); the migration policy is documented.
@@ -77,7 +79,7 @@ decisions, `adr-005-use-deterministic-simulation-and-parameter-packs.md`
 This step answers whether the intended module layout can be expressed as a
 compilable TypeScript tree with enforced import boundaries. It unblocks all
 later domain and adapter work. See HLD §"Module layout" and
-`adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`.
+`adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`.
 
 - [x] 1.2.1. Create the `domain/`, `application/`, and `adapters/` package
   boundaries with index files and Biome/TSConfig path aliases.
@@ -91,7 +93,7 @@ later domain and adapter work. See HLD §"Module layout" and
   `TelemetrySink`.
   - Requires 1.2.1.
   - Place interfaces inside `domain/ports/` per HLD §"Module layout".
-  - See `adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`
+  - See `adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`
     §Decision outcome.
   - Success: all six port types compile; no port file imports from an adapter
     module.
@@ -108,7 +110,7 @@ later domain and adapter work. See HLD §"Module layout" and
 This step answers whether the domain model compiles, round-trips through
 Valibot validation, and satisfies its invariants in isolation. Its outcome
 informs the simulation contract in phase 2. See HLD §"Domain model" and
-`adr-005-use-deterministic-simulation-and-parameter-packs.md`.
+`adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md`.
 
 - [ ] 1.3.1. Implement `RunState`, `Resources`, `TechDebtVector`,
   `AllocationPolicy`, `EthicsPolicy`, `AlignmentState`, `ProgressionState`, and
@@ -123,7 +125,7 @@ informs the simulation contract in phase 2. See HLD §"Domain model" and
   with all tunable constants.
   - Requires 1.3.1.
   - See HLD §"Parameter packs" and
-    `adr-005-use-deterministic-simulation-and-parameter-packs.md` §Migration
+    `adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md` §Migration
     plan.
   - Success: the default pack compiles; its hash is stable across environments;
     self-play can load it without a browser.
@@ -131,7 +133,7 @@ informs the simulation contract in phase 2. See HLD §"Domain model" and
 - [ ] 1.3.3. Implement the seeded `RandomSource` adapter using the chosen
   PRNG.
   - Requires 1.1.4 and 1.2.3.
-  - See `adr-005-use-deterministic-simulation-and-parameter-packs.md`
+  - See `adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md`
     §Outstanding decisions.
   - Success: the same seed produces the same sequence across ten runs;
     property tests confirm distribution.
@@ -141,14 +143,14 @@ informs the simulation contract in phase 2. See HLD §"Domain model" and
 This step answers whether the chosen Dexie schema supports run creation,
 snapshot, event logging, and migration without React. Its outcome is required
 by every slice that saves or loads a run. See HLD §"Dexie schema" and
-`adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md`.
+`adrs/adr-0004-persist-runs-with-dexie-snapshots-and-event-logs.md`.
 
 - [ ] 1.4.1. Implement the Dexie schema version 1 with tables for `runs`,
   `runSnapshots`, `runEvents`, `settings`, `parameterPacks`, `contentPacks`, and
   `selfPlayReports`.
   - Requires 1.2.3 and 1.3.1.
   - See HLD §"Dexie schema" and
-    `adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md` §Decision
+    `adrs/adr-0004-persist-runs-with-dexie-snapshots-and-event-logs.md` §Decision
     outcome.
   - Success: the schema creates all tables in Happy DOM; a round-trip test
     writes and reads a `RunState` without data loss.
@@ -163,7 +165,8 @@ by every slice that saves or loads a run. See HLD §"Dexie schema" and
   re-open and that a future version 2 migration preserves or archives existing
   rows.
   - Requires 1.4.2.
-  - See `adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md` §Known
+  - See `adrs/adr-0004-persist-runs-with-dexie-snapshots-and-event-logs.md`
+    §Known
     risks.
   - Success: tests run headless; no migration silently destroys saved data.
 
@@ -172,7 +175,7 @@ by every slice that saves or loads a run. See HLD §"Dexie schema" and
 This step answers whether the six machines can be defined, connected to the
 React tree, and model-tested for unreachable states before simulation equations
 exist. See HLD §"XState state graph" and
-`adr-003-use-xstate-for-workflow-orchestration.md`.
+`adrs/adr-0003-use-xstate-for-workflow-orchestration.md`.
 
 - [ ] 1.5.1. Implement shell definitions for `app.machine`, `run.machine`,
   `policy.machine`, `event.machine`, `progression.machine`, and `audio.machine`.
@@ -205,8 +208,8 @@ audio, or canvas animation; those arrive in later slices.
 This step answers whether the tick contract from the HLD can be implemented as
 a pure function that changes `RunState` reproducibly. It is the most critical
 technical proof in the project. See HLD §"Simulation design" and
-`adr-005-use-deterministic-simulation-and-parameter-packs.md`,
-`adr-010-run-fixed-tick-simulation-outside-react-rendering.md`.
+`adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md`,
+`adrs/adr-0010-run-fixed-tick-simulation-outside-react-rendering.md`.
 
 - [ ] 2.1.1. Implement `simulateTick(input: SimTickInput): SimTickOutput` as a
   pure function with no side effects, reading only its declared inputs.
@@ -240,12 +243,12 @@ technical proof in the project. See HLD §"Simulation design" and
 This step answers whether the fixed-tick loop can advance `RunState` at a
 configured cadence and expose snapshots to the React tree without letting React
 own simulation timing. See
-`adr-010-run-fixed-tick-simulation-outside-react-rendering.md`.
+`adrs/adr-0010-run-fixed-tick-simulation-outside-react-rendering.md`.
 
 - [ ] 2.2.1. Implement a main-thread `TickService` that calls `simulateTick`
   at a configured interval and exposes immutable snapshots via a subscription.
   - Requires 2.1.1 and 1.5.1.
-  - See `adr-010-run-fixed-tick-simulation-outside-react-rendering.md`
+  - See `adrs/adr-0010-run-fixed-tick-simulation-outside-react-rendering.md`
     §Migration plan.
   - Success: the tick loop advances `RunState` independently of React render
     cycles; pausing the loop stops state advancement; React components receive
@@ -263,7 +266,7 @@ own simulation timing. See
 This step answers whether the manual typing ritual, initial ethos choice, and
 first policy setting can be built as accessible React screens driven by
 `app.machine` and `policy.machine`. See HLD §"Core screens" and
-`adr-007-keep-runtime-interface-authoritative-and-deterministic.md`.
+`adrs/adr-0007-keep-runtime-interface-authoritative-and-deterministic.md`.
 
 - [ ] 2.3.1. Implement the manual typing ritual screen with a 30-second
   timed input field, seed summary, and initial ethos choice.
@@ -277,7 +280,7 @@ first policy setting can be built as accessible React screens driven by
   LoC, cash, karma, brand, PMF, and power.
   - Requires 2.2.1 and 2.3.1.
   - See HLD §"Core screens" (Main Dashboard) and
-    `adr-007-keep-runtime-interface-authoritative-and-deterministic.md`
+    `adrs/adr-0007-keep-runtime-interface-authoritative-and-deterministic.md`
     §Decision outcome.
   - All values must come from domain selectors, not from Canvas or generated
     imagery.
@@ -288,7 +291,7 @@ first policy setting can be built as accessible React screens driven by
   controls that sum to 100 and commit through `policy.machine`.
   - Requires 2.3.2.
   - See HLD §"Core aggregates" (`AllocationPolicy`) and
-    `adr-003-use-xstate-for-workflow-orchestration.md` (policy.machine).
+    `adrs/adr-0003-use-xstate-for-workflow-orchestration.md` (policy.machine).
   - Success: invalid combinations are rejected before commit; draft policy
     does not enter the simulation; keyboard and numeric-input controls work.
 
@@ -296,8 +299,8 @@ first policy setting can be built as accessible React screens driven by
 
 This step answers whether the Dexie adapter can persist the run reliably and
 whether the player can resume after a browser restart. See
-`adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md` and HLD §"Save
-strategy".
+`adrs/adr-0004-persist-runs-with-dexie-snapshots-and-event-logs.md` and HLD
+§"Save strategy".
 
 - [ ] 2.4.1. Implement periodic snapshot persistence triggered by the tick
   service.
@@ -310,14 +313,14 @@ strategy".
   the most recent snapshot on boot.
   - Requires 2.4.1 and 1.5.1.
   - See HLD §"Key workflows" and
-    `adr-001-build-an-offline-first-react-pwa.md` §"Migration plan".
+    `adrs/adr-0001-build-an-offline-first-react-pwa.md` §"Migration plan".
   - Success: the app boots offline and continues a run; Dexie migration tests
     still pass.
 
 - [ ] 2.4.3. Implement JSON import and export for a single run.
   - Requires 2.4.2.
   - See HLD §"Security and privacy" and
-    `adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md` §Migration
+    `adrs/adr-0004-persist-runs-with-dexie-snapshots-and-event-logs.md` §Migration
     plan.
   - Exported JSON must include schema version, run ID, seed, and
     parameter-pack hash.
@@ -355,7 +358,7 @@ that make policy trade-offs meaningful.
 This step answers whether debt categories accumulate, compound, and generate
 incidents according to the simulation design. See HLD §"The system heartbeat"
 (steps 6 and 10) and
-`adr-005-use-deterministic-simulation-and-parameter-packs.md`.
+`adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md`.
 
 - [ ] 3.1.1. Implement the eight debt-category accumulation and reduction
   rules inside `simulateTick` (tick step 6), driven by quality and security
@@ -388,7 +391,7 @@ incidents according to the simulation design. See HLD §"The system heartbeat"
 This step answers whether the player can respond to incidents through
 `event.machine` and whether those responses produce auditable domain events.
 See HLD §"Key workflows" (incident response) and
-`adr-003-use-xstate-for-workflow-orchestration.md`.
+`adrs/adr-0003-use-xstate-for-workflow-orchestration.md`.
 
 - [ ] 3.2.1. Implement the incident prompt screen: cause, response options
   (disclose, mitigate, ignore, cover up, civic action), consequences, and
@@ -415,14 +418,14 @@ See HLD §"Key workflows" (incident response) and
 This step answers whether the player can diagnose their risk surface through a
 visual view that is readable without relying on generated imagery for
 authoritative values. See HLD §"Core screens" (Debt Constellation) and
-`adr-007-keep-runtime-interface-authoritative-and-deterministic.md`.
+`adrs/adr-0007-keep-runtime-interface-authoritative-and-deterministic.md`.
 
 - [ ] 3.3.1. Implement the debt constellation Canvas panel showing the eight
   debt categories as nodes with edge weights proportional to their current
   values.
   - Requires 3.1.1 and 2.3.2.
   - See HLD §"Visual layer order" and
-    `adr-007-keep-runtime-interface-authoritative-and-deterministic.md`.
+    `adrs/adr-0007-keep-runtime-interface-authoritative-and-deterministic.md`.
   - All critical values must be rendered as runtime text, not baked into
     Canvas imagery.
   - Success: a textual summary of the constellation passes `bun test:a11y`;
@@ -536,7 +539,7 @@ game so far.
 This step answers whether the unlock gate mechanism can be implemented as a
 pure domain service and whether `progression.machine` can orchestrate the
 review and accept/defer flow. See HLD §"Core requirements" (stage 1–4
-progression) and `adr-003-use-xstate-for-workflow-orchestration.md`.
+progression) and `adrs/adr-0003-use-xstate-for-workflow-orchestration.md`.
 
 - [ ] 5.1.1. Implement stage threshold evaluation (tick step 12): check
   unlock conditions for manual coder, autocomplete, edit bot, and single- agent
@@ -601,13 +604,14 @@ strategic depth rather than replacing it. See HLD §"XState state graph"
 This step answers whether the first four vertical slices produce a mechanically
 balanced game where multiple strategies are viable and no trivial dominant
 policy exists. See HLD §"Self-play agents" and
-`adr-006-use-adversarial-self-play-for-parameter-tuning.md`.
+`adrs/adr-0006-use-adversarial-self-play-for-parameter-tuning.md`.
 
 - [ ] 5.3.1. Implement the baseline self-play runner: a headless harness that
   runs agent archetypes against the domain core over many seeds and parameter
   packs.
   - Requires steps 2.1–2.2 and 1.3.2.
-  - See `adr-006-use-adversarial-self-play-for-parameter-tuning.md` §Migration
+  - See `adrs/adr-0006-use-adversarial-self-play-for-parameter-tuning.md`
+    §Migration
     plan and HLD §"Self-play agents".
   - The runner must work without mounting React.
   - Success: the runner produces a JSON report covering pacing, exploitability,
@@ -626,7 +630,7 @@ policy exists. See HLD §"Self-play agents" and
   fun score, and promote one pack as the new default after human review.
   - Requires 5.3.2.
   - See HLD §"Optimization process" and
-    `adr-006-use-adversarial-self-play-for-parameter-tuning.md`.
+    `adrs/adr-0006-use-adversarial-self-play-for-parameter-tuning.md`.
   - Success: the promoted pack has no lock-on-victory strategy according to
     the exploit hunter; the balancing report is committed to the repository.
 
@@ -679,7 +683,7 @@ HLD §"The system heartbeat" (step 2) and HLD §"Path to customer value" (slice
 This step answers whether the power economy is legible through a Canvas
 visualizer that provides textual summaries for accessibility. See HLD §"Core
 screens" (Power & Heat) and
-`adr-007-keep-runtime-interface-authoritative-and-deterministic.md`.
+`adrs/adr-0007-keep-runtime-interface-authoritative-and-deterministic.md`.
 
 - [ ] 6.2.1. Implement the power and heat Canvas panel: power draw bar,
   generation mix breakdown, and heat budget indicator.
@@ -735,14 +739,15 @@ and whether the ending trigger is legible from prior simulation state. See HLD
 
 This step answers whether the simulation can express its state through semantic
 audio events without coupling the domain to Web Audio. See
-`adr-009-use-semantic-audio-events-for-reactive-sound.md` and HLD §"Reactive
-music and sound design".
+`adrs/adr-0009-use-semantic-audio-events-for-reactive-sound.md` and HLD
+§"Reactive music and sound design".
 
 - [ ] 7.2.1. Implement the `AudioEventSink` Web Audio adapter with buses for
   music, SFX, and UI; implement rate-limited scheduling for high-frequency
   events (commits, debt ticks).
   - Requires 1.2.2 and phase 2.
-  - See `adr-009-use-semantic-audio-events-for-reactive-sound.md` §Migration
+  - See `adrs/adr-0009-use-semantic-audio-events-for-reactive-sound.md`
+    §Migration
     plan.
   - Audio must be disabled in tests through the silent stub adapter.
   - Success: disabling the audio bus produces no simulation-state change;
@@ -768,12 +773,13 @@ music and sound design".
 This step answers whether the parameter-pack promotion pipeline is formally
 safe against worker failures, stale evidence, and exploit laundering. It should
 be completed once the self-play runner from step 5.3 is stable. See
-`adr-011-use-tla-plus-for-self-play-promotion-safety.md`.
+`adrs/adr-0011-use-tla-plus-for-self-play-promotion-safety.md`.
 
 - [ ] 7.3.1. Create `formal/tla/self-play-promotion/` with the initial TLA+
   specification, TLC checker configuration, and README.
   - Requires 5.3.2.
-  - See `adr-011-use-tla-plus-for-self-play-promotion-safety.md` §Migration
+  - See `adrs/adr-0011-use-tla-plus-for-self-play-promotion-safety.md`
+    §Migration
     plan.
   - Success: `tlc` checks the model on a small bounded configuration; no
     safety invariant is violated on the initial model.
@@ -781,7 +787,8 @@ be completed once the self-play runner from step 5.3 is stable. See
 - [ ] 7.3.2. Implement the TypeScript `canPromote` guard mirroring the TLA+
   `CanPromote` predicate, with the `TrialEvidence` record shape.
   - Requires 7.3.1 and 5.3.1.
-  - See `adr-011-use-tla-plus-for-self-play-promotion-safety.md` §Implementation
+  - See `adrs/adr-0011-use-tla-plus-for-self-play-promotion-safety.md`
+    §Implementation
     impact.
   - Success: `canPromote` rejects trial evidence that would fail the seven
     formal invariants; negative fixtures cover each rejection case.
@@ -790,7 +797,7 @@ be completed once the self-play runner from step 5.3 is stable. See
   nondeterministic, and wrong-hash results; confirm all seven safety invariants
   still hold.
   - Requires 7.3.2.
-  - See `adr-011-use-tla-plus-for-self-play-promotion-safety.md` §Required
+  - See `adrs/adr-0011-use-tla-plus-for-self-play-promotion-safety.md` §Required
     invariants.
   - Success: `tlc` finds no counterexample under all bad-worker interleavings
     for the bounded model; liveness holds under explicit fairness assumptions.
@@ -799,12 +806,12 @@ be completed once the self-play runner from step 5.3 is stable. See
 
 This step answers whether the game can be installed to a device home screen and
 booted fully offline without a development server. See
-`adr-001-build-an-offline-first-react-pwa.md` §Migration plan.
+`adrs/adr-0001-build-an-offline-first-react-pwa.md` §Migration plan.
 
 - [ ] 7.4.1. Wire the Vite PWA plugin (or custom service worker) to
   pre-cache the app shell and all static assets.
   - Requires phase 7 feature work to be stable.
-  - See `adr-001-build-an-offline-first-react-pwa.md`.
+  - See `adrs/adr-0001-build-an-offline-first-react-pwa.md`.
   - Success: `lighthouse --preset pwa` gives a passing PWA score; the game
     boots after the service worker is installed and the network is disabled.
 
@@ -847,7 +854,7 @@ workflow. Assets belong to one of three buckets: `direct-generated-reference`
 (reference only, never loaded at runtime), `generated-source-converted`
 (processed and validated before runtime use), and `algorithmic` (scripts, code,
 or manifests). See
-`adr-008-use-development-time-image-generation-with-asset-promotion.md`.
+`adrs/adr-0008-use-development-time-image-generation-with-asset-promotion.md`.
 
 - [ ] 8.3.1. Create the `prompts/` and `assets/` directory structure as
   described in HLD §"Required art pipeline".
@@ -862,7 +869,8 @@ or manifests). See
   Agentland asset specification. Each manifest must record: asset ID, family,
   bucket, intent class, tool, prompt path, source path, processed path, atlas
   metadata, validation report path, and runtime text policy.
-  - See `adr-008-use-development-time-image-generation-with-asset-promotion.md`
+  - See
+    `adrs/adr-0008-use-development-time-image-generation-with-asset-promotion.md`
     §Decision outcome and HLD §"Required art pipeline".
   - Allowed `intent_class` values: `reference-only`, `sliceable-source`,
     `ornament-source`, `runtime-processed`, `lightmask-source`,
@@ -877,7 +885,7 @@ or manifests). See
   palette quantization, sprite slicing, nine-slice extraction, atlas packing,
   and light-mask generation.
   - See HLD §"Required art pipeline" and
-    `adr-008-use-development-time-image-generation-with-asset-promotion.md`
+    `adrs/adr-0008-use-development-time-image-generation-with-asset-promotion.md`
     §Migration plan.
   - Scripts must be deterministic, emit clear failures, and record settings in
     the source manifest after each accepted step.
@@ -917,7 +925,7 @@ or manifests). See
 - [ ] 8.6.1. Design and implement cloud sync as an optional outbound adapter
   over the `GameStateRepository` port.
   - Requires phase 7 and a backend service decision.
-  - See `adr-001-build-an-offline-first-react-pwa.md` §Non-goals and HLD
+  - See `adrs/adr-0001-build-an-offline-first-react-pwa.md` §Non-goals and HLD
     §"Implementation priorities".
   - Success: enabling sync does not alter domain equations; disabling sync
     returns the game to fully offline operation.

@@ -147,7 +147,7 @@ explicitly approved it.
   package.json
   Makefile
   docs/developers-guide.md
-  docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md
+  docs/adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md
   docs/contents.md
   docs/roadmap.md
   docs/execplans/1-2-1-create-package-boundaries.md
@@ -600,7 +600,8 @@ source-tree skeleton" as task 1.2.1. The success text says the empty skeleton
 must pass `bun check:types` and that Biome must reject a domain file that
 imports from `adapters/`.
 
-ADR 002, `docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`,
+ADR 002,
+`docs/adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`,
 sets the boundary direction, names `src/domain/`, `src/application/`, and
 `src/adapters/` as the package boundaries, and rejects `src/core/`. The ADR
 remains accepted; no amendment is required by 1.2.1 unless an implementation
@@ -667,7 +668,7 @@ Relevant skills and documents for implementation:
 - `commit-message`, for file-based commit messages after validation.
 - `pr-creation` and `en-gb-oxendict`, for the draft PR.
 - `AGENTS.md`, `docs/roadmap.md`,
-  `docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`,
+  `docs/adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`,
   `docs/vibe-coder-high-level-design.md`, `docs/developers-guide.md`,
   `docs/users-guide.md`, `docs/contents.md`,
   `docs/execplans/1-1-2-record-the-type-script-source-tree-naming.md`,

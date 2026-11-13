@@ -10,10 +10,10 @@ Status: COMPLETE
 
 Roadmap item 1.1.1 closes two early build-spine questions before the domain
 core and adapter skeleton are implemented. After this change, a developer can
-open `docs/adr-001-build-an-offline-first-react-pwa.md` and see that Bun is the
-accepted package runner, and that the first service-worker strategy is settled.
-`docs/roadmap.md` then marks item 1.1.1 as done because Architectural Decision
-Record (ADR) 001 no longer leaves those choices open.
+open `docs/adrs/adr-0001-build-an-offline-first-react-pwa.md` and see that Bun
+is the accepted package runner, and that the first service-worker strategy is
+settled. `docs/roadmap.md` then marks item 1.1.1 as done because Architectural
+Decision Record (ADR) 001 no longer leaves those choices open.
 
 This is a documentation and decision-record change. It must not implement the
 service worker, add Vite PWA dependencies, alter runtime behaviour, or start
@@ -110,10 +110,11 @@ The roadmap entry lives in `docs/roadmap.md` under "1. Foundational contracts
 and build spine", step 1.1, task 1.1.1. It requires a short ADR amendment or
 decision log entry for the package runner and service-worker strategy.
 
-ADR 001 is `docs/adr-001-build-an-offline-first-react-pwa.md`. Its "Outstanding
-decisions" section currently asks the project to choose the package runner and
-choose between Workbox, Vite PWA tooling, or a custom worker. It also contains
-the import/export save-format question that must not be decided accidentally.
+ADR 001 is `docs/adrs/adr-0001-build-an-offline-first-react-pwa.md`. Its
+"Outstanding decisions" section currently asks the project to choose the
+package runner and choose between Workbox, Vite PWA tooling, or a custom
+worker. It also contains the import/export save-format question that must not
+be decided accidentally.
 
 The high-level design in `docs/vibe-coder-high-level-design.md` names React 19,
 TypeScript, Vite/Bun, and an offline-first PWA build path. The developer guide
@@ -134,11 +135,11 @@ Relevant local documents:
 
 - `AGENTS.md`
 - `docs/roadmap.md`
-- `docs/adr-001-build-an-offline-first-react-pwa.md`
-- `docs/adr-002-adopt-hexagonal-architecture-for-domain-boundaries.md`
-- `docs/adr-003-use-xstate-for-workflow-orchestration.md`
-- `docs/adr-004-persist-runs-with-dexie-snapshots-and-event-logs.md`
-- `docs/adr-005-use-deterministic-simulation-and-parameter-packs.md`
+- `docs/adrs/adr-0001-build-an-offline-first-react-pwa.md`
+- `docs/adrs/adr-0002-adopt-hexagonal-architecture-for-domain-boundaries.md`
+- `docs/adrs/adr-0003-use-xstate-for-workflow-orchestration.md`
+- `docs/adrs/adr-0004-persist-runs-with-dexie-snapshots-and-event-logs.md`
+- `docs/adrs/adr-0005-use-deterministic-simulation-and-parameter-packs.md`
 - `docs/vibe-coder-high-level-design.md`
 - `docs/developers-guide.md`
 - `docs/users-guide.md`
@@ -166,9 +167,9 @@ First, confirm the working branch is not `main` with
 it to `1-1-1-record-package-runner-and-service-worker-strategy` before the
 first commit.
 
-Second, edit `docs/adr-001-build-an-offline-first-react-pwa.md`. Add a short
-accepted amendment or decision-log section below the existing decision outcome
-or before "Outstanding decisions". The amendment must say:
+Second, edit `docs/adrs/adr-0001-build-an-offline-first-react-pwa.md`. Add a
+short accepted amendment or decision-log section below the existing decision
+outcome or before "Outstanding decisions". The amendment must say:
 
 ```plaintext
 Package runner: Bun.
